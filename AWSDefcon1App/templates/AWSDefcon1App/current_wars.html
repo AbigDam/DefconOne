@@ -1,0 +1,42 @@
+{% extends "AWSDefcon1App/layout.html" %}
+
+{% block body %}
+    <h2 style = "text-align: center;">Current Fights</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th style="font-size: 20px;">Attacker</th>
+                <th style="font-size: 20px; text-align: right; vertical-align: top;">Defender</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for war in wars %}
+            <tr>
+                {% if war.nation1 == playernation %}
+                    <td style="color: red; font-weight: bold; font-size: 18px;"> {{ war.nation1.name }}</td>
+                {% else %}
+                    <td style="color: rgb(255, 255, 255); font-size: 18px;"> {{ war.nation1.name }}</td>
+                {% endif %}
+                <td style="font-size: 18px; text-align: right; vertical-align: top;">
+                    {% if war.nation2 == playernation %}
+                        <span style="color: red; font-weight: bold;"> {{ war.nation2.name }}</span>
+                        <form method="post" action="{% url 'current_wars' game_id=game_id %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="winner" value="{{ war.nation1.name }}">
+                            <button type="submit">Surrender</button>
+                        </form>
+                    {% else %}
+                        <span style="color: white;"> {{ war.nation2.name }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="how-to-play-widget">
+        <button class="how-to-play-button">How to Play</button>
+        <div class="how-to-play-content">
+            <p style = "color: black">This is a list of all current conflicts.  To start a new war, click the Declare War tab.  To end a war, either surrender, oo request an alliance from the Alliance tab.  Surrendering is only possible in a defensive war</p>
+    </div>
+
+{% endblock %}

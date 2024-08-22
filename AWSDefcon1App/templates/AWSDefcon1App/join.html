@@ -1,0 +1,57 @@
+{% extends "AWSDefcon1App/layout.html" %}
+
+{% block body %}
+    <h1 style="text-align: center;">CLICK BELOW TO JOIN THE GAME</h1>
+
+
+    {% if player_number == 1 %}
+    <form style="text-align: center" method="post" action="{% url 'joingame' game_id=game_id player_number=player_number %}">
+        {% csrf_token %}
+        <!-- Include other form fields as needed -->
+        <button type="submit" style="background-color: #000000; color: white; padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer;">Join Game #{{ game_id }} as the UK</button>
+    </form>    
+    {% elif player_number == 2 %}
+    <form style="text-align: center" method="post" action="{% url 'joingame' game_id=game_id player_number=player_number %}">
+        {% csrf_token %}
+        <!-- Include other form fields as needed -->
+        <button type="submit" style="background-color: #000000; color: white; padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer;">Join Game #{{ game_id }} as the USA</button>
+    </form> 
+    {% elif player_number == 3 %}
+    <form style="text-align: center" method="post" action="{% url 'joingame' game_id=game_id player_number=player_number %}">
+        {% csrf_token %}
+        <!-- Include other form fields as needed -->
+        <button type="submit" style="background-color: #000000; color: white; padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer;">Join Game #{{ game_id }} as France</button>
+    </form> 
+    {% elif player_number == 4 %}
+    <form style="text-align: center" method="post" action="{% url 'joingame' game_id=game_id player_number=player_number %}">
+        {% csrf_token %}
+        <!-- Include other form fields as needed -->
+        <button type="submit" style="background-color: #000000; color: white; padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer;">Join Game #{{ game_id }} as the USSR</button>
+    </form> 
+    {% elif player_number == 5 %}
+    <form style="text-align: center" method="post" action="{% url 'joingame' game_id=game_id player_number=player_number %}">
+        {% csrf_token %}
+        <!-- Include other form fields as needed -->
+        <button type="submit" style="background-color: #000000; color: white; padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer;">Join Game #{{ game_id }} as Germany</button>
+    </form> 
+    {% elif player_number == 6 %}
+    <form style="text-align: center" method="post" action="{% url 'joingame' game_id=game_id player_number=player_number %}">
+        {% csrf_token %}
+        <!-- Include other form fields as needed -->
+        <button type="submit" style="background-color: #000000; color: white; padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer;">Join Game #{{ game_id }} as Italy</button>
+    </form> 
+    {% elif player_number == 7 %}
+    <form style="text-align: center" method="post" action="{% url 'joingame' game_id=game_id player_number=player_number %}">
+        {% csrf_token %}
+        <!-- Include other form fields as needed -->
+        <button type="submit" style="background-color: #000000; color: white; padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer;">Join Game #{{ game_id }} as Japan</button>
+    </form> 
+    {% elif player_number == 0 %}
+    <form style="text-align: center" method="post" action="{% url 'joingame' game_id=game_id player_number=player_number %}">
+        {% csrf_token %}
+        <!-- Include other form fields as needed -->
+        <button type="submit" style="background-color: #000000; color: white; padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer;">Join Game #{{ game_id }} as Cuba</button>
+    </form>  
+    {% endif %}
+
+{% endblock %}

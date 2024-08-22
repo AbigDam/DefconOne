@@ -1,0 +1,78 @@
+{% extends "AWSDefcon1App/layout.html" %}
+
+{% block body %}
+    <h2 style="text-align: center;">Send Resources</h2>
+    <form method="post" action="{% url 'send' game_id=game_id %}" style="text-align: center;">
+        {% csrf_token %}
+
+        <label for="selected_nation" style="font-weight: bold;">Select Recipient Nation:</label><br>
+        <select name="selected_nation" id="selected_nation" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc; width: 200px; font-size: 16px;">
+            {% for nation in knownnations %}
+                <option value="{{ nation.name }}">{{ nation.name }}</option>
+            {% endfor %}
+        </select><br><br>
+
+        <label for="send_type" style="font-weight: bold;">Select Send Type:</label><br>
+        <select name="send_type" id="send_type" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc; width: 200px; font-size: 16px;">
+            <option value="1">Send Divisions</option>
+            <option value="2">Send Planes</option>
+            <option value="3">Send Boats</option>
+        </select><br><br>
+
+        <label for="amount" style="font-weight: bold;">Enter Percent:</label><br>
+        <input type="range" id="amount" name="amount" min="1" max="100" style="width: 80%; margin-bottom: 10px;">
+        <br>
+        <span id="amount_label">Amount: 1</span><br><br>
+
+        <button type="submit" style="background-color: #000000; color: white; padding: 10px 20px; border: 2px white; border-radius: 5px; cursor: pointer;">Send</button>
+    </form>
+
+    <script>
+        var slider = document.getElementById("amount");
+        var output = document.getElementById("amount_label");
+        output.innerHTML = "Amount: " + slider.value;
+
+        slider.oninput = function() {
+            output.innerHTML = "Amount: " + this.value;
+        }
+    </script>
+
+
+     <br>  <br>  <br>  
+        <table class="table table-striped table-hover table-sm">
+            <thead>
+                <tr>
+                    <th scope="col">Player</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">States</th>
+                    <th scope="col">Divisions</th>
+                    <th scope="col">Boats</th>
+                    <th scope="col">Planes</th>
+                    <th scope="col">Alliance Name</th>
+                    <th scope="col">Points</th>
+                    <th scope="col">Nuke Time</th>
+                    <th scope="col">Nukes</th>
+                </tr>
+            </thead>
+            <tbody>
+                    <tr>
+                        <td scope="row">{{ PlayerAAA.user.username }}</td>
+                        <td scope="row">{{ PlayerAAA.name }}</td>
+                        <td scope="row">{{ PlayerAAA.states }}</td>
+                        <td scope="row">{{ PlayerAAA.divisions }}</td>
+                        <td scope="row">{{ PlayerAAA.boats }}</td>
+                        <td scope="row">{{ PlayerAAA.planes }}</td>
+                        <td scope="row">{{ PlayerAAA.alliance_name }}</td>
+                        <td scope="row">{{ PlayerAAA.points }}</td>
+                        <td scope="row">{{ PlayerAAA.nuke_time }}</td>
+                        <td scope="row">{{ PlayerAAA.nukes }}</td>
+                    </tr>
+            </tbody>
+        </table>
+        <div class="how-to-play-widget">
+            <button class="how-to-play-button">How to Play</button>
+            <div class="how-to-play-content">
+                <p style = "color: black">Here you can send supplies to any exsisting nation.  You can send supplies as a percent of your wealth.  Doing this will lower a nations hostility, which increases the chance of them accepting an alliance.</p>
+            </div>
+        </div>
+{% endblock %}

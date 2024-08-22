@@ -1,0 +1,43 @@
+{% extends "AWSDefcon1App/layout.html" %}
+{% block body %}
+<h2 style="text-align: center;">Message Users</h2>
+
+{% if game_id == 0 %}
+    <div style="text-align: center; margin-bottom: 20px;">
+        <input type="text" id="userSearch" placeholder="Search users..." style="padding: 5px;">
+    </div>
+{% endif %}
+
+<table style="margin: 0 auto; width: 50%; text-align: center;">
+    <thead>
+        <tr>
+            <th>Message</th>
+            <th>Profile</th>
+        </tr>
+    </thead>
+    <tbody id="userTableBody">
+        {% for user in users %}
+            <tr>
+                <td><a href="{% if game_id == 0 %}{% url 'DM' recipient_id=user.id %}{% else %}{% url 'message' game_id=game_id recipient_id=user.id %}{% endif %}">Message {{ user.username }}</a></td>
+                <td><a href="{% url 'profile' user_id=user.id %}">{{ user.username }}'s Profile</a></td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+    document.getElementById('userSearch').addEventListener('input', function() {
+        var searchQuery = this.value.toLowerCase();
+        var rows = document.querySelectorAll('#userTableBody tr');
+
+        rows.forEach(function(row) {
+            var username = row.querySelector('td a').textContent.toLowerCase();
+            if (username.includes(searchQuery)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+</script>
+{% endblock %}

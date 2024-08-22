@@ -1,0 +1,61 @@
+{% extends "AWSDefcon1App/layout.html" %}
+
+{% block body %}
+
+    <h2 style = "text-align: center;">Announcements</h2>
+
+
+    <div class="game-container"> 
+    {% if announces %}
+    {% for announce in announces %}
+    <div class="game">
+      <hr>  
+      <div class="boxed-list">
+        <p class = "boxed-list-instance"> {{announce.text}}</p>
+        <p style = "color: #A9A9A9; font-family: 'Hoefler Text', serif;font-style: italic; font-size: 10px;"> sent on {{announce.start_time}}</p>
+      </div>
+      <hr>
+    </div>
+    {% endfor %}
+    {% else %}
+
+    <div class="boxed-list">
+        <p class = "boxed-list-instance"> No Announcements Yet</p>
+      </div>
+  </div>
+    <script>
+        // Set the timeout duration for inactivity (in milliseconds)
+        const inactivityTimeout = 5000; // 5 seconds
+
+        // Initialize variables to track activity and timeout
+        let activityTimeout;
+        let isUserActive = true;
+
+        // Function to refresh the page
+        function refreshPage() {
+            location.reload();
+        }
+
+        // Function to reset the activity timer
+        function resetActivityTimer() {
+            isUserActive = true;
+
+            // Clear any existing timeout
+            clearTimeout(activityTimeout);
+
+            // Set a new timeout to refresh the page after the specified duration of inactivity
+            activityTimeout = setTimeout(() => {
+                isUserActive = false;
+                refreshPage();
+            }, inactivityTimeout);
+        }
+
+        // Add event listeners to detect user activity
+        document.addEventListener('mousemove', resetActivityTimer);
+        document.addEventListener('keydown', resetActivityTimer);
+
+        // Initialize the activity timer when the page loads
+        window.onload = resetActivityTimer;
+    </script>
+    {% endif %}
+{% endblock %}

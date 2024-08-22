@@ -1,0 +1,73 @@
+{% extends "AWSDefcon1App/layout.html" %}
+{% load static %}
+
+{% block body %}
+<h2 style="text-align: center;">Spies</h2>
+
+<form style = "text-align: center;" method="post">
+    {% csrf_token %}
+    
+    <!-- Dropdown Menu for Selecting Target Nation -->
+    <label for="selected_nation" style="font-weight: bold;">Select a Nation:</label><br>
+    <select name="target" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc; width: 200px; font-size: 16px;">
+        {% for nation in nations %}
+            <option value="{{ nation.name }}">{{ nation.name }}</option>
+        {% endfor %}                        
+    </select><br><br>
+
+    <h3 style = "text-align: center;">Requests Left: {{requesters}}</h3>
+
+    <br><br>
+    
+    <!-- Buttons for Different Actions -->
+    <button type="submit" name="get" value="1">Recruit Double Agent</button>
+    <button type="submit" name="army" value="1">Sabotage Army</button>
+    <button type="submit" name="air" value="1">Sabotage Air Force</button>
+    <button type="submit" name="navy" value="1">Sabotage Navy</button>
+    <button type="submit" name="nuke" value="1">Steal Nuclear Technology</button>
+    <button type="submit" name="coup" value="1">Fund Revolt in a Single State</button>
+    <button type="submit" name="civil" value="1">Start Civil War</button>
+    <button type="submit" name="kill" value="1">Assassinate Spy</button>
+
+</form>
+<table class="table table-striped table-sm" style="margin-top: 30px;">
+    <thead>
+        <tr>
+            <th scope="col">Player</th>
+            <th scope="col">Name</th>
+            <th scope="col">States</th>
+            <th scope="col">Divisions</th>
+            <th scope="col">Boats</th>
+            <th scope="col">Planes</th>
+            <th scope="col">Alliance Name</th>
+            <th scope="col">Points</th>
+            <th scope="col">Nuke Time</th>
+            <th scope="col">Nukes</th>
+            <th scope="col">Spies</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td scope="row">{{ PlayerAAA.user.username }}</td>
+            <td scope="row">{{ PlayerAAA.name }}</td>
+            <td scope="row">{{ PlayerAAA.states }}</td>
+            <td scope="row">{{ PlayerAAA.divisions }}</td>
+            <td scope="row">{{ PlayerAAA.boats }}</td>
+            <td scope="row">{{ PlayerAAA.planes }}</td>
+            <td scope="row">{{ PlayerAAA.alliance_name }}</td>
+            <td scope="row">{{ PlayerAAA.points }}</td>
+            <td scope="row">{{ PlayerAAA.nuke_time }}</td>
+            <td scope="row">{{ PlayerAAA.nukes }}</td>
+            <td scope="row">{{ PlayerAAA.spies }}</td>
+        </tr>
+    </tbody>
+</table>
+
+
+<div class="how-to-play-widget">
+    <button class="how-to-play-button">How to Play</button>
+    <div class="how-to-play-content">
+        <p style = "color: black">This is where you can do spy misssions against nations.  You can recruit their spies to join your nation.  You can sabotage their army, navy, or air force.  You can also steal their nuclear technology to lower your nuke time.  You can also steal their land, either a single state in a small revolt, or hald their nation in a civil war.  You can also assisnate their spies.  These operations are all very risky, and could lead to the death of your own spy. </p>
+    </div>
+</div>
+{% endblock %}

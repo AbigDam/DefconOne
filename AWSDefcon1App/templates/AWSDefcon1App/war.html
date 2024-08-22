@@ -1,0 +1,28 @@
+{% extends "AWSDefcon1App/layout.html" %}
+{% load static %}
+{% block body %}
+<h2 style="text-align: center;"> Declare War</h2>
+<div style="text-align: center;">
+    <form method="post" action="{% url 'war' game_id=game_id %}">
+        {% csrf_token %}
+        
+        <label for="selected_nation" style="font-weight: bold;">Select a Nation:</label><br>
+        <select name="selected_nation" id="selected_nation" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc; width: 200px; font-size: 16px;">
+            {% for nation in knownnations %}
+                <option value="{{ nation.name }}">{{ nation.name }}</option>
+            {% endfor %}
+        </select><br>
+        
+        <button type="submit" style="margin-top: 20px;">
+            <img src = "/static/AWSDefcon1App/DeclareWar.png" alt="Declare Fight" style="width: 100px; height: 100px;">
+        </button>
+    </form>
+</div>
+
+<div class="how-to-play-widget">
+    <button class="how-to-play-button">How to Play</button>
+    <div class="how-to-play-content">
+        <p style = "color: black">To declare a war, pick a nation from the drop down, and click the button.  If the desired nation isn't there, it either doesn't exsist, or is allied to you.  Break alliances from the focus page.</p>
+</div>
+
+{% endblock %}

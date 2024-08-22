@@ -1,0 +1,141 @@
+{% extends "AWSDefcon1App/layout.html" %}
+{% block body %}
+    <h2 style="text-align: center;">Focus</h2>
+    <h3 style="text-align: center;">You have {{ points }} focus points</h3>
+
+    <div id="tutorial-container" style="text-align: center;">
+        <div id="tutorial-toggle">
+            <button id="toggle-button" style="padding: 10px 20px; background-color: #000300; color: white; border: none; border-radius: 5px; cursor: pointer;">Toggle Tutorial</button>
+        </div>
+        <div id="tutorial-text" style="display: none;">
+            <p>Every cycle you get a focus point. You can spend the focus points at this store!</p>
+        </div>
+    </div>
+    <br><br>
+    <div style="display: flex; justify-content: center; gap: 50px;">
+        <div>
+            <h4 >Trade 1 Focus Point for 80 Divisions</h4>
+            <form method="post" action="{% url 'focus' game_id=game_id %}" class="focus-form">
+                {% csrf_token %}
+                <input type="hidden" name="army" value="army">
+                <input type="hidden" name="slider_value" class="slider-value" value="1">
+                <button type="submit" style= " margin-left: 40%; background-color: #000000; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Army</button>
+            </form>
+        </div>
+
+        <div>
+            <h4>Trade 1 Focus Point for 1000 Planes</h4>
+            <form method="post" action="{% url 'focus' game_id=game_id %}" class="focus-form">
+                {% csrf_token %}
+                <input type="hidden" name="air" value="air">
+                <input type="hidden" name="slider_value" class="slider-value" value="1">
+                <button type="submit" style="text-align: center; margin-left: 40%; background-color: #000000; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Air</button>
+            </form>
+        </div>
+    </div>
+    <br>
+    <div style="display: flex; justify-content: center; gap: 50px;">
+        <div>
+            <h4>Trade 1 Focus Point for 60 Boats</h4>
+            <form method="post" action="{% url 'focus' game_id=game_id %}" class="focus-form">
+                {% csrf_token %}
+                <input type="hidden" name="navy" value="navy">
+                <input type="hidden" name="slider_value" class="slider-value" value="1">
+                <button type="submit" style="margin-left: 40%; background-color: #000000; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Navy</button>
+            </form>
+        </div>
+
+        <div>
+            <h4>Trade 2 Focus Points for less nuke time or nukes</h4>
+            <form method="post" action="{% url 'focus' game_id=game_id %}" class="focus-form">
+                {% csrf_token %}
+                <input type="hidden" name="nuke" value="nuke">
+                <input type="hidden" name="slider_value" class="slider-value" value="1">
+                <button type="submit" style="margin-left: 40%; background-color: #000000; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Nukes</button>
+            </form>
+        </div>
+    </div>
+    <br><br>
+    <div style="text-align: center;">
+        <h4>Trade 2 Focus Points for a governmental change, removing you from any alliance or war</h4>
+        <form method="post" action="{% url 'focus' game_id=game_id %}" class="focus-form">
+            {% csrf_token %}
+            <input type="hidden" name="policy" value="policy">
+            <input type="hidden" name="slider_value" class="slider-value" value="1">
+            <button type="submit" style="background-color: #000000; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Policy</button>
+        </form>
+    </div>
+    <br><br>
+    <div style="text-align: center; margin-top: 20px;">
+        <input type="range" id="focus-slider" min="1" max="{{ points }}" value="1" style="width: 80%;">
+        <p>Focus Points Selected: <span id="slider-value">1</span></p>
+    </div>
+
+    <table class="table table-striped table-sm" style="margin-top: 30px;">
+        <thead>
+            <tr>
+                <th scope="col">Player</th>
+                <th scope="col">Name</th>
+                <th scope="col">States</th>
+                <th scope="col">Divisions</th>
+                <th scope="col">Boats</th>
+                <th scope="col">Planes</th>
+                <th scope="col">Alliance Name</th>
+                <th scope="col">Points</th>
+                <th scope="col">Nuke Time</th>
+                <th scope="col">Nukes</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td scope="row">{{ PlayerAAA.user.username }}</td>
+                <td scope="row">{{ PlayerAAA.name }}</td>
+                <td scope="row">{{ PlayerAAA.states }}</td>
+                <td scope="row">{{ PlayerAAA.divisions }}</td>
+                <td scope="row">{{ PlayerAAA.boats }}</td>
+                <td scope="row">{{ PlayerAAA.planes }}</td>
+                <td scope="row">{{ PlayerAAA.alliance_name }}</td>
+                <td scope="row">{{ PlayerAAA.points }}</td>
+                <td scope="row">{{ PlayerAAA.nuke_time }}</td>
+                <td scope="row">{{ PlayerAAA.nukes }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script>
+        document.getElementById("toggle-button").addEventListener("click", function() {
+            var tutorialText = document.getElementById("tutorial-text");
+            if (tutorialText.style.display === "none") {
+                tutorialText.style.display = "block";
+            } else {
+                tutorialText.style.display = "none";
+            }
+        });
+
+        var slider = document.getElementById("focus-slider");
+        var sliderValue = document.getElementById("slider-value");
+
+        slider.oninput = function() {
+            sliderValue.innerHTML = this.value;
+
+            // Update the hidden input values in each form
+            document.querySelectorAll(".slider-value").forEach(function(input) {
+                input.value = slider.value;
+            });
+        }
+
+        // Ensure the slider value is set in the hidden input before form submission
+        document.querySelectorAll(".focus-form").forEach(function(form) {
+            form.addEventListener("submit", function() {
+                form.querySelector(".slider-value").value = slider.value;
+            });
+        });
+    </script>
+
+<div class="how-to-play-widget">
+    <button class="how-to-play-button">How to Play</button>
+    <div class="how-to-play-content">
+        <p style = "color: black">Here you can spend focus points to leave alliances, train soldeirs, build nukes, or develop your airforce or navy.  You can spend multiple points at once if you would like to bulk spend them in one place.</p>
+    </div>
+</div>
+{% endblock %}

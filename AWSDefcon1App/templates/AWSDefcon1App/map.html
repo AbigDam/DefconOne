@@ -1,0 +1,133 @@
+{% extends "AWSDefcon1App/layout.html" %}
+{% load static %}
+
+{% block body %}
+<h2 style = "text-align: center;">Map</h2>
+
+<canvas id="mapCanvas" style="display: block; margin: 0 auto; width: 70%; height: auto;"></canvas>
+<div style = "text-align: right;" id="colorDisplay">Click on the map to see the nation.</div>
+
+{% with file_path as map_image %}
+<script>
+    const mapImageSrc = "{% static map_image %}";
+    const canvas = document.getElementById('mapCanvas');
+    const ctx = canvas.getContext('2d');
+    const colorDisplay = document.getElementById('colorDisplay');
+
+    const colors = {
+        'Ocean': '#FFFFFF',
+        'USA': '#4355D6',
+        'UK': '#FF006A',
+        'France': '#0055A4',
+        'USSR': '#CD0000',
+        'Germany': '#454745',
+        'Japan': '#8E3615',
+        'Italy': '#6FC814',
+        'Canada': '#FFA6A6',
+        'Norway': '#733A0B',
+        'Sweden': '#39E7F7',
+        'Finland': '#AEE3E8',
+        'Ireland': '#009A49',
+        'Poland': '#DFAAE9',
+        'Netherlands': '#C7B38A',
+        'Yugoslavia': '#B39DCD',
+        'Xinjiang': '#D78E4B',
+        'Spain': '#C2B280',
+        'Portugal': '#8C5734',
+        'Belgium': '#FFD100',
+        'Hungary': '#E99E3F',
+        'Romania': '#E4D886',
+        'Mexico': '#006847',
+        'Bulgaria': '#6B4226',
+        'Turkey': '#C46758',
+        'PRC': '#DE2910',
+        'China': '#9CD298',
+        'Iran': '#A53860',
+        'Shanxi': '#E1A923',
+        'MaClique': '#7F7F7F',
+        'Greece': '#0D5EAF',
+        'Chile': '#D52B1E',
+        'Peru': '#FFD700',
+        'Venezuela': '#FF4500',
+        'Colombia': '#B46A7C',
+        'Ecuador': '#008080',
+        'Iraq': '#D2B48C',
+        'Afghanistan': '#3C1053',
+        'Tibet': '#B7410E',
+        'Guatemala': '#B77A42',
+        'Honduras': '#376A8F',
+        'ElSalvador': '#584279',
+        'Nicaragua': '#CEAF6F',
+        'Guangxi': '#8CC84B',
+        'Saudi': '#007A3E',
+        'Yunnan': '#E1A923',
+        'Panama': '#0073CF',
+        'Brazil': '#00A859',
+        'Siam': '#98C5D2',
+        'Bolivia': '#007A33',
+        'Paraguay': '#77AB43',
+        'Argentina': '#74ACDF',
+        'CostaRica': '#B32C4D',
+        'Uruguay': '#77AB43',
+        'Cuba': '#002590',
+    };
+
+    // Function to convert RGB to HEX
+    function rgbToHex(r, g, b) {
+        return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+    }
+
+    // Load the map image onto the canvas
+    const img = new Image();
+    img.src = mapImageSrc;
+    img.alt = "Game Map";
+    img.onload = () => {
+        const imgWidth = img.naturalWidth;
+        const imgHeight = img.naturalHeight;
+
+        // Set canvas dimensions to match the image
+        canvas.width = imgWidth;
+        canvas.height = imgHeight;
+
+        // Draw the image on the canvas
+        ctx.drawImage(img, 0, 0, imgWidth, imgHeight);
+
+        // Adjust canvas styling to maintain aspect ratio
+        canvas.style.width = "70%";
+        canvas.style.height = "auto";
+    };
+
+    // Function to get the color of the clicked pixel
+    function getColorAtPixel(event) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const x = (event.clientX - rect.left) * scaleX;
+        const y = (event.clientY - rect.top) * scaleY;
+        const imageData = ctx.getImageData(x, y, 1, 1).data;
+        const colorHex = rgbToHex(imageData[0], imageData[1], imageData[2]);
+        return colorHex;
+    }
+
+    // Function to get the nation name from the color
+    function getNationFromColor(color) {
+        for (const [nation, hex] of Object.entries(colors)) {
+            if (hex.toUpperCase() === color) {
+                return nation;
+            }
+        }
+        return "the border";
+    }
+
+    // Add click event listener to the canvas
+    canvas.addEventListener('click', (event) => {
+        const color = getColorAtPixel(event);
+        const nation = getNationFromColor(color);
+        colorDisplay.textContent = `You clicked on ${nation}`;
+    });
+</script>
+
+
+{% endwith %}
+
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "AWSDefcon1App/layout.html" %}
+{% load static %}
+
+{% block body %}
+<h2 style="text-align: center;">Alliance Requests</h2>
+<h3 style = "text-align: center;">Requests Left: {{requesters}}</h3>
+
+<form method="post" action="{% url 'makealliance' game_id=game_id %}" style="text-align: center;">
+    {% csrf_token %}
+    
+    <label for="selected_nation" style="font-weight: bold;">Select a Nation:</label><br>
+    <select name="selected_nation" id="selected_nation" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc; width: 200px; font-size: 16px;">
+        <option value="">No Nation</option>
+        {% for nation in knownnations %}
+            <option value="{{ nation.name }}">{{ nation.name }}</option>
+        {% endfor %}
+    </select><br><br>
+    
+    <button type="submit" style="background-color: #000000; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Send Alliance Request</button>
+</form>
+<br><br>
+<ul style="list-style-type: none; padding: 0; text-align: center;">
+    {% for alliance in alliances %}
+        <li>
+            <span style="font-weight: bold;">{{ alliance.nation1.name }} is asking for you to join their team</span>
+            <form method="post" action="{% url 'makealliance' game_id=game_id %}">
+                {% csrf_token %}
+                <input type="hidden" name="accepting_nation" value="{{ alliance.nation1.name }}">
+                <button type="submit" style="background-color: #000000; color: white; padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer;">Join Their Team</button>
+            </form>
+        </li>
+    {% endfor %}
+</ul>
+
+
+<div class="how-to-play-widget">
+    <button class="how-to-play-button">How to Play</button>
+    <div class="how-to-play-content">
+        <p style = "color: black">Here you can request an alliance with any nation.  If the nation is playable, then it requires a player to accept an alliance.  If you want to break a alliance, you can do it from the focus page.  The chance of an unplayable nation accepting is determines by their hostility, which can be lowered by sending them supplies.</p>
+    </div>
+</div>
+
+{% endblock %}

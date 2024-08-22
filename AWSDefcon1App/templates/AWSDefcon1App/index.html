@@ -1,0 +1,82 @@
+{% extends "AWSDefcon1App/layout.html" %}
+
+{% block body %}
+
+    <h2 style = "text-align: center;" >Games</h2>
+    {% if max_game_id is not None and max_game_id < 6 %}
+    <h2 >   <a style="text-align: center;" class="nav-link" href="{% url 'makegame' game_id=next_id %}" >Make New Game</a> </h2>
+    {% else %}
+    <h2 style="text-align: center;"> Lobby Full </h2>
+    {% endif %}
+  </div>
+    <div class="game-container" style ="text-align: center;"> 
+    {% for game in games %}
+    <div style="align-items: center; justify-content: center;" class="game">
+      <hr>  
+      <h3 class="linker" style="text-align: center;"><a class="linker" href="{% url 'map' game_id=game.id %}">Game #{{ game.id }}</a></h3>
+      <div style="border: 1px solid #ccc; padding: 10px; margin-top: 10px;">
+        <p class = "boxed-list-instance">UK: {% if game.player1.username == 'empty' %}<a class = "linker" href="{% url 'joingame' game_id=game.id player_number=1 %}">Join as Player 1</a>{% else %}{{ game.player1.username }}{% endif %}</p>
+        <p class = "boxed-list-instance">USA: {% if game.player2.username == 'empty' %}<a class = "linker" href="{% url 'joingame' game_id=game.id player_number=2 %}">Join as Player 2</a>{% else %}{{ game.player2.username }}{% endif %}</p>
+        <p class = "boxed-list-instance">France: {% if game.player3.username == 'empty' %}<a class = "linker" href="{% url 'joingame' game_id=game.id player_number=3 %}">Join as Player 3</a>{% else %}{{ game.player3.username }}{% endif %}</p>
+        <p class = "boxed-list-instance">USSR: {% if game.player4.username == 'empty' %}<a class = "linker" href="{% url 'joingame' game_id=game.id player_number=4 %}">Join as Player 4</a>{% else %}{{ game.player4.username }}{% endif %}</p>
+        <p class = "boxed-list-instance">Germany: {% if game.player5.username == 'empty' %}<a class = "linker" href="{% url 'joingame' game_id=game.id player_number=5 %}">Join as Player 5</a>{% else %}{{ game.player5.username }}{% endif %}</p>
+        <p class = "boxed-list-instance">Italy: {% if game.player6.username == 'empty' %}<a class = "linker" href="{% url 'joingame' game_id=game.id player_number=6 %}">Join as Player 6</a>{% else %}{{ game.player6.username }}{% endif %}</p>
+        <p class = "boxed-list-instance">Japan: {% if game.player7.username == 'empty' %}<a class = "linker" href="{% url 'joingame' game_id=game.id player_number=7 %}">Join as Player 7</a>{% else %}{{ game.player7.username }}{% endif %}</p>
+        <p class = "boxed-list-instance">Cuba: {% if game.player0.username == 'empty' %}<a class = "linker" href="{% url 'joingame' game_id=game.id player_number=0 %}">Join as Player 8</a>{% else %}{{ game.player0.username }}{% endif %}</p>      
+      </div>
+      <hr>
+    </div>
+  {% endfor %}
+  </div>
+
+<h2 style="text-align: center;">Leaderboard</h2>
+    <style>
+        .leaderboard {
+            width: 300px;
+            margin: 0 auto;
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            text-align: center;
+            background-color: #000000;
+        }
+        .leaderboard ol {
+            padding-left: 0;
+            list-style: decimal inside;
+        }
+        .leaderboard li {
+            margin: 10px 0;
+            font-size: 18px;
+        }
+
+    </style>
+
+<div class="leaderboard">
+  <ol>
+      {% for user in leaderboard|slice:":10" %}
+      <li>{{ user.username }} || {{ user.wins }}</li>
+      {% endfor %}
+  </ol>
+</div>
+
+<div class="how-to-play-widget">
+  <button class="how-to-play-button">How to Play</button>
+  <div class="how-to-play-content">
+      <p style = "color: black">Defcon1 is a historical strategy game where players can choose from a variety of nations to start their gameplay journey. The available nations include the UK, USA, France, USSR, Germany, Italy, Japan, and Cuba. Each nation offers unique starting stats, creating diverse gameplay experiences and strategies. For beginners, it is highly recommended to start with the USSR to get accustomed to the game's basics.  If no games are available then click "Make Game" to start a new game, which you can play alone or with friends</p>
+  </div>
+</div>
+
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8958763949859084"
+     crossorigin="anonymous"></script>
+<!-- Defcon1Add -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-8958763949859084"
+     data-ad-slot="7217028237"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+{% endblock %}

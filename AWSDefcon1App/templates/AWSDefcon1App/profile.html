@@ -1,0 +1,205 @@
+{% extends "AWSDefcon1App/layout.html" %}
+
+{% block body %}
+    <div class="profile-container">
+        <div class="profile-header">
+            <h1>{{ name }}'s Profile</h1>
+        </div>
+        <div class="profile-info">
+            <div class="profile-stats">
+                <div class="stat-item">
+                    <h2>Wins</h2>
+                    <p>{{ wins }}</p>
+                </div>
+                <div class="profile-bio">
+                    <p>{{ bio }}</p>
+                </div>
+                <div class="stat-item">
+                    <h2>Achievements</h2>
+                    <p>{{ achievements }}</p>
+                </div>
+            </div>
+        </div>
+
+        {% if is_owner %}
+            <div class="edit-bio">
+                <h2>Edit Your Bio</h2>
+                <form method="post">
+                    {% csrf_token %}
+                    <textarea name="bio" rows="4" placeholder="Write something about yourself...">{{ bio }}</textarea>
+                    <button type="submit" class="save-btn">Save Bio</button>
+                </form>
+            </div>
+        {% endif %}
+    </div>
+    <br>
+    <br>
+    <div style="display: flex; justify-content: center; gap: 40px; font-size: 24px;">
+        <div style="text-align: center;">
+            {% if hunWins %}
+                <span class="gold-text">100 Wins</span>
+            {% else %}
+                <span class="black-text">100 Wins</span>
+            {% endif %}
+            <p style="font-size: 14px;">Have 100 Wins</p>
+        </div>
+        
+        <div style="text-align: center;">
+            {% if ruleTheWorld %}
+                <span class="gold-text">Rule the World</span>
+            {% else %}
+                <span class="black-text">Rule the World</span>
+            {% endif %}
+            <p style="font-size: 14px;">Control all of the states</p>
+        </div>
+        
+        <div style="text-align: center;">
+            {% if cubaWins %}
+                <span class="gold-text">Cuba Wins</span>
+            {% else %}
+                <span class="black-text">Cuba Wins</span>
+            {% endif %}
+            <p style="font-size: 14px;">Win a game as Cuba</p>
+        </div>
+        
+        <div style="text-align: center;">
+            {% if cubaRules %}
+                <span class="gold-text">Cuba Rules</span>
+            {% else %}
+                <span class="black-text">Cuba Rules</span>
+            {% endif %}
+            <p style="font-size: 14px;">Rule the World as Cuba</p>
+        </div>
+        
+        <div style="text-align: center;">
+            {% if defcon1 %}
+                <span class="gold-text">Defcon 1</span>
+            {% else %}
+                <span class="black-text">Defcon 1</span>
+            {% endif %}
+            <p style="font-size: 14px;">Have more than 200 Nukes</p>
+        </div>
+    </div>
+    
+    
+    
+    
+    <style>
+        .gold-text {
+            color: gold;
+        }
+        .black-text {
+            color: white;
+        }
+    </style>
+    <style>
+        .profile-container {
+            width: 60%;
+            margin: 0 auto;
+            background: #f9f9f9;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            font-family: 'Lato', sans-serif;
+        }
+
+        .profile-header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 20px;
+        }
+
+        .profile-header h1 {
+            font-size: 2.5em;
+            color: #333;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .profile-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 20px;
+        }
+
+        .profile-stats {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            text-align: center;
+        }
+
+        .stat-item {
+            width: 30%;
+        }
+
+        .stat-item h2 {
+            font-size: 2em;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .stat-item p {
+            font-size: 1.5em;
+            color: #333;
+            margin: 0;
+        }
+
+        .profile-bio {
+            width: 40%;
+            text-align: center;
+        }
+
+        .profile-bio h2 {
+            font-size: 1.8em;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .profile-bio p {
+            font-size: 1.2em;
+            line-height: 1.6;
+            color: #777;
+        }
+
+        .edit-bio {
+            margin-top: 30px;
+        }
+
+        .edit-bio h2 {
+            font-size: 1.8em;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .edit-bio textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            resize: none;
+        }
+
+        .save-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #4A90E2;
+            color: white;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .save-btn:hover {
+            background-color: #357ABD;
+        }
+    </style>
+{% endblock %}

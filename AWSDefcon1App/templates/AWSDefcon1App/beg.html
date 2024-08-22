@@ -1,0 +1,55 @@
+{% extends "AWSDefcon1App/layout.html" %}
+{% load static %}
+{% block body %}
+
+<h2 style = "text-align: center;" >Ask your allies for aid</h2>
+
+
+
+<form method="post" action="{% url 'beg' game_id=game_id %}">
+
+    {% csrf_token %}
+    <h3 style = "text-align: center;">Requests Left: {{requesters}}</h3>
+    <input type="image" src="/static/AWSDefcon1App/RequestAid.png" alt="Submit" class="submit-button" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;">
+  </form>
+
+     <br>  <br>  <br>  
+        <table class="table table-striped table-sm">
+            <thead>
+                <tr>
+                    <th scope="col">Player</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">States</th>
+                    <th scope="col">Divisions</th>
+                    <th scope="col">Boats</th>
+                    <th scope="col">Planes</th>
+                    <th scope="col">Alliance Name</th>
+                    <th scope="col">Points</th>
+                    <th scope="col">Nuke Time</th>
+                    <th scope="col">Nukes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for nation in knownnations %}
+                    <tr>
+                        <td scope="row">{{ nation.user.username }}</td>
+                        <td scope="row">{{ nation.name }}</td>
+                        <td scope="row">{{ nation.states }}</td>
+                        <td scope="row">{{ nation.divisions }}</td>
+                        <td scope="row">{{ nation.boats }}</td>
+                        <td scope="row">{{ nation.planes }}</td>
+                        <td scope="row">{{ nation.alliance_name }}</td>
+                        <td scope="row">{{ nation.points }}</td>
+                        <td scope="row">{{ nation.nuke_time }}</td>
+                        <td scope="row">{{ nation.nukes }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="how-to-play-widget">
+            <button class="how-to-play-button">How to Play</button>
+            <div class="how-to-play-content">
+                <p style = "color: black">Clicking the button will ask your allies for aid.  Doing this takes up requests, be careful and conserve them because they are needed for making new allies, as well completing spy missions.  You get more every turn, which you can read about in the battles tab.  If you have many allies then clicking this button can allow you to benefit from their generosity.  They have a random chance of giving you somthing, and nothing you can do can impact this chance, other then getting more allies.</p>
+        </div>
+{% endblock %}

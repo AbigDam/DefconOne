@@ -1,0 +1,64 @@
+{% extends "AWSDefcon1App/layout.html" %}
+{% load static %}
+
+{% block body %}
+<h2>Messages with {{ recipient.username }}</h2>
+<div id="messageContainer">
+    {% for message in messages %}
+        <div class="message">
+            <strong>{{ message.sender.username }}:</strong> {{ message.text }}
+        </div>
+    {% endfor %}
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <textarea name="content" placeholder="Type your message here"></textarea>
+    <button type="submit">Send</button>
+</form>
+
+
+<script>
+    const refreshInterval = 5000; // 5 seconds
+    let isUserActivea = false;
+    let lastActivityTime = new Date().getTime();
+
+    document.addEventListener('keydown', () => {
+        isUserActivea = true;
+        lastActivityTime = new Date().getTime();
+    });
+
+    setInterval(() => {
+        const currentTime = new Date().getTime();
+        if (!isUserActivea && (currentTime - lastActivityTime) >= refreshInterval) {
+            window.location.href = window.location.href;
+        }
+        isUserActivea = false;
+    }, refreshInterval);
+</script>
+
+<script>
+    const inactivityTimeout = 5000; // 5 seconds
+    let activityTimeout;
+    let isUserActive = true;
+
+    function refreshPage() {
+        window.location.href = window.location.href;
+    }
+
+    function resetActivityTimer() {
+        isUserActive = true;
+        clearTimeout(activityTimeout);
+        activityTimeout = setTimeout(() => {
+            isUserActive = false;
+            refreshPage();
+        }, inactivityTimeout);
+    }
+
+    document.addEventListener('mousemove', resetActivityTimer);
+    document.addEventListener('keydown', resetActivityTimer);
+
+    window.onload = resetActivityTimer;
+</script>
+
+{% endblock %}
