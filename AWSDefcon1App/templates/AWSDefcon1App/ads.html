@@ -1,0 +1,50 @@
+{% extends "AWSDefcon1App/layout.html" %}
+{% load static %}
+{% block body %}
+<h2>Watch Ads</h2>
+<h3>To support the game, simply leave this tab open</h3>
+<h3>If you want you can even click some of the ads, and then close them</h3>
+<script>
+    const refreshInterval = 5000; // 5 seconds
+    let isUserActivea = false;
+    let lastActivityTime = new Date().getTime();
+
+    document.addEventListener('keydown', () => {
+        isUserActivea = true;
+        lastActivityTime = new Date().getTime();
+    });
+
+    setInterval(() => {
+        const currentTime = new Date().getTime();
+        if (!isUserActivea && (currentTime - lastActivityTime) >= refreshInterval) {
+            window.location.href = window.location.href;
+        }
+        isUserActivea = false;
+    }, refreshInterval);
+</script>
+
+<script>
+    const inactivityTimeout = 5000; // 5 seconds
+    let activityTimeout;
+    let isUserActive = true;
+
+    function refreshPage() {
+        window.location.href = window.location.href;
+    }
+
+    function resetActivityTimer() {
+        isUserActive = true;
+        clearTimeout(activityTimeout);
+        activityTimeout = setTimeout(() => {
+            isUserActive = false;
+            refreshPage();
+        }, inactivityTimeout);
+    }
+
+    document.addEventListener('mousemove', resetActivityTimer);
+    document.addEventListener('keydown', resetActivityTimer);
+
+    window.onload = resetActivityTimer;
+</script>
+{% endblock %}
+

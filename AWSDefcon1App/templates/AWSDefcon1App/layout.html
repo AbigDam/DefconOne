@@ -91,6 +91,12 @@
   <li class="nav-item">
       <a class="nav-link" href="{% url 'index' %}">Active Games</a>
   </li>
+  <li class="nav-item">
+    <a class="nav-link" href="{% url 'articles' %}">Historical Articles</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="{% url 'ads' %}">Watch Ads</a>
+  </li>
   {% if request.user.username %}
       <li class="nav-item">
           <a class="nav-link" href="{% url 'logout' %}">Log Out</a>

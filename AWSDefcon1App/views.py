@@ -107,6 +107,10 @@ colors = {
     'Tannu Tuva': '#c6a9f8',
     'Yemen': '#905d5d',
 }
+def ads(request):
+      return render(request, "AWSDefcon1App/ads.html")
+def articles(request):
+      return render(request, "AWSDefcon1App/articles.html")
 
 def error(request, exception):
       return render(request, "AWSDefcon1App/error.html")
@@ -1539,7 +1543,7 @@ def battle(request,game_id):
               nation.requests = 10
               nation.save()
                   
-        color_filter_dict = {
+    color_filter_dict = {
     '#4892FF': 'invert(49%) sepia(76%) saturate(1792%) hue-rotate(196deg) brightness(100%) contrast(103%)',
     '#ff4879': 'invert(44%) sepia(70%) saturate(2984%) hue-rotate(318deg) brightness(101%) contrast(102%)',
     '#a3101f': 'invert(13%) sepia(96%) saturate(5796%) hue-rotate(350deg) brightness(65%) contrast(92%)',
@@ -1630,77 +1634,95 @@ def battle(request,game_id):
     
     all_squares_list = list(all_squares.values('name', 'color'))
     color_filter_json = json.dumps(color_filter_dict)
-    
+        
     html_content = """ 
 
-        {% extends "AWSDefcon1App/layout.html" %}
-        {% block body %}
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>State Images with Colors</title>
-            <style>
-                canvas {
-                    display: block;
-                    margin: auto;
-                    border: 1px solid #000;
-                }
-            </style>
-        </head>
-        <body>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>State Images with Colors</title>
+        <style>
+            canvas {
+                display: block;
+                margin: auto;
+                border: 1px solid #000;
+            }
+        </style>
+    </head>
+    <body>
 
-            <canvas id="canvas" style = "background-color:skyblue;"></canvas>
-            <div style = "text-align: right;" id="colorDisplay">Click on the map to see the nation.</div>
+        <canvas id="canvas" style="background-color:skyblue;"></canvas>
+        <div style="text-align: right;" id="colorDisplay">Click on the map to see the nation.</div>
 
-            <script>
+        <script>
 
-        const canvas = document.getElementById('canvas');
-        const backgroundColor = 'lightblue';
-        const ctx = canvas.getContext('2d');
-        const colorDisplay = document.getElementById('colorDisplay');
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            const colorDisplay = document.getElementById('colorDisplay');
+            const backgroundColor = 'lightblue';
 
-        // List of images and their corresponding filters
-        const images = [
+            // List of images and their corresponding filters
+            const images = [
     """
+
+    # Dynamically populate the image data
     for square in all_squares:
-       html_content += """ {src: '/static/AWSDefcon1App/white_image/MapChart_Map.""" + square.name + """.png', filter: ' """ + color_filter_dict[square.color] + """ '}, \n """
-    
+        html_content += f""" {{src: '/static/AWSDefcon1App/white_image/MapChart_Map.{square.name}.png', filter: ' {color_filter_dict[square.color]} '}},\n """
+
     html_content += """
-        ];
-    
+            ];
+
+            // Helper function to load an image
             const loadImage = (src) => {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.onload = () => resolve(img);
-                img.src = src;
-            });
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.src = src;
+                });
             };
-    
-            const drawImages = async () => {
+
+            // Set canvas dimensions (optional)
             let maxWidth = 0;
             let maxHeight = 0;
-    
-            // Calculate the maximum width and height
-            for (const { src } of images) {
-                const img = await loadImage(src);
-                if (img.width > maxWidth) maxWidth = img.width;
-                if (img.height > maxHeight) maxHeight = img.height;
-            }
-    
-            // Set canvas dimensions
-            canvas.width = maxWidth;
-            canvas.height = maxHeight;
-            ctx.fillStyle = backgroundColor;
 
-            // Draw each image on the canvas with the specified filter
-            for (const { src, filter } of images) {
-                const img = await loadImage(src);
-                ctx.save();
-                ctx.filter = filter;
-                ctx.drawImage(img, 0, 0);
-                ctx.restore();
-            }
+            // Lazy load images when they come into view using IntersectionObserver
+            const lazyLoadImages = async (entries, observer) => {
+                for (const entry of entries) {
+                    if (entry.isIntersecting) {
+                        const imgInfo = images[entry.target.dataset.index];
+                        const img = await loadImage(imgInfo.src);
+
+                        // Adjust canvas size based on image
+                        if (img.width > maxWidth) maxWidth = img.width;
+                        if (img.height > maxHeight) maxHeight = img.height;
+                        canvas.width = maxWidth;
+                        canvas.height = maxHeight;
+
+                        // Draw image with filter
+                        ctx.save();
+                        ctx.filter = imgInfo.filter;
+                        ctx.drawImage(img, 0, 0);
+                        ctx.restore();
+
+                        // Unobserve once the image is loaded
+                        observer.unobserve(entry.target);
+                    }
+                }
             };
-    
+
+            // Initialize IntersectionObserver
+            const observer = new IntersectionObserver(lazyLoadImages, {
+                root: null, // Use the viewport
+                rootMargin: '0px',
+                threshold: 0.1 // Trigger when 10% of the element is visible
+            });
+
+            // Observe each image placeholder
+            images.forEach((_, index) => {
+                const placeholder = document.createElement('div');
+                placeholder.dataset.index = index;
+                document.body.appendChild(placeholder);
+                observer.observe(placeholder);
+            });
         drawImages();
         const colors = {
             'United Kingdom': '#FF4777',
@@ -1824,24 +1846,12 @@ def battle(request,game_id):
         <div class="how-to-play-widget">
             <button class="how-to-play-button">How to Play</button>
             <div class="how-to-play-content">
-                <p style = "color: black">Here you can see the map of the world. At the top of the screen, players will find several tabs such as Map, Ask For Aid, Wars, and more. These tabs provide different functionalities and options to manage your nation and its interactions with others.</p>
-        </div>
-
-        <div class="how-to-play-widget">
-            <button class="how-to-play-button">How to Play</button>
-            <div class="how-to-play-content">
                 <p style = "color: black">If your coming back after a while, go to the announcement page to see what you missed. Here you can see the map of the world. At the top of the screen, players will find several tabs such as Map, Ask For Aid, Wars, and more. These tabs provide different functionalities and options to manage your nation and its interactions with others.</p>
         </div>
-
-    {% """
-    html_content += "endblock %}"
+  </div>
+    """
     file_path = "AWSDefcon1App/templates/AWSDefcon1App/JSMap.html"
-
-    # Write the HTML content to the file
-    with open(file_path, 'w') as file:
-        file.write(html_content)
-
-    return render(request, "AWSDefcon1App/JSMap.html",{"game_id":game_id})        
+    return render(request, "AWSDefcon1App/JSMap.html",{'html_content': html_content ,"game_id":game_id})        
         
 @login_required(login_url = 'login')
 def diplomacy(request,game_id):
@@ -2091,101 +2101,99 @@ def current_wars(request,game_id):
 @login_required
 def map(request, game_id):
     color_filter_dict = {
-    '#4892FF': 'invert(49%) sepia(76%) saturate(1792%) hue-rotate(196deg) brightness(100%) contrast(103%)',
-    '#ff4879': 'invert(44%) sepia(70%) saturate(2984%) hue-rotate(318deg) brightness(101%) contrast(102%)',
-    '#a3101f': 'invert(13%) sepia(96%) saturate(5796%) hue-rotate(350deg) brightness(65%) contrast(92%)',
-    '#56a552': 'invert(52%) sepia(7%) saturate(2676%) hue-rotate(69deg) brightness(105%) contrast(99%)',
-    '#62bd52': 'invert(63%) sepia(55%) saturate(456%) hue-rotate(65deg) brightness(92%) contrast(88%)',
-    '#79ebff': 'invert(81%) sepia(10%) saturate(2513%) hue-rotate(163deg) brightness(105%) contrast(103%)',
-    '#4d0019': 'invert(11%) sepia(68%) saturate(2762%) hue-rotate(320deg) brightness(73%) contrast(112%)',
-    '#c7e9b4': 'invert(90%) sepia(18%) saturate(459%) hue-rotate(49deg) brightness(101%) contrast(86%)',
-    '#623c3c': 'invert(24%) sepia(7%) saturate(5090%) hue-rotate(314deg) brightness(69%) contrast(69%)',
-    '#e79481': 'invert(61%) sepia(38%) saturate(513%) hue-rotate(323deg) brightness(103%) contrast(81%)',
-    '#def7c6': 'invert(93%) sepia(10%) saturate(818%) hue-rotate(44deg) brightness(106%) contrast(94%)',
-    '#57a1ff': 'invert(61%) sepia(39%) saturate(3550%) hue-rotate(191deg) brightness(100%) contrast(104%)',
-    '#ffffff': 'invert(100%) sepia(0%) saturate(0%) hue-rotate(171deg) brightness(107%) contrast(106%)',
-    '#c23b85': 'invert(35%) sepia(16%) saturate(7490%) hue-rotate(301deg) brightness(82%) contrast(83%)',
-    '#9b3e33': 'invert(24%) sepia(33%) saturate(4109%) hue-rotate(344deg) brightness(83%) contrast(75%)',
-    '#4993ff': 'invert(49%) sepia(76%) saturate(1792%) hue-rotate(196deg) brightness(100%) contrast(103%)',
-    '#ffa47f': 'invert(74%) sepia(49%) saturate(761%) hue-rotate(311deg) brightness(106%) contrast(101%)',
-    '#dfe5a0': 'invert(96%) sepia(97%) saturate(352%) hue-rotate(5deg) brightness(94%) contrast(90%)',
-    '#ca828b': 'invert(62%) sepia(26%) saturate(512%) hue-rotate(303deg) brightness(88%) contrast(98%)',
-    '#fff6ff': 'invert(100%) sepia(20%) saturate(3203%) hue-rotate(192deg) brightness(103%) contrast(103%)',
-    '#ffb25f': 'invert(68%) sepia(81%) saturate(387%) hue-rotate(333deg) brightness(101%) contrast(101%)',
-    '#c80a0a': 'invert(14%) sepia(57%) saturate(4472%) hue-rotate(349deg) brightness(114%) contrast(113%)',
-    '#ffff79': 'invert(96%) sepia(99%) saturate(624%) hue-rotate(341deg) brightness(107%) contrast(103%)',
-    '#ffff9b': 'invert(99%) sepia(20%) saturate(2017%) hue-rotate(337deg) brightness(105%) contrast(108%)',
-    '#33965b': 'invert(50%) sepia(25%) saturate(982%) hue-rotate(91deg) brightness(92%) contrast(91%)',
-    '#86c66c': 'invert(72%) sepia(51%) saturate(352%) hue-rotate(58deg) brightness(90%) contrast(90%)',
-    '#c3a5f5': 'invert(80%) sepia(51%) saturate(3224%) hue-rotate(203deg) brightness(103%) contrast(92%)',
-    '#ffff77': 'invert(95%) sepia(10%) saturate(2062%) hue-rotate(1deg) brightness(108%) contrast(101%)',
-    '#ac7a58': 'invert(59%) sepia(8%) saturate(2156%) hue-rotate(341deg) brightness(85%) contrast(86%)',
-    '#ff7789': 'invert(51%) sepia(17%) saturate(1640%) hue-rotate(304deg) brightness(114%) contrast(101%)',
-    '#49bb7e': 'invert(63%) sepia(25%) saturate(879%) hue-rotate(95deg) brightness(96%) contrast(87%)',
-    '#46d8cb': 'invert(68%) sepia(90%) saturate(302%) hue-rotate(121deg) brightness(93%) contrast(90%)',
-    '#2eadff': 'invert(56%) sepia(41%) saturate(3098%) hue-rotate(181deg) brightness(104%) contrast(105%)',
-    '#acbe99': 'invert(83%) sepia(13%) saturate(525%) hue-rotate(47deg) brightness(92%) contrast(76%)',
-    '#c79679': 'invert(83%) sepia(13%) saturate(525%) hue-rotate(47deg) brightness(92%) contrast(76%)',
-    '#5e5ea4': 'invert(38%) sepia(27%) saturate(1019%) hue-rotate(202deg) brightness(92%) contrast(85%)',
-    '#ffb35f': 'invert(75%) sepia(19%) saturate(1336%) hue-rotate(338deg) brightness(101%) contrast(101%)',
-    '#525252': 'invert(31%) sepia(0%) saturate(0%) hue-rotate(231deg) brightness(95%) contrast(86%)',
-    '#329a00': 'invert(42%) sepia(98%) saturate(1929%) hue-rotate(68deg) brightness(91%) contrast(101%)',
-    '#fbdf0a': 'invert(91%) sepia(24%) saturate(4904%) hue-rotate(355deg) brightness(110%) contrast(97%)',
-    '#be96fa': 'invert(64%) sepia(20%) saturate(916%) hue-rotate(221deg) brightness(97%) contrast(102%)',
-    '#fee8c8': 'invert(92%) sepia(12%) saturate(1135%) hue-rotate(319deg) brightness(107%) contrast(99%)',
-    '#b496e6': 'invert(68%) sepia(10%) saturate(2409%) hue-rotate(214deg) brightness(96%) contrast(88%)',
-    '#abbe99': 'invert(85%) sepia(20%) saturate(319%) hue-rotate(48deg) brightness(83%) contrast(92%)',
-    '#bdccff': 'invert(69%) sepia(73%) saturate(172%) hue-rotate(192deg) brightness(101%) contrast(102%)',
-    '#4696fa': 'invert(51%) sepia(44%) saturate(2757%) hue-rotate(194deg) brightness(102%) contrast(96%)',
-    '#a5e684': 'invert(84%) sepia(33%) saturate(519%) hue-rotate(47deg) brightness(97%) contrast(89%)',
-    '#68cf75': 'invert(75%) sepia(95%) saturate(261%) hue-rotate(66deg) brightness(83%) contrast(94%)',
-    '#927a30': 'invert(46%) sepia(32%) saturate(812%) hue-rotate(8deg) brightness(97%) contrast(86%)',
-    '#8b40a6': 'invert(33%) sepia(18%) saturate(3148%) hue-rotate(247deg) brightness(94%) contrast(93%)',
-    '#fff375': 'invert(83%) sepia(47%) saturate(437%) hue-rotate(1deg) brightness(106%) contrast(101%)',
-    '#3fb08d': 'invert(56%) sepia(68%) saturate(352%) hue-rotate(110deg) brightness(93%) contrast(87%)',
-    '#698948': 'invert(51%) sepia(44%) saturate(432%) hue-rotate(47deg) brightness(88%) contrast(85%)',
-    '#bea0f0': 'invert(67%) sepia(40%) saturate(756%) hue-rotate(210deg) brightness(98%) contrast(92%)',
-    '#5a771d': 'invert(36%) sepia(99%) saturate(329%) hue-rotate(38deg) brightness(94%) contrast(91%)',
-    '#c15151': 'invert(29%) sepia(16%) saturate(3802%) hue-rotate(322deg) brightness(122%) contrast(77%)',
-    '#ffbe7f': 'invert(99%) sepia(30%) saturate(7468%) hue-rotate(303deg) brightness(102%) contrast(101%)',
-    '#fabe78': 'invert(100%) sepia(98%) saturate(2728%) hue-rotate(305deg) brightness(103%) contrast(96%)',
-    '#5c927e': 'invert(57%) sepia(16%) saturate(765%) hue-rotate(106deg) brightness(90%) contrast(84%)',
-    '#685b84': 'invert(40%) sepia(7%) saturate(2312%) hue-rotate(218deg) brightness(89%) contrast(84%)',
-    '#8a9a74': 'invert(63%) sepia(13%) saturate(665%) hue-rotate(43deg) brightness(92%) contrast(87%)',
-    '#473070': 'invert(22%) sepia(16%) saturate(2205%) hue-rotate(220deg) brightness(94%) contrast(96%)',
-    '#ab6f72': 'invert(47%) sepia(30%) saturate(545%) hue-rotate(308deg) brightness(97%) contrast(81%)',
-    '#63cdfe': 'invert(77%) sepia(18%) saturate(2815%) hue-rotate(170deg) brightness(102%) contrast(99%)',
-    '#ff7847': 'invert(66%) sepia(31%) saturate(5034%) hue-rotate(330deg) brightness(101%) contrast(101%)',
-    '#53d0d9': 'invert(74%) sepia(12%) saturate(1682%) hue-rotate(135deg) brightness(98%) contrast(88%)',
-    '#809141': 'invert(55%) sepia(65%) saturate(362%) hue-rotate(32deg) brightness(85%) contrast(81%)',
-    '#c79779': 'invert(66%) sepia(14%) saturate(917%) hue-rotate(340deg) brightness(94%) contrast(90%)',
-    '#d7f0c8': 'invert(93%) sepia(28%) saturate(313%) hue-rotate(39deg) brightness(102%) contrast(88%)',
-    '#7b7cb8': 'invert(57%) sepia(11%) saturate(1473%) hue-rotate(201deg) brightness(86%) contrast(85%)',
-    '#ffeab1': 'invert(88%) sepia(21%) saturate(625%) hue-rotate(337deg) brightness(103%) contrast(105%)',
-    '#cdafff': 'invert(82%) sepia(42%) saturate(2835%) hue-rotate(199deg) brightness(100%) contrast(104%)',
-    '#fffeff': 'invert(93%) sepia(7%) saturate(622%) hue-rotate(283deg) brightness(108%) contrast(104%)',
-    '#8adba2': 'invert(83%) sepia(21%) saturate(604%) hue-rotate(84deg) brightness(92%) contrast(92%)',
-    '#456722': 'invert(28%) sepia(100%) saturate(336%) hue-rotate(47deg) brightness(97%) contrast(85%)',
-    '#c8aafa': 'invert(68%) sepia(10%) saturate(1458%) hue-rotate(219deg) brightness(104%) contrast(96%)',
-    '#92b2bf': 'invert(69%) sepia(10%) saturate(716%) hue-rotate(152deg) brightness(100%) contrast(85%)',
-    '#ff4979': 'invert(38%) sepia(58%) saturate(1973%) hue-rotate(320deg) brightness(105%) contrast(101%)',
-    '#b99beb': 'invert(70%) sepia(23%) saturate(2318%) hue-rotate(206deg) brightness(102%) contrast(84%)',
-    '#905c5c': 'invert(43%) sepia(16%) saturate(1004%) hue-rotate(314deg) brightness(90%) contrast(88%)',
-    '#651e29': 'invert(12%) sepia(67%) saturate(1955%) hue-rotate(325deg) brightness(93%) contrast(92%)',
-    '#9e8add': 'invert(68%) sepia(10%) saturate(5167%) hue-rotate(206deg) brightness(91%) contrast(89%)',
-    '#b2233b': 'invert(18%) sepia(38%) saturate(4969%) hue-rotate(333deg) brightness(96%) contrast(93%)',
-    '#c6a9f8': 'invert(74%) sepia(33%) saturate(968%) hue-rotate(203deg) brightness(95%) contrast(104%)',
-    '#905d5d': 'invert(42%) sepia(7%) saturate(2251%) hue-rotate(314deg) brightness(92%) contrast(80%)',
-    }
+        '#4892FF': 'invert(49%) sepia(76%) saturate(1792%) hue-rotate(196deg) brightness(100%) contrast(103%)',
+        '#ff4879': 'invert(44%) sepia(70%) saturate(2984%) hue-rotate(318deg) brightness(101%) contrast(102%)',
+        '#a3101f': 'invert(13%) sepia(96%) saturate(5796%) hue-rotate(350deg) brightness(65%) contrast(92%)',
+        '#56a552': 'invert(52%) sepia(7%) saturate(2676%) hue-rotate(69deg) brightness(105%) contrast(99%)',
+        '#62bd52': 'invert(63%) sepia(55%) saturate(456%) hue-rotate(65deg) brightness(92%) contrast(88%)',
+        '#79ebff': 'invert(81%) sepia(10%) saturate(2513%) hue-rotate(163deg) brightness(105%) contrast(103%)',
+        '#4d0019': 'invert(11%) sepia(68%) saturate(2762%) hue-rotate(320deg) brightness(73%) contrast(112%)',
+        '#c7e9b4': 'invert(90%) sepia(18%) saturate(459%) hue-rotate(49deg) brightness(101%) contrast(86%)',
+        '#623c3c': 'invert(24%) sepia(7%) saturate(5090%) hue-rotate(314deg) brightness(69%) contrast(69%)',
+        '#e79481': 'invert(61%) sepia(38%) saturate(513%) hue-rotate(323deg) brightness(103%) contrast(81%)',
+        '#def7c6': 'invert(93%) sepia(10%) saturate(818%) hue-rotate(44deg) brightness(106%) contrast(94%)',
+        '#57a1ff': 'invert(61%) sepia(39%) saturate(3550%) hue-rotate(191deg) brightness(100%) contrast(104%)',
+        '#ffffff': 'invert(100%) sepia(0%) saturate(0%) hue-rotate(171deg) brightness(107%) contrast(106%)',
+        '#c23b85': 'invert(35%) sepia(16%) saturate(7490%) hue-rotate(301deg) brightness(82%) contrast(83%)',
+        '#9b3e33': 'invert(24%) sepia(33%) saturate(4109%) hue-rotate(344deg) brightness(83%) contrast(75%)',
+        '#4993ff': 'invert(49%) sepia(76%) saturate(1792%) hue-rotate(196deg) brightness(100%) contrast(103%)',
+        '#ffa47f': 'invert(74%) sepia(49%) saturate(761%) hue-rotate(311deg) brightness(106%) contrast(101%)',
+        '#dfe5a0': 'invert(96%) sepia(97%) saturate(352%) hue-rotate(5deg) brightness(94%) contrast(90%)',
+        '#ca828b': 'invert(62%) sepia(26%) saturate(512%) hue-rotate(303deg) brightness(88%) contrast(98%)',
+        '#fff6ff': 'invert(100%) sepia(20%) saturate(3203%) hue-rotate(192deg) brightness(103%) contrast(103%)',
+        '#ffb25f': 'invert(68%) sepia(81%) saturate(387%) hue-rotate(333deg) brightness(101%) contrast(101%)',
+        '#c80a0a': 'invert(14%) sepia(57%) saturate(4472%) hue-rotate(349deg) brightness(114%) contrast(113%)',
+        '#ffff79': 'invert(96%) sepia(99%) saturate(624%) hue-rotate(341deg) brightness(107%) contrast(103%)',
+        '#ffff9b': 'invert(99%) sepia(20%) saturate(2017%) hue-rotate(337deg) brightness(105%) contrast(108%)',
+        '#33965b': 'invert(50%) sepia(25%) saturate(982%) hue-rotate(91deg) brightness(92%) contrast(91%)',
+        '#86c66c': 'invert(72%) sepia(51%) saturate(352%) hue-rotate(58deg) brightness(90%) contrast(90%)',
+        '#c3a5f5': 'invert(80%) sepia(51%) saturate(3224%) hue-rotate(203deg) brightness(103%) contrast(92%)',
+        '#ffff77': 'invert(95%) sepia(10%) saturate(2062%) hue-rotate(1deg) brightness(108%) contrast(101%)',
+        '#ac7a58': 'invert(59%) sepia(8%) saturate(2156%) hue-rotate(341deg) brightness(85%) contrast(86%)',
+        '#ff7789': 'invert(51%) sepia(17%) saturate(1640%) hue-rotate(304deg) brightness(114%) contrast(101%)',
+        '#49bb7e': 'invert(63%) sepia(25%) saturate(879%) hue-rotate(95deg) brightness(96%) contrast(87%)',
+        '#46d8cb': 'invert(68%) sepia(90%) saturate(302%) hue-rotate(121deg) brightness(93%) contrast(90%)',
+        '#2eadff': 'invert(56%) sepia(41%) saturate(3098%) hue-rotate(181deg) brightness(104%) contrast(105%)',
+        '#acbe99': 'invert(83%) sepia(13%) saturate(525%) hue-rotate(47deg) brightness(92%) contrast(76%)',
+        '#c79679': 'invert(83%) sepia(13%) saturate(525%) hue-rotate(47deg) brightness(92%) contrast(76%)',
+        '#5e5ea4': 'invert(38%) sepia(27%) saturate(1019%) hue-rotate(202deg) brightness(92%) contrast(85%)',
+        '#ffb35f': 'invert(75%) sepia(19%) saturate(1336%) hue-rotate(338deg) brightness(101%) contrast(101%)',
+        '#525252': 'invert(31%) sepia(0%) saturate(0%) hue-rotate(231deg) brightness(95%) contrast(86%)',
+        '#329a00': 'invert(42%) sepia(98%) saturate(1929%) hue-rotate(68deg) brightness(91%) contrast(101%)',
+        '#fbdf0a': 'invert(91%) sepia(24%) saturate(4904%) hue-rotate(355deg) brightness(110%) contrast(97%)',
+        '#be96fa': 'invert(64%) sepia(20%) saturate(916%) hue-rotate(221deg) brightness(97%) contrast(102%)',
+        '#fee8c8': 'invert(92%) sepia(12%) saturate(1135%) hue-rotate(319deg) brightness(107%) contrast(99%)',
+        '#b496e6': 'invert(68%) sepia(10%) saturate(2409%) hue-rotate(214deg) brightness(96%) contrast(88%)',
+        '#abbe99': 'invert(85%) sepia(20%) saturate(319%) hue-rotate(48deg) brightness(83%) contrast(92%)',
+        '#bdccff': 'invert(69%) sepia(73%) saturate(172%) hue-rotate(192deg) brightness(101%) contrast(102%)',
+        '#4696fa': 'invert(51%) sepia(44%) saturate(2757%) hue-rotate(194deg) brightness(102%) contrast(96%)',
+        '#a5e684': 'invert(84%) sepia(33%) saturate(519%) hue-rotate(47deg) brightness(97%) contrast(89%)',
+        '#68cf75': 'invert(75%) sepia(95%) saturate(261%) hue-rotate(66deg) brightness(83%) contrast(94%)',
+        '#927a30': 'invert(46%) sepia(32%) saturate(812%) hue-rotate(8deg) brightness(97%) contrast(86%)',
+        '#8b40a6': 'invert(33%) sepia(18%) saturate(3148%) hue-rotate(247deg) brightness(94%) contrast(93%)',
+        '#fff375': 'invert(83%) sepia(47%) saturate(437%) hue-rotate(1deg) brightness(106%) contrast(101%)',
+        '#3fb08d': 'invert(56%) sepia(68%) saturate(352%) hue-rotate(110deg) brightness(93%) contrast(87%)',
+        '#698948': 'invert(51%) sepia(44%) saturate(432%) hue-rotate(47deg) brightness(88%) contrast(85%)',
+        '#bea0f0': 'invert(67%) sepia(40%) saturate(756%) hue-rotate(210deg) brightness(98%) contrast(92%)',
+        '#5a771d': 'invert(36%) sepia(99%) saturate(329%) hue-rotate(38deg) brightness(94%) contrast(91%)',
+        '#c15151': 'invert(29%) sepia(16%) saturate(3802%) hue-rotate(322deg) brightness(122%) contrast(77%)',
+        '#ffbe7f': 'invert(99%) sepia(30%) saturate(7468%) hue-rotate(303deg) brightness(102%) contrast(101%)',
+        '#fabe78': 'invert(100%) sepia(98%) saturate(2728%) hue-rotate(305deg) brightness(103%) contrast(96%)',
+        '#5c927e': 'invert(57%) sepia(16%) saturate(765%) hue-rotate(106deg) brightness(90%) contrast(84%)',
+        '#685b84': 'invert(40%) sepia(7%) saturate(2312%) hue-rotate(218deg) brightness(89%) contrast(84%)',
+        '#8a9a74': 'invert(63%) sepia(13%) saturate(665%) hue-rotate(43deg) brightness(92%) contrast(87%)',
+        '#473070': 'invert(22%) sepia(16%) saturate(2205%) hue-rotate(220deg) brightness(94%) contrast(96%)',
+        '#ab6f72': 'invert(47%) sepia(30%) saturate(545%) hue-rotate(308deg) brightness(97%) contrast(81%)',
+        '#63cdfe': 'invert(77%) sepia(18%) saturate(2815%) hue-rotate(170deg) brightness(102%) contrast(99%)',
+        '#ff7847': 'invert(66%) sepia(31%) saturate(5034%) hue-rotate(330deg) brightness(101%) contrast(101%)',
+        '#53d0d9': 'invert(74%) sepia(12%) saturate(1682%) hue-rotate(135deg) brightness(98%) contrast(88%)',
+        '#809141': 'invert(55%) sepia(65%) saturate(362%) hue-rotate(32deg) brightness(85%) contrast(81%)',
+        '#c79779': 'invert(66%) sepia(14%) saturate(917%) hue-rotate(340deg) brightness(94%) contrast(90%)',
+        '#d7f0c8': 'invert(93%) sepia(28%) saturate(313%) hue-rotate(39deg) brightness(102%) contrast(88%)',
+        '#7b7cb8': 'invert(57%) sepia(11%) saturate(1473%) hue-rotate(201deg) brightness(86%) contrast(85%)',
+        '#ffeab1': 'invert(88%) sepia(21%) saturate(625%) hue-rotate(337deg) brightness(103%) contrast(105%)',
+        '#cdafff': 'invert(82%) sepia(42%) saturate(2835%) hue-rotate(199deg) brightness(100%) contrast(104%)',
+        '#fffeff': 'invert(93%) sepia(7%) saturate(622%) hue-rotate(283deg) brightness(108%) contrast(104%)',
+        '#8adba2': 'invert(83%) sepia(21%) saturate(604%) hue-rotate(84deg) brightness(92%) contrast(92%)',
+        '#456722': 'invert(28%) sepia(100%) saturate(336%) hue-rotate(47deg) brightness(97%) contrast(85%)',
+        '#c8aafa': 'invert(68%) sepia(10%) saturate(1458%) hue-rotate(219deg) brightness(104%) contrast(96%)',
+        '#92b2bf': 'invert(69%) sepia(10%) saturate(716%) hue-rotate(152deg) brightness(100%) contrast(85%)',
+        '#ff4979': 'invert(38%) sepia(58%) saturate(1973%) hue-rotate(320deg) brightness(105%) contrast(101%)',
+        '#b99beb': 'invert(70%) sepia(23%) saturate(2318%) hue-rotate(206deg) brightness(102%) contrast(84%)',
+        '#905c5c': 'invert(43%) sepia(16%) saturate(1004%) hue-rotate(314deg) brightness(90%) contrast(88%)',
+        '#651e29': 'invert(12%) sepia(67%) saturate(1955%) hue-rotate(325deg) brightness(93%) contrast(92%)',
+        '#9e8add': 'invert(68%) sepia(10%) saturate(5167%) hue-rotate(206deg) brightness(91%) contrast(89%)',
+        '#b2233b': 'invert(18%) sepia(38%) saturate(4969%) hue-rotate(333deg) brightness(96%) contrast(93%)',
+        '#c6a9f8': 'invert(74%) sepia(33%) saturate(968%) hue-rotate(203deg) brightness(95%) contrast(104%)',
+        '#905d5d': 'invert(42%) sepia(7%) saturate(2251%) hue-rotate(314deg) brightness(92%) contrast(80%)',
+        }
     all_squares = Square.objects.filter(map = Map.objects.get(number=game_id, game = Games.objects.get(id=game_id)))
     
     all_squares_list = list(all_squares.values('name', 'color'))
     color_filter_json = json.dumps(color_filter_dict)
-    
+            
     html_content = """ 
 
-        {% extends "AWSDefcon1App/layout.html" %}
-        {% block body %}
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>State Images with Colors</title>
@@ -2199,194 +2207,209 @@ def map(request, game_id):
         </head>
         <body>
 
-            <canvas id="canvas" style = "background-color:skyblue;"></canvas>
-            <div style = "text-align: right;" id="colorDisplay">Click on the map to see the nation.</div>
+            <canvas id="canvas" style="background-color:skyblue;"></canvas>
+            <div style="text-align: right;" id="colorDisplay">Click on the map to see the nation.</div>
 
             <script>
 
-        const canvas = document.getElementById('canvas');
-        const backgroundColor = 'lightblue';
-        const ctx = canvas.getContext('2d');
-        const colorDisplay = document.getElementById('colorDisplay');
+                const canvas = document.getElementById('canvas');
+                const ctx = canvas.getContext('2d');
+                const colorDisplay = document.getElementById('colorDisplay');
+                const backgroundColor = 'lightblue';
 
-        // List of images and their corresponding filters
-        const images = [
-    """
+                // List of images and their corresponding filters
+                const images = [
+        """
+
+        # Dynamically populate the image data
     for square in all_squares:
-       html_content += """ {src: '/static/AWSDefcon1App/white_image/MapChart_Map.""" + square.name + """.png', filter: ' """ + color_filter_dict[square.color] + """ '}, \n """
-    
+        html_content += f""" {{src: '/static/AWSDefcon1App/white_image/MapChart_Map.{square.name}.png', filter: ' {color_filter_dict[square.color]} '}},\n """
+
     html_content += """
-        ];
-    
-            const loadImage = (src) => {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.onload = () => resolve(img);
-                img.src = src;
-            });
-            };
-    
-            const drawImages = async () => {
-            let maxWidth = 0;
-            let maxHeight = 0;
-    
-            // Calculate the maximum width and height
-            for (const { src } of images) {
-                const img = await loadImage(src);
-                if (img.width > maxWidth) maxWidth = img.width;
-                if (img.height > maxHeight) maxHeight = img.height;
+                ];
+
+                // Helper function to load an image
+                const loadImage = (src) => {
+                    return new Promise((resolve) => {
+                        const img = new Image();
+                        img.onload = () => resolve(img);
+                        img.src = src;
+                    });
+                };
+
+                // Set canvas dimensions (optional)
+                let maxWidth = 0;
+                let maxHeight = 0;
+
+                // Lazy load images when they come into view using IntersectionObserver
+                const lazyLoadImages = async (entries, observer) => {
+                    for (const entry of entries) {
+                        if (entry.isIntersecting) {
+                            const imgInfo = images[entry.target.dataset.index];
+                            const img = await loadImage(imgInfo.src);
+
+                            // Adjust canvas size based on image
+                            if (img.width > maxWidth) maxWidth = img.width;
+                            if (img.height > maxHeight) maxHeight = img.height;
+                            canvas.width = maxWidth;
+                            canvas.height = maxHeight;
+
+                            // Draw image with filter
+                            ctx.save();
+                            ctx.filter = imgInfo.filter;
+                            ctx.drawImage(img, 0, 0);
+                            ctx.restore();
+
+                            // Unobserve once the image is loaded
+                            observer.unobserve(entry.target);
+                        }
+                    }
+                };
+
+                // Initialize IntersectionObserver
+                const observer = new IntersectionObserver(lazyLoadImages, {
+                    root: null, // Use the viewport
+                    rootMargin: '0px',
+                    threshold: 0.1 // Trigger when 10% of the element is visible
+                });
+
+                // Observe each image placeholder
+                images.forEach((_, index) => {
+                    const placeholder = document.createElement('div');
+                    placeholder.dataset.index = index;
+                    document.body.appendChild(placeholder);
+                    observer.observe(placeholder);
+                });
+            drawImages();
+            const colors = {
+                'United Kingdom': '#FF4777',
+                'Soviet Union': '#A2101E',
+                'Italy': '#56A151',
+                'Second Brazilian Republic': '#60BA51',
+                'Sultanate of Aussa': '#4d0019',
+                'Turkey': '#C8E9B4',
+                'Norway': '#623C3A',
+                'Iraq': '#E6927F',
+                'Saudi Arabia': '#DDF7C6',
+                'United States': '#559FFF',
+                'Albania': '#C33A84',
+                'Dominion of Canada': '#983D32',
+                'France': '#4892FF',
+                'Kingdom of Hungary': '#FFA27E',
+                'China': '#DEE39A',
+                'Chile': '#C9818A',
+                'Peru': '#fff6ff',
+                'British Raj': '#C80D09',
+                'Spain': '#FFFF77',
+                'Kingdom of Greece': '#79e8ff',
+                'Lithuania': '#ffffA0',
+                'Mexico': '#85C56B',
+                'Ethiopia': '#C3A4F4',
+                'Romania': '#ffff73',
+                'Portugal': '#319358',
+                'Bhutan': '#AA7857',
+                'Poland': '#FF7487',
+                'Australia': '#48B97C',
+                'Czechoslovakia': '#44d7c8',
+                'Sweden': '#29ADFF',
+                'Venezuela': '#AABB98',
+                'Yugoslavia': '#5D5DA1',
+                'Netherlands': '#FCAE5D',
+                'German Reich': '#525252',
+                'Bulgaria': '#329700',
+                'Belgium': '#FBDD08',
+                'South Africa': '#BD95F9',
+                'Philippines': '#B395E6',
+                'Uruguay': '#A9BD97',
+                'Argentina': '#BCCCFF',
+                'Republic of Paraguay': '#4695F9',
+                'Mengkukuo': '#A3E381',
+                'Japan': '#FDE7C4',
+                'Ireland': '#66CD75',
+                'Costa Rica': '#91792F',
+                'Cuba': '#8C40A7',
+                'Colombia': '#AABB98',
+                'Sinkiang': '#3EAE8B',
+                'Yunnan': '#688947',
+                'Dominican Republic': '#BA9EEF',
+                'Mongolia': '#58751C',
+                'Switzerland': '#BE4F4D',
+                'Ecuador': '#FFBD7C',
+                'El Salvador': '#F8BF78',
+                'Iran': '#5C927E',
+                'Xibei San Ma': '#695A87',
+                'Denmark': '#AABB98',
+                'Guangxi Clique': '#899A73',
+                'Guatemala': '#46306D',
+                'Haiti': '#AA6E71',
+                'Finland': '#ffffff',
+                'Estonia': '#60CDFD',
+                'Manchukuo': '#FF7844',
+                'Afghanistan': '#55CED6',
+                'Honduras': '#7E8F3F',
+                'Iceland': '#C79677',
+                'Siam': '#D5EFC5',
+                'Dutch East Indies': '#FFAF5D',
+                'Latvia': '#7A7AB4',
+                'Bolivian Republic': '#FFE6AF',
+                'Liberia': '#CCAEFF',
+                'Austria': '#FFFDFF',
+                'Luxembourg': '#8BD9A1',
+                'Tibet': '#446520',
+                'Nepal': '#C6A8F9',
+                'Nicaragua': '#90B1BE',
+                'British Malaya': '#FF4776',
+                'New Zealand': '#B69AEA',
+                'Oman': '#92625D',
+                'Shanxi': '#601C27',
+                'Panama': '#9C89DC',
+                'Communist China': '#A92137',
+                'Tannu Tuva': '#C3A8F6',
+                'Yemen': '#8D5F5C',
             }
-    
-            // Set canvas dimensions
-            canvas.width = maxWidth;
-            canvas.height = maxHeight;
-            ctx.fillStyle = backgroundColor;
 
-            // Draw each image on the canvas with the specified filter
-            for (const { src, filter } of images) {
-                const img = await loadImage(src);
-                ctx.save();
-                ctx.filter = filter;
-                ctx.drawImage(img, 0, 0);
-                ctx.restore();
+            function rgbToHex(r, g, b) {
+                return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
             }
-            };
-    
-        drawImages();
-        const colors = {
-            'United Kingdom': '#FF4777',
-            'Soviet Union': '#A2101E',
-            'Italy': '#56A151',
-            'Second Brazilian Republic': '#60BA51',
-            'Sultanate of Aussa': '#4d0019',
-            'Turkey': '#C8E9B4',
-            'Norway': '#623C3A',
-            'Iraq': '#E6927F',
-            'Saudi Arabia': '#DDF7C6',
-            'United States': '#559FFF',
-            'Albania': '#C33A84',
-            'Dominion of Canada': '#983D32',
-            'France': '#4892FF',
-            'Kingdom of Hungary': '#FFA27E',
-            'China': '#DEE39A',
-            'Chile': '#C9818A',
-            'Peru': '#fff6ff',
-            'British Raj': '#C80D09',
-            'Spain': '#FFFF77',
-            'Kingdom of Greece': '#79e8ff',
-            'Lithuania': '#ffffA0',
-            'Mexico': '#85C56B',
-            'Ethiopia': '#C3A4F4',
-            'Romania': '#ffff73',
-            'Portugal': '#319358',
-            'Bhutan': '#AA7857',
-            'Poland': '#FF7487',
-            'Australia': '#48B97C',
-            'Czechoslovakia': '#44d7c8',
-            'Sweden': '#29ADFF',
-            'Venezuela': '#AABB98',
-            'Yugoslavia': '#5D5DA1',
-            'Netherlands': '#FCAE5D',
-            'German Reich': '#525252',
-            'Bulgaria': '#329700',
-            'Belgium': '#FBDD08',
-            'South Africa': '#BD95F9',
-            'Philippines': '#B395E6',
-            'Uruguay': '#A9BD97',
-            'Argentina': '#BCCCFF',
-            'Republic of Paraguay': '#4695F9',
-            'Mengkukuo': '#A3E381',
-            'Japan': '#FDE7C4',
-            'Ireland': '#66CD75',
-            'Costa Rica': '#91792F',
-            'Cuba': '#8C40A7',
-            'Colombia': '#AABB98',
-            'Sinkiang': '#3EAE8B',
-            'Yunnan': '#688947',
-            'Dominican Republic': '#BA9EEF',
-            'Mongolia': '#58751C',
-            'Switzerland': '#BE4F4D',
-            'Ecuador': '#FFBD7C',
-            'El Salvador': '#F8BF78',
-            'Iran': '#5C927E',
-            'Xibei San Ma': '#695A87',
-            'Denmark': '#AABB98',
-            'Guangxi Clique': '#899A73',
-            'Guatemala': '#46306D',
-            'Haiti': '#AA6E71',
-            'Finland': '#ffffff',
-            'Estonia': '#60CDFD',
-            'Manchukuo': '#FF7844',
-            'Afghanistan': '#55CED6',
-            'Honduras': '#7E8F3F',
-            'Iceland': '#C79677',
-            'Siam': '#D5EFC5',
-            'Dutch East Indies': '#FFAF5D',
-            'Latvia': '#7A7AB4',
-            'Bolivian Republic': '#FFE6AF',
-            'Liberia': '#CCAEFF',
-            'Austria': '#FFFDFF',
-            'Luxembourg': '#8BD9A1',
-            'Tibet': '#446520',
-            'Nepal': '#C6A8F9',
-            'Nicaragua': '#90B1BE',
-            'British Malaya': '#FF4776',
-            'New Zealand': '#B69AEA',
-            'Oman': '#92625D',
-            'Shanxi': '#601C27',
-            'Panama': '#9C89DC',
-            'Communist China': '#A92137',
-            'Tannu Tuva': '#C3A8F6',
-            'Yemen': '#8D5F5C',
-        }
 
-        function rgbToHex(r, g, b) {
-            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
-        }
+            function getColorAtPixel(event) {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                const x = (event.clientX - rect.left) * scaleX;
+                const y = (event.clientY - rect.top) * scaleY;
+                const imageData = ctx.getImageData(x, y, 1, 1).data;
+                const colorHex = rgbToHex(imageData[0], imageData[1], imageData[2]);
+                console.log(colorHex); // Debugging: Logs the color hex code to console
+                return colorHex;
+            }
 
-        function getColorAtPixel(event) {
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            const x = (event.clientX - rect.left) * scaleX;
-            const y = (event.clientY - rect.top) * scaleY;
-            const imageData = ctx.getImageData(x, y, 1, 1).data;
-            const colorHex = rgbToHex(imageData[0], imageData[1], imageData[2]);
-            console.log(colorHex); // Debugging: Logs the color hex code to console
-            return colorHex;
-        }
-
-        function getNationFromColor(color) {
-            for (const [nation, hex] of Object.entries(colors)) {
-                // Fix 1: Use strict comparison with the color hex in uppercase
-                if (hex.toUpperCase() === color) {
-                    return nation;
+            function getNationFromColor(color) {
+                for (const [nation, hex] of Object.entries(colors)) {
+                    // Fix 1: Use strict comparison with the color hex in uppercase
+                    if (hex.toUpperCase() === color) {
+                        return nation;
+                    }
                 }
+                return "the border"; // This means no matching color was found
             }
-            return "the border"; // This means no matching color was found
-        }
 
-        canvas.addEventListener('click', (event) => {
-            const color = getColorAtPixel(event);
-            const nation = getNationFromColor(color);
-            colorDisplay.textContent = `You clicked on ${nation}`;
-        });
-        </script>
-        <div class="how-to-play-widget">
-            <button class="how-to-play-button">How to Play</button>
-            <div class="how-to-play-content">
-                <p style = "color: black">If your coming back after a while, go to the announcement page to see what you missed. Here you can see the map of the world. At the top of the screen, players will find several tabs such as Map, Ask For Aid, Wars, and more. These tabs provide different functionalities and options to manage your nation and its interactions with others.</p>
-        </div>
-  </div>
-    {% """
-    html_content += "endblock %}"
+            canvas.addEventListener('click', (event) => {
+                const color = getColorAtPixel(event);
+                const nation = getNationFromColor(color);
+                colorDisplay.textContent = `You clicked on ${nation}`;
+            });
+            </script>
+            <div class="how-to-play-widget">
+                <button class="how-to-play-button">How to Play</button>
+                <div class="how-to-play-content">
+                    <p style = "color: black">If your coming back after a while, go to the announcement page to see what you missed. Here you can see the map of the world. At the top of the screen, players will find several tabs such as Map, Ask For Aid, Wars, and more. These tabs provide different functionalities and options to manage your nation and its interactions with others.</p>
+            </div>
+    </div>
+        """
+    
     file_path = "AWSDefcon1App/templates/AWSDefcon1App/JSMap.html"
-
-    # Write the HTML content to the file
-    with open(file_path, 'w') as file:
-        file.write(html_content)
-
-    return render(request, "AWSDefcon1App/JSMap.html",{'all_squares_list': all_squares_list ,"game_id":game_id, color_filter_json:'color_filter_json'})
+    return render(request, "AWSDefcon1App/JSMap.html",{'html_content': html_content ,"game_id":game_id})
 
     
 def makegame(request,game_id):
@@ -12843,103 +12866,100 @@ def makegame(request,game_id):
     square_instance.coastal = True
     square_instance.save()
 
-    
     color_filter_dict = {
-    '#4892FF': 'invert(49%) sepia(76%) saturate(1792%) hue-rotate(196deg) brightness(100%) contrast(103%)',
-    '#ff4879': 'invert(44%) sepia(70%) saturate(2984%) hue-rotate(318deg) brightness(101%) contrast(102%)',
-    '#a3101f': 'invert(13%) sepia(96%) saturate(5796%) hue-rotate(350deg) brightness(65%) contrast(92%)',
-    '#56a552': 'invert(52%) sepia(7%) saturate(2676%) hue-rotate(69deg) brightness(105%) contrast(99%)',
-    '#62bd52': 'invert(63%) sepia(55%) saturate(456%) hue-rotate(65deg) brightness(92%) contrast(88%)',
-    '#79ebff': 'invert(81%) sepia(10%) saturate(2513%) hue-rotate(163deg) brightness(105%) contrast(103%)',
-    '#4d0019': 'invert(11%) sepia(68%) saturate(2762%) hue-rotate(320deg) brightness(73%) contrast(112%)',
-    '#c7e9b4': 'invert(90%) sepia(18%) saturate(459%) hue-rotate(49deg) brightness(101%) contrast(86%)',
-    '#623c3c': 'invert(24%) sepia(7%) saturate(5090%) hue-rotate(314deg) brightness(69%) contrast(69%)',
-    '#e79481': 'invert(61%) sepia(38%) saturate(513%) hue-rotate(323deg) brightness(103%) contrast(81%)',
-    '#def7c6': 'invert(93%) sepia(10%) saturate(818%) hue-rotate(44deg) brightness(106%) contrast(94%)',
-    '#57a1ff': 'invert(61%) sepia(39%) saturate(3550%) hue-rotate(191deg) brightness(100%) contrast(104%)',
-    '#ffffff': 'invert(100%) sepia(0%) saturate(0%) hue-rotate(171deg) brightness(107%) contrast(106%)',
-    '#c23b85': 'invert(35%) sepia(16%) saturate(7490%) hue-rotate(301deg) brightness(82%) contrast(83%)',
-    '#9b3e33': 'invert(24%) sepia(33%) saturate(4109%) hue-rotate(344deg) brightness(83%) contrast(75%)',
-    '#4993ff': 'invert(49%) sepia(76%) saturate(1792%) hue-rotate(196deg) brightness(100%) contrast(103%)',
-    '#ffa47f': 'invert(74%) sepia(49%) saturate(761%) hue-rotate(311deg) brightness(106%) contrast(101%)',
-    '#dfe5a0': 'invert(96%) sepia(97%) saturate(352%) hue-rotate(5deg) brightness(94%) contrast(90%)',
-    '#ca828b': 'invert(62%) sepia(26%) saturate(512%) hue-rotate(303deg) brightness(88%) contrast(98%)',
-    '#fff6ff': 'invert(100%) sepia(20%) saturate(3203%) hue-rotate(192deg) brightness(103%) contrast(103%)',
-    '#ffb25f': 'invert(68%) sepia(81%) saturate(387%) hue-rotate(333deg) brightness(101%) contrast(101%)',
-    '#c80a0a': 'invert(14%) sepia(57%) saturate(4472%) hue-rotate(349deg) brightness(114%) contrast(113%)',
-    '#ffff79': 'invert(96%) sepia(99%) saturate(624%) hue-rotate(341deg) brightness(107%) contrast(103%)',
-    '#ffff9b': 'invert(99%) sepia(20%) saturate(2017%) hue-rotate(337deg) brightness(105%) contrast(108%)',
-    '#33965b': 'invert(50%) sepia(25%) saturate(982%) hue-rotate(91deg) brightness(92%) contrast(91%)',
-    '#86c66c': 'invert(72%) sepia(51%) saturate(352%) hue-rotate(58deg) brightness(90%) contrast(90%)',
-    '#c3a5f5': 'invert(80%) sepia(51%) saturate(3224%) hue-rotate(203deg) brightness(103%) contrast(92%)',
-    '#ffff77': 'invert(95%) sepia(10%) saturate(2062%) hue-rotate(1deg) brightness(108%) contrast(101%)',
-    '#ac7a58': 'invert(59%) sepia(8%) saturate(2156%) hue-rotate(341deg) brightness(85%) contrast(86%)',
-    '#ff7789': 'invert(51%) sepia(17%) saturate(1640%) hue-rotate(304deg) brightness(114%) contrast(101%)',
-    '#49bb7e': 'invert(63%) sepia(25%) saturate(879%) hue-rotate(95deg) brightness(96%) contrast(87%)',
-    '#46d8cb': 'invert(68%) sepia(90%) saturate(302%) hue-rotate(121deg) brightness(93%) contrast(90%)',
-    '#2eadff': 'invert(56%) sepia(41%) saturate(3098%) hue-rotate(181deg) brightness(104%) contrast(105%)',
-    '#acbe99': 'invert(83%) sepia(13%) saturate(525%) hue-rotate(47deg) brightness(92%) contrast(76%)',
-    '#c79679': 'invert(83%) sepia(13%) saturate(525%) hue-rotate(47deg) brightness(92%) contrast(76%)',
-    '#5e5ea4': 'invert(38%) sepia(27%) saturate(1019%) hue-rotate(202deg) brightness(92%) contrast(85%)',
-    '#ffb35f': 'invert(75%) sepia(19%) saturate(1336%) hue-rotate(338deg) brightness(101%) contrast(101%)',
-    '#525252': 'invert(31%) sepia(0%) saturate(0%) hue-rotate(231deg) brightness(95%) contrast(86%)',
-    '#329a00': 'invert(42%) sepia(98%) saturate(1929%) hue-rotate(68deg) brightness(91%) contrast(101%)',
-    '#fbdf0a': 'invert(91%) sepia(24%) saturate(4904%) hue-rotate(355deg) brightness(110%) contrast(97%)',
-    '#be96fa': 'invert(64%) sepia(20%) saturate(916%) hue-rotate(221deg) brightness(97%) contrast(102%)',
-    '#fee8c8': 'invert(92%) sepia(12%) saturate(1135%) hue-rotate(319deg) brightness(107%) contrast(99%)',
-    '#b496e6': 'invert(68%) sepia(10%) saturate(2409%) hue-rotate(214deg) brightness(96%) contrast(88%)',
-    '#abbe99': 'invert(85%) sepia(20%) saturate(319%) hue-rotate(48deg) brightness(83%) contrast(92%)',
-    '#bdccff': 'invert(69%) sepia(73%) saturate(172%) hue-rotate(192deg) brightness(101%) contrast(102%)',
-    '#4696fa': 'invert(51%) sepia(44%) saturate(2757%) hue-rotate(194deg) brightness(102%) contrast(96%)',
-    '#a5e684': 'invert(84%) sepia(33%) saturate(519%) hue-rotate(47deg) brightness(97%) contrast(89%)',
-    '#68cf75': 'invert(75%) sepia(95%) saturate(261%) hue-rotate(66deg) brightness(83%) contrast(94%)',
-    '#927a30': 'invert(46%) sepia(32%) saturate(812%) hue-rotate(8deg) brightness(97%) contrast(86%)',
-    '#8b40a6': 'invert(33%) sepia(18%) saturate(3148%) hue-rotate(247deg) brightness(94%) contrast(93%)',
-    '#fff375': 'invert(83%) sepia(47%) saturate(437%) hue-rotate(1deg) brightness(106%) contrast(101%)',
-    '#3fb08d': 'invert(56%) sepia(68%) saturate(352%) hue-rotate(110deg) brightness(93%) contrast(87%)',
-    '#698948': 'invert(51%) sepia(44%) saturate(432%) hue-rotate(47deg) brightness(88%) contrast(85%)',
-    '#bea0f0': 'invert(67%) sepia(40%) saturate(756%) hue-rotate(210deg) brightness(98%) contrast(92%)',
-    '#5a771d': 'invert(36%) sepia(99%) saturate(329%) hue-rotate(38deg) brightness(94%) contrast(91%)',
-    '#c15151': 'invert(29%) sepia(16%) saturate(3802%) hue-rotate(322deg) brightness(122%) contrast(77%)',
-    '#ffbe7f': 'invert(99%) sepia(30%) saturate(7468%) hue-rotate(303deg) brightness(102%) contrast(101%)',
-    '#fabe78': 'invert(100%) sepia(98%) saturate(2728%) hue-rotate(305deg) brightness(103%) contrast(96%)',
-    '#5c927e': 'invert(57%) sepia(16%) saturate(765%) hue-rotate(106deg) brightness(90%) contrast(84%)',
-    '#685b84': 'invert(40%) sepia(7%) saturate(2312%) hue-rotate(218deg) brightness(89%) contrast(84%)',
-    '#8a9a74': 'invert(63%) sepia(13%) saturate(665%) hue-rotate(43deg) brightness(92%) contrast(87%)',
-    '#473070': 'invert(22%) sepia(16%) saturate(2205%) hue-rotate(220deg) brightness(94%) contrast(96%)',
-    '#ab6f72': 'invert(47%) sepia(30%) saturate(545%) hue-rotate(308deg) brightness(97%) contrast(81%)',
-    '#63cdfe': 'invert(77%) sepia(18%) saturate(2815%) hue-rotate(170deg) brightness(102%) contrast(99%)',
-    '#ff7847': 'invert(66%) sepia(31%) saturate(5034%) hue-rotate(330deg) brightness(101%) contrast(101%)',
-    '#53d0d9': 'invert(74%) sepia(12%) saturate(1682%) hue-rotate(135deg) brightness(98%) contrast(88%)',
-    '#809141': 'invert(55%) sepia(65%) saturate(362%) hue-rotate(32deg) brightness(85%) contrast(81%)',
-    '#c79779': 'invert(66%) sepia(14%) saturate(917%) hue-rotate(340deg) brightness(94%) contrast(90%)',
-    '#d7f0c8': 'invert(93%) sepia(28%) saturate(313%) hue-rotate(39deg) brightness(102%) contrast(88%)',
-    '#7b7cb8': 'invert(57%) sepia(11%) saturate(1473%) hue-rotate(201deg) brightness(86%) contrast(85%)',
-    '#ffeab1': 'invert(88%) sepia(21%) saturate(625%) hue-rotate(337deg) brightness(103%) contrast(105%)',
-    '#cdafff': 'invert(82%) sepia(42%) saturate(2835%) hue-rotate(199deg) brightness(100%) contrast(104%)',
-    '#fffeff': 'invert(93%) sepia(7%) saturate(622%) hue-rotate(283deg) brightness(108%) contrast(104%)',
-    '#8adba2': 'invert(83%) sepia(21%) saturate(604%) hue-rotate(84deg) brightness(92%) contrast(92%)',
-    '#456722': 'invert(28%) sepia(100%) saturate(336%) hue-rotate(47deg) brightness(97%) contrast(85%)',
-    '#c8aafa': 'invert(68%) sepia(10%) saturate(1458%) hue-rotate(219deg) brightness(104%) contrast(96%)',
-    '#92b2bf': 'invert(69%) sepia(10%) saturate(716%) hue-rotate(152deg) brightness(100%) contrast(85%)',
-    '#ff4979': 'invert(38%) sepia(58%) saturate(1973%) hue-rotate(320deg) brightness(105%) contrast(101%)',
-    '#b99beb': 'invert(70%) sepia(23%) saturate(2318%) hue-rotate(206deg) brightness(102%) contrast(84%)',
-    '#905c5c': 'invert(43%) sepia(16%) saturate(1004%) hue-rotate(314deg) brightness(90%) contrast(88%)',
-    '#651e29': 'invert(12%) sepia(67%) saturate(1955%) hue-rotate(325deg) brightness(93%) contrast(92%)',
-    '#9e8add': 'invert(68%) sepia(10%) saturate(5167%) hue-rotate(206deg) brightness(91%) contrast(89%)',
-    '#b2233b': 'invert(18%) sepia(38%) saturate(4969%) hue-rotate(333deg) brightness(96%) contrast(93%)',
-    '#c6a9f8': 'invert(74%) sepia(33%) saturate(968%) hue-rotate(203deg) brightness(95%) contrast(104%)',
-    '#905d5d': 'invert(42%) sepia(7%) saturate(2251%) hue-rotate(314deg) brightness(92%) contrast(80%)',
-    }
+        '#4892FF': 'invert(49%) sepia(76%) saturate(1792%) hue-rotate(196deg) brightness(100%) contrast(103%)',
+        '#ff4879': 'invert(44%) sepia(70%) saturate(2984%) hue-rotate(318deg) brightness(101%) contrast(102%)',
+        '#a3101f': 'invert(13%) sepia(96%) saturate(5796%) hue-rotate(350deg) brightness(65%) contrast(92%)',
+        '#56a552': 'invert(52%) sepia(7%) saturate(2676%) hue-rotate(69deg) brightness(105%) contrast(99%)',
+        '#62bd52': 'invert(63%) sepia(55%) saturate(456%) hue-rotate(65deg) brightness(92%) contrast(88%)',
+        '#79ebff': 'invert(81%) sepia(10%) saturate(2513%) hue-rotate(163deg) brightness(105%) contrast(103%)',
+        '#4d0019': 'invert(11%) sepia(68%) saturate(2762%) hue-rotate(320deg) brightness(73%) contrast(112%)',
+        '#c7e9b4': 'invert(90%) sepia(18%) saturate(459%) hue-rotate(49deg) brightness(101%) contrast(86%)',
+        '#623c3c': 'invert(24%) sepia(7%) saturate(5090%) hue-rotate(314deg) brightness(69%) contrast(69%)',
+        '#e79481': 'invert(61%) sepia(38%) saturate(513%) hue-rotate(323deg) brightness(103%) contrast(81%)',
+        '#def7c6': 'invert(93%) sepia(10%) saturate(818%) hue-rotate(44deg) brightness(106%) contrast(94%)',
+        '#57a1ff': 'invert(61%) sepia(39%) saturate(3550%) hue-rotate(191deg) brightness(100%) contrast(104%)',
+        '#ffffff': 'invert(100%) sepia(0%) saturate(0%) hue-rotate(171deg) brightness(107%) contrast(106%)',
+        '#c23b85': 'invert(35%) sepia(16%) saturate(7490%) hue-rotate(301deg) brightness(82%) contrast(83%)',
+        '#9b3e33': 'invert(24%) sepia(33%) saturate(4109%) hue-rotate(344deg) brightness(83%) contrast(75%)',
+        '#4993ff': 'invert(49%) sepia(76%) saturate(1792%) hue-rotate(196deg) brightness(100%) contrast(103%)',
+        '#ffa47f': 'invert(74%) sepia(49%) saturate(761%) hue-rotate(311deg) brightness(106%) contrast(101%)',
+        '#dfe5a0': 'invert(96%) sepia(97%) saturate(352%) hue-rotate(5deg) brightness(94%) contrast(90%)',
+        '#ca828b': 'invert(62%) sepia(26%) saturate(512%) hue-rotate(303deg) brightness(88%) contrast(98%)',
+        '#fff6ff': 'invert(100%) sepia(20%) saturate(3203%) hue-rotate(192deg) brightness(103%) contrast(103%)',
+        '#ffb25f': 'invert(68%) sepia(81%) saturate(387%) hue-rotate(333deg) brightness(101%) contrast(101%)',
+        '#c80a0a': 'invert(14%) sepia(57%) saturate(4472%) hue-rotate(349deg) brightness(114%) contrast(113%)',
+        '#ffff79': 'invert(96%) sepia(99%) saturate(624%) hue-rotate(341deg) brightness(107%) contrast(103%)',
+        '#ffff9b': 'invert(99%) sepia(20%) saturate(2017%) hue-rotate(337deg) brightness(105%) contrast(108%)',
+        '#33965b': 'invert(50%) sepia(25%) saturate(982%) hue-rotate(91deg) brightness(92%) contrast(91%)',
+        '#86c66c': 'invert(72%) sepia(51%) saturate(352%) hue-rotate(58deg) brightness(90%) contrast(90%)',
+        '#c3a5f5': 'invert(80%) sepia(51%) saturate(3224%) hue-rotate(203deg) brightness(103%) contrast(92%)',
+        '#ffff77': 'invert(95%) sepia(10%) saturate(2062%) hue-rotate(1deg) brightness(108%) contrast(101%)',
+        '#ac7a58': 'invert(59%) sepia(8%) saturate(2156%) hue-rotate(341deg) brightness(85%) contrast(86%)',
+        '#ff7789': 'invert(51%) sepia(17%) saturate(1640%) hue-rotate(304deg) brightness(114%) contrast(101%)',
+        '#49bb7e': 'invert(63%) sepia(25%) saturate(879%) hue-rotate(95deg) brightness(96%) contrast(87%)',
+        '#46d8cb': 'invert(68%) sepia(90%) saturate(302%) hue-rotate(121deg) brightness(93%) contrast(90%)',
+        '#2eadff': 'invert(56%) sepia(41%) saturate(3098%) hue-rotate(181deg) brightness(104%) contrast(105%)',
+        '#acbe99': 'invert(83%) sepia(13%) saturate(525%) hue-rotate(47deg) brightness(92%) contrast(76%)',
+        '#c79679': 'invert(83%) sepia(13%) saturate(525%) hue-rotate(47deg) brightness(92%) contrast(76%)',
+        '#5e5ea4': 'invert(38%) sepia(27%) saturate(1019%) hue-rotate(202deg) brightness(92%) contrast(85%)',
+        '#ffb35f': 'invert(75%) sepia(19%) saturate(1336%) hue-rotate(338deg) brightness(101%) contrast(101%)',
+        '#525252': 'invert(31%) sepia(0%) saturate(0%) hue-rotate(231deg) brightness(95%) contrast(86%)',
+        '#329a00': 'invert(42%) sepia(98%) saturate(1929%) hue-rotate(68deg) brightness(91%) contrast(101%)',
+        '#fbdf0a': 'invert(91%) sepia(24%) saturate(4904%) hue-rotate(355deg) brightness(110%) contrast(97%)',
+        '#be96fa': 'invert(64%) sepia(20%) saturate(916%) hue-rotate(221deg) brightness(97%) contrast(102%)',
+        '#fee8c8': 'invert(92%) sepia(12%) saturate(1135%) hue-rotate(319deg) brightness(107%) contrast(99%)',
+        '#b496e6': 'invert(68%) sepia(10%) saturate(2409%) hue-rotate(214deg) brightness(96%) contrast(88%)',
+        '#abbe99': 'invert(85%) sepia(20%) saturate(319%) hue-rotate(48deg) brightness(83%) contrast(92%)',
+        '#bdccff': 'invert(69%) sepia(73%) saturate(172%) hue-rotate(192deg) brightness(101%) contrast(102%)',
+        '#4696fa': 'invert(51%) sepia(44%) saturate(2757%) hue-rotate(194deg) brightness(102%) contrast(96%)',
+        '#a5e684': 'invert(84%) sepia(33%) saturate(519%) hue-rotate(47deg) brightness(97%) contrast(89%)',
+        '#68cf75': 'invert(75%) sepia(95%) saturate(261%) hue-rotate(66deg) brightness(83%) contrast(94%)',
+        '#927a30': 'invert(46%) sepia(32%) saturate(812%) hue-rotate(8deg) brightness(97%) contrast(86%)',
+        '#8b40a6': 'invert(33%) sepia(18%) saturate(3148%) hue-rotate(247deg) brightness(94%) contrast(93%)',
+        '#fff375': 'invert(83%) sepia(47%) saturate(437%) hue-rotate(1deg) brightness(106%) contrast(101%)',
+        '#3fb08d': 'invert(56%) sepia(68%) saturate(352%) hue-rotate(110deg) brightness(93%) contrast(87%)',
+        '#698948': 'invert(51%) sepia(44%) saturate(432%) hue-rotate(47deg) brightness(88%) contrast(85%)',
+        '#bea0f0': 'invert(67%) sepia(40%) saturate(756%) hue-rotate(210deg) brightness(98%) contrast(92%)',
+        '#5a771d': 'invert(36%) sepia(99%) saturate(329%) hue-rotate(38deg) brightness(94%) contrast(91%)',
+        '#c15151': 'invert(29%) sepia(16%) saturate(3802%) hue-rotate(322deg) brightness(122%) contrast(77%)',
+        '#ffbe7f': 'invert(99%) sepia(30%) saturate(7468%) hue-rotate(303deg) brightness(102%) contrast(101%)',
+        '#fabe78': 'invert(100%) sepia(98%) saturate(2728%) hue-rotate(305deg) brightness(103%) contrast(96%)',
+        '#5c927e': 'invert(57%) sepia(16%) saturate(765%) hue-rotate(106deg) brightness(90%) contrast(84%)',
+        '#685b84': 'invert(40%) sepia(7%) saturate(2312%) hue-rotate(218deg) brightness(89%) contrast(84%)',
+        '#8a9a74': 'invert(63%) sepia(13%) saturate(665%) hue-rotate(43deg) brightness(92%) contrast(87%)',
+        '#473070': 'invert(22%) sepia(16%) saturate(2205%) hue-rotate(220deg) brightness(94%) contrast(96%)',
+        '#ab6f72': 'invert(47%) sepia(30%) saturate(545%) hue-rotate(308deg) brightness(97%) contrast(81%)',
+        '#63cdfe': 'invert(77%) sepia(18%) saturate(2815%) hue-rotate(170deg) brightness(102%) contrast(99%)',
+        '#ff7847': 'invert(66%) sepia(31%) saturate(5034%) hue-rotate(330deg) brightness(101%) contrast(101%)',
+        '#53d0d9': 'invert(74%) sepia(12%) saturate(1682%) hue-rotate(135deg) brightness(98%) contrast(88%)',
+        '#809141': 'invert(55%) sepia(65%) saturate(362%) hue-rotate(32deg) brightness(85%) contrast(81%)',
+        '#c79779': 'invert(66%) sepia(14%) saturate(917%) hue-rotate(340deg) brightness(94%) contrast(90%)',
+        '#d7f0c8': 'invert(93%) sepia(28%) saturate(313%) hue-rotate(39deg) brightness(102%) contrast(88%)',
+        '#7b7cb8': 'invert(57%) sepia(11%) saturate(1473%) hue-rotate(201deg) brightness(86%) contrast(85%)',
+        '#ffeab1': 'invert(88%) sepia(21%) saturate(625%) hue-rotate(337deg) brightness(103%) contrast(105%)',
+        '#cdafff': 'invert(82%) sepia(42%) saturate(2835%) hue-rotate(199deg) brightness(100%) contrast(104%)',
+        '#fffeff': 'invert(93%) sepia(7%) saturate(622%) hue-rotate(283deg) brightness(108%) contrast(104%)',
+        '#8adba2': 'invert(83%) sepia(21%) saturate(604%) hue-rotate(84deg) brightness(92%) contrast(92%)',
+        '#456722': 'invert(28%) sepia(100%) saturate(336%) hue-rotate(47deg) brightness(97%) contrast(85%)',
+        '#c8aafa': 'invert(68%) sepia(10%) saturate(1458%) hue-rotate(219deg) brightness(104%) contrast(96%)',
+        '#92b2bf': 'invert(69%) sepia(10%) saturate(716%) hue-rotate(152deg) brightness(100%) contrast(85%)',
+        '#ff4979': 'invert(38%) sepia(58%) saturate(1973%) hue-rotate(320deg) brightness(105%) contrast(101%)',
+        '#b99beb': 'invert(70%) sepia(23%) saturate(2318%) hue-rotate(206deg) brightness(102%) contrast(84%)',
+        '#905c5c': 'invert(43%) sepia(16%) saturate(1004%) hue-rotate(314deg) brightness(90%) contrast(88%)',
+        '#651e29': 'invert(12%) sepia(67%) saturate(1955%) hue-rotate(325deg) brightness(93%) contrast(92%)',
+        '#9e8add': 'invert(68%) sepia(10%) saturate(5167%) hue-rotate(206deg) brightness(91%) contrast(89%)',
+        '#b2233b': 'invert(18%) sepia(38%) saturate(4969%) hue-rotate(333deg) brightness(96%) contrast(93%)',
+        '#c6a9f8': 'invert(74%) sepia(33%) saturate(968%) hue-rotate(203deg) brightness(95%) contrast(104%)',
+        '#905d5d': 'invert(42%) sepia(7%) saturate(2251%) hue-rotate(314deg) brightness(92%) contrast(80%)',
+        }
     all_squares = Square.objects.filter(map = Map.objects.get(number=game_id, game = Games.objects.get(id=game_id)))
     
-    image_details = []
-
-   
+    all_squares_list = list(all_squares.values('name', 'color'))
+    color_filter_json = json.dumps(color_filter_dict)
+            
     html_content = """ 
 
-        {% extends "AWSDefcon1App/layout.html" %}
-        {% block body %}
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>State Images with Colors</title>
@@ -12953,193 +12973,206 @@ def makegame(request,game_id):
         </head>
         <body>
 
-            <canvas id="canvas" style = "background-color:skyblue;"></canvas>
-            <div style = "text-align: right;" id="colorDisplay">Click on the map to see the nation.</div>
+            <canvas id="canvas" style="background-color:skyblue;"></canvas>
+            <div style="text-align: right;" id="colorDisplay">Click on the map to see the nation.</div>
 
             <script>
 
-        const canvas = document.getElementById('canvas');
-        const backgroundColor = 'lightblue';
-        const ctx = canvas.getContext('2d');
-        const colorDisplay = document.getElementById('colorDisplay');
+                const canvas = document.getElementById('canvas');
+                const ctx = canvas.getContext('2d');
+                const colorDisplay = document.getElementById('colorDisplay');
+                const backgroundColor = 'lightblue';
 
-        // List of images and their corresponding filters
-        const images = [
-    """
+                // List of images and their corresponding filters
+                const images = [
+        """
+
+        # Dynamically populate the image data
     for square in all_squares:
-       html_content += """ {src: '/static/AWSDefcon1App/white_image/MapChart_Map.""" + square.name + """.png', filter: ' """ + color_filter_dict[square.color] + """ '}, \n """
-    
+        html_content += f""" {{src: '/static/AWSDefcon1App/white_image/MapChart_Map.{square.name}.png', filter: ' {color_filter_dict[square.color]} '}},\n """
+
     html_content += """
-        ];
-    
-            const loadImage = (src) => {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.onload = () => resolve(img);
-                img.src = src;
-            });
-            };
-    
-            const drawImages = async () => {
-            let maxWidth = 0;
-            let maxHeight = 0;
-    
-            // Calculate the maximum width and height
-            for (const { src } of images) {
-                const img = await loadImage(src);
-                if (img.width > maxWidth) maxWidth = img.width;
-                if (img.height > maxHeight) maxHeight = img.height;
+                ];
+
+                // Helper function to load an image
+                const loadImage = (src) => {
+                    return new Promise((resolve) => {
+                        const img = new Image();
+                        img.onload = () => resolve(img);
+                        img.src = src;
+                    });
+                };
+
+                // Set canvas dimensions (optional)
+                let maxWidth = 0;
+                let maxHeight = 0;
+
+                // Lazy load images when they come into view using IntersectionObserver
+                const lazyLoadImages = async (entries, observer) => {
+                    for (const entry of entries) {
+                        if (entry.isIntersecting) {
+                            const imgInfo = images[entry.target.dataset.index];
+                            const img = await loadImage(imgInfo.src);
+
+                            // Adjust canvas size based on image
+                            if (img.width > maxWidth) maxWidth = img.width;
+                            if (img.height > maxHeight) maxHeight = img.height;
+                            canvas.width = maxWidth;
+                            canvas.height = maxHeight;
+
+                            // Draw image with filter
+                            ctx.save();
+                            ctx.filter = imgInfo.filter;
+                            ctx.drawImage(img, 0, 0);
+                            ctx.restore();
+
+                            // Unobserve once the image is loaded
+                            observer.unobserve(entry.target);
+                        }
+                    }
+                };
+
+                // Initialize IntersectionObserver
+                const observer = new IntersectionObserver(lazyLoadImages, {
+                    root: null, // Use the viewport
+                    rootMargin: '0px',
+                    threshold: 0.1 // Trigger when 10% of the element is visible
+                });
+
+                // Observe each image placeholder
+                images.forEach((_, index) => {
+                    const placeholder = document.createElement('div');
+                    placeholder.dataset.index = index;
+                    document.body.appendChild(placeholder);
+                    observer.observe(placeholder);
+                });
+            drawImages();
+            const colors = {
+                'United Kingdom': '#FF4777',
+                'Soviet Union': '#A2101E',
+                'Italy': '#56A151',
+                'Second Brazilian Republic': '#60BA51',
+                'Sultanate of Aussa': '#4d0019',
+                'Turkey': '#C8E9B4',
+                'Norway': '#623C3A',
+                'Iraq': '#E6927F',
+                'Saudi Arabia': '#DDF7C6',
+                'United States': '#559FFF',
+                'Albania': '#C33A84',
+                'Dominion of Canada': '#983D32',
+                'France': '#4892FF',
+                'Kingdom of Hungary': '#FFA27E',
+                'China': '#DEE39A',
+                'Chile': '#C9818A',
+                'Peru': '#fff6ff',
+                'British Raj': '#C80D09',
+                'Spain': '#FFFF77',
+                'Kingdom of Greece': '#79e8ff',
+                'Lithuania': '#ffffA0',
+                'Mexico': '#85C56B',
+                'Ethiopia': '#C3A4F4',
+                'Romania': '#ffff73',
+                'Portugal': '#319358',
+                'Bhutan': '#AA7857',
+                'Poland': '#FF7487',
+                'Australia': '#48B97C',
+                'Czechoslovakia': '#44d7c8',
+                'Sweden': '#29ADFF',
+                'Venezuela': '#AABB98',
+                'Yugoslavia': '#5D5DA1',
+                'Netherlands': '#FCAE5D',
+                'German Reich': '#525252',
+                'Bulgaria': '#329700',
+                'Belgium': '#FBDD08',
+                'South Africa': '#BD95F9',
+                'Philippines': '#B395E6',
+                'Uruguay': '#A9BD97',
+                'Argentina': '#BCCCFF',
+                'Republic of Paraguay': '#4695F9',
+                'Mengkukuo': '#A3E381',
+                'Japan': '#FDE7C4',
+                'Ireland': '#66CD75',
+                'Costa Rica': '#91792F',
+                'Cuba': '#8C40A7',
+                'Colombia': '#AABB98',
+                'Sinkiang': '#3EAE8B',
+                'Yunnan': '#688947',
+                'Dominican Republic': '#BA9EEF',
+                'Mongolia': '#58751C',
+                'Switzerland': '#BE4F4D',
+                'Ecuador': '#FFBD7C',
+                'El Salvador': '#F8BF78',
+                'Iran': '#5C927E',
+                'Xibei San Ma': '#695A87',
+                'Denmark': '#AABB98',
+                'Guangxi Clique': '#899A73',
+                'Guatemala': '#46306D',
+                'Haiti': '#AA6E71',
+                'Finland': '#ffffff',
+                'Estonia': '#60CDFD',
+                'Manchukuo': '#FF7844',
+                'Afghanistan': '#55CED6',
+                'Honduras': '#7E8F3F',
+                'Iceland': '#C79677',
+                'Siam': '#D5EFC5',
+                'Dutch East Indies': '#FFAF5D',
+                'Latvia': '#7A7AB4',
+                'Bolivian Republic': '#FFE6AF',
+                'Liberia': '#CCAEFF',
+                'Austria': '#FFFDFF',
+                'Luxembourg': '#8BD9A1',
+                'Tibet': '#446520',
+                'Nepal': '#C6A8F9',
+                'Nicaragua': '#90B1BE',
+                'British Malaya': '#FF4776',
+                'New Zealand': '#B69AEA',
+                'Oman': '#92625D',
+                'Shanxi': '#601C27',
+                'Panama': '#9C89DC',
+                'Communist China': '#A92137',
+                'Tannu Tuva': '#C3A8F6',
+                'Yemen': '#8D5F5C',
             }
-    
-            // Set canvas dimensions
-            canvas.width = maxWidth;
-            canvas.height = maxHeight;
-            ctx.fillStyle = backgroundColor;
 
-            // Draw each image on the canvas with the specified filter
-            for (const { src, filter } of images) {
-                const img = await loadImage(src);
-                ctx.save();
-                ctx.filter = filter;
-                ctx.drawImage(img, 0, 0);
-                ctx.restore();
+            function rgbToHex(r, g, b) {
+                return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
             }
-            };
-    
-        drawImages();
-        const colors = {
-            'United Kingdom': '#FF4777',
-            'Soviet Union': '#A2101E',
-            'Italy': '#56A151',
-            'Second Brazilian Republic': '#60BA51',
-            'Sultanate of Aussa': '#4d0019',
-            'Turkey': '#C8E9B4',
-            'Norway': '#623C3A',
-            'Iraq': '#E6927F',
-            'Saudi Arabia': '#DDF7C6',
-            'United States': '#559FFF',
-            'Albania': '#C33A84',
-            'Dominion of Canada': '#983D32',
-            'France': '#4892FF',
-            'Kingdom of Hungary': '#FFA27E',
-            'China': '#DEE39A',
-            'Chile': '#C9818A',
-            'Peru': '#fff6ff',
-            'British Raj': '#C80D09',
-            'Spain': '#FFFF77',
-            'Kingdom of Greece': '#79e8ff',
-            'Lithuania': '#ffffA0',
-            'Mexico': '#85C56B',
-            'Ethiopia': '#C3A4F4',
-            'Romania': '#ffff73',
-            'Portugal': '#319358',
-            'Bhutan': '#AA7857',
-            'Poland': '#FF7487',
-            'Australia': '#48B97C',
-            'Czechoslovakia': '#44d7c8',
-            'Sweden': '#29ADFF',
-            'Venezuela': '#AABB98',
-            'Yugoslavia': '#5D5DA1',
-            'Netherlands': '#FCAE5D',
-            'German Reich': '#525252',
-            'Bulgaria': '#329700',
-            'Belgium': '#FBDD08',
-            'South Africa': '#BD95F9',
-            'Philippines': '#B395E6',
-            'Uruguay': '#A9BD97',
-            'Argentina': '#BCCCFF',
-            'Republic of Paraguay': '#4695F9',
-            'Mengkukuo': '#A3E381',
-            'Japan': '#FDE7C4',
-            'Ireland': '#66CD75',
-            'Costa Rica': '#91792F',
-            'Cuba': '#8C40A7',
-            'Colombia': '#AABB98',
-            'Sinkiang': '#3EAE8B',
-            'Yunnan': '#688947',
-            'Dominican Republic': '#BA9EEF',
-            'Mongolia': '#58751C',
-            'Switzerland': '#BE4F4D',
-            'Ecuador': '#FFBD7C',
-            'El Salvador': '#F8BF78',
-            'Iran': '#5C927E',
-            'Xibei San Ma': '#695A87',
-            'Denmark': '#AABB98',
-            'Guangxi Clique': '#899A73',
-            'Guatemala': '#46306D',
-            'Haiti': '#AA6E71',
-            'Finland': '#ffffff',
-            'Estonia': '#60CDFD',
-            'Manchukuo': '#FF7844',
-            'Afghanistan': '#55CED6',
-            'Honduras': '#7E8F3F',
-            'Iceland': '#C79677',
-            'Siam': '#D5EFC5',
-            'Dutch East Indies': '#FFAF5D',
-            'Latvia': '#7A7AB4',
-            'Bolivian Republic': '#FFE6AF',
-            'Liberia': '#CCAEFF',
-            'Austria': '#FFFDFF',
-            'Luxembourg': '#8BD9A1',
-            'Tibet': '#446520',
-            'Nepal': '#C6A8F9',
-            'Nicaragua': '#90B1BE',
-            'British Malaya': '#FF4776',
-            'New Zealand': '#B69AEA',
-            'Oman': '#92625D',
-            'Shanxi': '#601C27',
-            'Panama': '#9C89DC',
-            'Communist China': '#A92137',
-            'Tannu Tuva': '#C3A8F6',
-            'Yemen': '#8D5F5C',
-        }
 
-        function rgbToHex(r, g, b) {
-            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
-        }
+            function getColorAtPixel(event) {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                const x = (event.clientX - rect.left) * scaleX;
+                const y = (event.clientY - rect.top) * scaleY;
+                const imageData = ctx.getImageData(x, y, 1, 1).data;
+                const colorHex = rgbToHex(imageData[0], imageData[1], imageData[2]);
+                console.log(colorHex); // Debugging: Logs the color hex code to console
+                return colorHex;
+            }
 
-        function getColorAtPixel(event) {
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            const x = (event.clientX - rect.left) * scaleX;
-            const y = (event.clientY - rect.top) * scaleY;
-            const imageData = ctx.getImageData(x, y, 1, 1).data;
-            const colorHex = rgbToHex(imageData[0], imageData[1], imageData[2]);
-            console.log(colorHex); // Debugging: Logs the color hex code to console
-            return colorHex;
-        }
-
-        function getNationFromColor(color) {
-            for (const [nation, hex] of Object.entries(colors)) {
-                // Fix 1: Use strict comparison with the color hex in uppercase
-                if (hex.toUpperCase() === color) {
-                    return nation;
+            function getNationFromColor(color) {
+                for (const [nation, hex] of Object.entries(colors)) {
+                    // Fix 1: Use strict comparison with the color hex in uppercase
+                    if (hex.toUpperCase() === color) {
+                        return nation;
+                    }
                 }
+                return "the border"; // This means no matching color was found
             }
-            return "the border"; // This means no matching color was found
-        }
 
-        canvas.addEventListener('click', (event) => {
-            const color = getColorAtPixel(event);
-            const nation = getNationFromColor(color);
-            colorDisplay.textContent = `You clicked on ${nation}`;
-        });
-        </script>
-
-        <div class="how-to-play-widget">
-            <button class="how-to-play-button">How to Play</button>
-            <div class="how-to-play-content">
-                <p style = "color: black">Go back to the Active Games tab so you can chose a nation to play as.</p>
-        </div>
-
-    {% """
-    html_content += "endblock %}"
-
+            canvas.addEventListener('click', (event) => {
+                const color = getColorAtPixel(event);
+                const nation = getNationFromColor(color);
+                colorDisplay.textContent = `You clicked on ${nation}`;
+            });
+            </script>
+            <div class="how-to-play-widget">
+                <button class="how-to-play-button">How to Play</button>
+                <div class="how-to-play-content">
+                    <p style = "color: black">If your coming back after a while, go to the announcement page to see what you missed. Here you can see the map of the world. At the top of the screen, players will find several tabs such as Map, Ask For Aid, Wars, and more. These tabs provide different functionalities and options to manage your nation and its interactions with others.</p>
+            </div>
+    </div>
+        """
+    
     file_path = "AWSDefcon1App/templates/AWSDefcon1App/JSMap.html"
-
-    # Write the HTML content to the file
-    with open(file_path, 'w') as file:
-        file.write(html_content)
-
-    return render(request, "AWSDefcon1App/JSMap.html",{'image_details': image_details, "game_id":game_id, 'color_filter_dict': json.dumps(color_filter_dict)})
+    return render(request, "AWSDefcon1App/JSMap.html",{'html_content': html_content ,"game_id":game_id})

@@ -27,6 +27,8 @@ urlpatterns = [
     path('profile/<int:user_id>', views.profile, name='profile'),
     path('DM/<int:recipient_id>', views.SendDM, name='DM'),
     path('spies/<int:game_id>', views.spies, name='spies'),
+    path('articles', views.articles, name='articles'),
+    path('ads', views.ads, name='ads'),
 
 
 ]
