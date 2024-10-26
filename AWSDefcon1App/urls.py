@@ -4,6 +4,7 @@ from . import views
 
 urlpatterns = [
     path("", views.index, name="index"),
+    path("full_index", views.full_index, name="full_index"),
     path("login", views.login_view, name="login"),
     path("logout", views.logout_view, name="logout"),
     path("register", views.register, name="register"),
@@ -26,12 +27,13 @@ urlpatterns = [
     path('users/<int:game_id>', views.user_list, name='user_list'),
     path('profile/<int:user_id>', views.profile, name='profile'),
     path('DM/<int:recipient_id>', views.SendDM, name='DM'),
+    path('unread-senders/', views.unread_senders, name='unread_senders'),
     path('spies/<int:game_id>', views.spies, name='spies'),
-    path('articles', views.articles, name='articles'),
     path('ads', views.ads, name='ads'),
-
+    path('credits', views.credits, name='credits'),
+    path('game_maker_redirrect', views.game_maker_redirrect, name='game_maker_redirrect'),
 
 ]
-handler404 = 'AWSDefcon1App.views.error'
+handler404 = 'AWSDefcon1App.views.error404'
 handler500 = 'AWSDefcon1App.views.error500'
 handler403 = 'AWSDefcon1App.views.error'

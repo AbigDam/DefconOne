@@ -13,7 +13,7 @@ SECRET_KEY = '6ps8j!crjgrxt34cqbqn7x&b3y%(fny8k8nh21+qa)%ws3fh!q'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1',"defcon1.glitch.me",'defconone.glitch.me']
+ALLOWED_HOSTS = ['defcon1.pythonanywhere.com','https://defcon1.pythonanywhere.com', '127.0.0.1',"defcon1.glitch.me",'defconone.glitch.me']
 
 
 
@@ -69,6 +69,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'AWSDefcon1App.context_processors.unread_messages',
             ],
         },
     },
@@ -84,6 +85,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'CONN_MAX_AGE': 0,
     }
 }
 

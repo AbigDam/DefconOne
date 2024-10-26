@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="ezoic-site-verification" content="gdlvsSoJ5tzab9BJUp13HaQXwFqF2H" />
 <head>
-    <title>{% block title %}Defcon One{% endblock %}</title> <a style="position: fixed; right: 0%;" href="https://discord.gg/kZz4WRbGjN" target="_blank" class="discord-button"><img src="/static/AWSDefcon1App/Discord Icon.png" alt="Join our Discord Server" class="discord-icon"></a>
+    <title>{% block title %}Defcon One{% endblock %}</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
     <link href="{% static 'static\AWSDefcon1App\styles.css' %}" rel="stylesheet">
 </head>
@@ -15,10 +15,6 @@
         <section>
             <a href = "{% url 'index' %}"><img style= "position: fixed; width:70px; height:auto; border-radius: 40%;" id="logo" src="/static/AWSDefcon1App/Defcon1Logo.png" alt="Your Logo"> </a>
             <img id="musicButton" style="width:60px; position: fixed; right: 6%;" src="/static/AWSDefcon1App/AudioMutedIcon.png" alt="Play Music">
-            {% if request.user.username%}
-            <a href = "{% url 'user_list' game_id=0 %}"><img style= "position: fixed; right: 10%; width:70px; height:auto;" src="/static/AWSDefcon1App/Mail.png" alt="Mail"> </a>
-            <a href="{% url 'profile' user_id=request.user.id %}" style="position: fixed; right: 15%; top: 3%;width: auto; font-size: 18px; color: #4A90E2; font-family: 'Lato', sans-serif;">{{request.user.username}}'s Profile</a> {% if request.user.bio == None %} Add in your Bio! {% endif %}
-            {% endif %}
             <h1 style = "text-align: center; top: 6%;">Defcon1</h1>
         </section>
     
@@ -55,7 +51,7 @@
         });
     </script>
 
-    <audio id="backgroundMusic" src="/static/AWSDefcon1App/Ready_To_Join__Defcon_1_OST (1).wav"></audio>
+    <audio id="backgroundMusic" src="/static/AWSDefcon1App/Defcon1FullSoundtrack.wav"></audio>
 
     <script>
       document.addEventListener('DOMContentLoaded', function() {
@@ -88,67 +84,91 @@
     <br><br>
 <!-- First Nav Bar -->
 <ul class="nav" style="align-items: center; justify-content: center;">
-  <li class="nav-item">
-      <a class="nav-link" href="{% url 'index' %}">Active Games</a>
+  <li class="{% if request.path == '/' %}active{% else %}nav-item{% endif %}">
+    <a class="nav-link" href="{% url 'index' %}">Current Games</a>
   </li>
-  <li class="nav-item">
-    <a class="nav-link" href="{% url 'articles' %}">Historical Articles</a>
+  <li class="{% if request.path == '/full_index' %}active{% else %}nav-item{% endif %}">
+    <a class="nav-link" href="{% url 'full_index' %}">Join New Game</a>
   </li>
-  <li class="nav-item">
-    <a class="nav-link" href="{% url 'ads' %}">Watch Ads</a>
+  <li class="{% if request.path == '/game_maker_redirrect' %}active{% else %}nav-item{% endif %}">
+    <a class="nav-link" href="{% url 'game_maker_redirrect' %}">Make New Game</a>
   </li>
   {% if request.user.username %}
-      <li class="nav-item">
-          <a class="nav-link" href="{% url 'logout' %}">Log Out</a>
+      <li class="{% if request.path == '/users/0' %}active{% else %}nav-item{% endif %}">      
+        <a class="nav-link" href="{% url 'user_list' game_id=0  %}">Profiles </a>
       </li>
-  {% else %}
+      <li class="{% if request.path|slice:':9' == '/profile/' %}active{% else %}nav-item{% endif %}">
+        <a class="nav-link" href="{% url 'profile' user_id=request.user.id  %}">My Profile</a>
+      </li>
+      {% if has_unread_messages %}
       <li class="nav-item">
+        <a class="nav-link" href="{% url 'unread_senders' %}">Unread Messages {% if has_unread_messages %}<span class="unread-indicator">•</span>{% endif %} </a>
+      </li>
+      {% endif %}
+      <li class="{% if request.path == '/credits' %}active{% else %}nav-item{% endif %}">
+        <a class="nav-link" href="{% url 'credits' %}">Credits</a>
+      </li>
+      <li class="{% if request.path == '/ads' %}active{% else %}nav-item{% endif %}">
+        <a class="nav-link" href="{% url 'ads' %}">Support Us</a>
+      </li>
+      <li class="nav-item">
+          <a class="nav-link" href="{% url 'logout' %}" style = "color: red">Log Out</a>
+      </li>
+
+  {% else %}
+      <li class="{% if request.path == '/credits' %}active{% else %}nav-item{% endif %}">
+        <a class="nav-link" href="{% url 'credits' %}">Credits</a>
+      </li>
+      <li class="{% if request.path == '/ads' %}active{% else %}nav-item{% endif %}">
+        <a class="nav-link" href="{% url 'ads' %}">Support Us</a>
+      </li>
+      <li class="{% if request.path == '/login' %}active{% else %}nav-item{% endif %}">
           <a class="nav-link" href="{% url 'login' %}">Log In</a>
       </li>
-      <li class="nav-item">
-          <a class="nav-link" href="{% url 'register' %}">Register</a>
+      <li class="{% if request.path == '/register' %}active{% else %}nav-item{% endif %}">
+        <a class="nav-link" href="{% url 'register' %}">Register</a>
       </li> 
   {% endif %}
 </ul>
 
 <!-- Second Nav Bar (only visible if game_id exists) -->
-{% if game_id %}
+{% if game_id and not make_game%}
   <ul class="nav" style="align-items: center; justify-content: center; margin-top: 10px;">
-      <li class="nav-item">
-          <a class="nav-link" href="{% url 'map' game_id=game_id %}">Map</a>
-      </li>
-      <li class="nav-item">
+    <li class="{% if request.path|slice:':5' == '/map/' %}active{% else %}nav-item{% endif %}">
+      <a class="nav-link" href="{% url 'map' game_id=game_id %}">Map</a>
+        </li>
+        <li class="{% if request.path|slice:':5' == '/beg/' %}active{% else %}nav-item{% endif %}">
           <a class="nav-link" href="{% url 'beg' game_id=game_id %}">Ask for Aid</a>
       </li>
-      <li class="nav-item">
-          <a class="nav-link" href="{% url 'current_wars' game_id=game_id %}">Wars</a>
+      <li class="{% if request.path|slice:':14' == '/current_wars/' %}active{% else %}nav-item{% endif %}">
+        <a class="nav-link" href="{% url 'current_wars' game_id=game_id %}">Wars</a>
       </li>
-      <li class="nav-item">
-          <a class="nav-link" href="{% url 'game' game_id=game_id %}">Statistics</a>
+      <li class="{% if request.path|slice:':6' == '/game/' %}active{% else %}nav-item{% endif %}">
+        <a class="nav-link" href="{% url 'game' game_id=game_id %}">Statistics</a>
       </li>
-      <li class="nav-item">
-          <a class="nav-link" href="{% url 'battle' game_id=game_id %}">Battle</a>
+      <li class="{% if request.path|slice:':8' == '/battle/' %}active{% else %}nav-item{% endif %}">
+        <a class="nav-link" href="{% url 'battle' game_id=game_id %}">Battle</a>
       </li>
-      <li class="nav-item">
-          <a class="nav-link" href="{% url 'war' game_id=game_id %}">Declare War</a>
+      <li class="{% if request.path|slice:':5' == '/war/' %}active{% else %}nav-item{% endif %}">
+        <a class="nav-link" href="{% url 'war' game_id=game_id %}">Declare War</a>
       </li>
-      <li class="nav-item">
-          <a class="nav-link" href="{% url 'makealliance' game_id=game_id %}">Alliance</a>
+      <li class="{% if request.path|slice:':14' == '/makealliance/' %}active{% else %}nav-item{% endif %}">
+        <a class="nav-link" href="{% url 'makealliance' game_id=game_id %}">Alliance</a>
       </li>
-      <li class="nav-item">
-          <a class="nav-link" href="{% url 'send' game_id=game_id %}">Send Supplies</a>
+      <li class="{% if request.path|slice:':6' == '/send/' %}active{% else %}nav-item{% endif %}">
+        <a class="nav-link" href="{% url 'send' game_id=game_id %}">Send Supplies</a>
       </li>
-      <li class="nav-item">
-          <a class="nav-link" href="{% url 'focus' game_id=game_id %}">Focus</a>
+      <li class="{% if request.path|slice:':7' == '/focus/' %}active{% else %}nav-item{% endif %}">
+        <a class="nav-link" href="{% url 'focus' game_id=game_id %}">Focus</a>
       </li>
-      <li class="nav-item">
-          <a class="nav-link" href="{% url 'announcement' game_id=game_id %}">Announcements</a>
+      <li class="{% if request.path|slice:':14' == '/announcement/' %}active{% else %}nav-item{% endif %}">
+        <a class="nav-link" href="{% url 'announcement' game_id=game_id %}">Announcements</a>
       </li>
-      <li class="nav-item">
-          <a class="nav-link" href="{% url 'user_list' game_id=game_id %}">In-Game Message</a>
+      <li class="{% if request.path|slice:':7' == '/users/' %}active{% else %}nav-item{% endif %}">
+        <a class="nav-link" href="{% url 'user_list' game_id=game_id %}">In-Game Message</a>
       </li>
-      <li class="nav-item">
-          <a class="nav-link" href="{% url 'spies' game_id=game_id %}">Spies</a>
+      <li class="{% if request.path|slice:':7' == '/spies/' %}active{% else %}nav-item{% endif %}">
+        <a class="nav-link" href="{% url 'spies' game_id=game_id %}">Spies</a>
       </li>
   </ul>
 {% endif %}
@@ -165,37 +185,6 @@
     </main>
 
 
-    <button id="toggleFooter" style="background-color:#000000;border: 2px solid white;color: white;padding: 5px 14px;text-align: center;text-decoration: none;display: inline-block;font-size: 16px;cursor: pointer;border-radius: 5px; transition: background-color 0.3s;">Credits</button>
-    <div id="footerContainer" style="display: none;">
-        <footer style = "    text-align: right;">
-            <!-- Footer content -->
-            <p xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/"><a property="dct:title" rel="cc:attributionURL" href="https://defcon1game.glitch.me/">Defcon1 Game</a> by ABigDam is licensed under <a href="http://creativecommons.org/licenses/by-nd/4.0/?ref=chooser-v1" target="_blank" rel="license noopener noreferrer" style="display:inline-block;">CC BY-ND 4.0<img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1"><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/by.svg?ref=chooser-v1"><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/nd.svg?ref=chooser-v1"></a></p>
-            <p>Logo Inspired by art from I_Rules_The_Waves</p>
-            <p>Art and Web Design by Esofayah</p>
-            <p>Battle animation art by I_Rules_The_Waves He does rule the waves</p>
-            <p><a href="https://defconone.glitch.me/"> 🔥 Game</a></p>
-              <p><a href="https://defcon1game.glitch.me/">👴  Old Game</a></p>
-              <p><a href="https://tng10.glitch.me/">🔢 Trading Number Game</a></p>
-
-              Socials ↓↓↓↓
-              <p><a href="https://gamejolt.com/games/defcon1/837982">⚡  Gamejolt</a></p>
-              <p><a href="https://abigdam.itch.io/defcon1">🎮 Itch.io</a></p>
-              <p><a href="https://aero-adventures.fandom.com/wiki/Defcon1VideoGame">🌐  Wiki</a></p>
-              <p><a href="https://www.speedrun.com/Defcon1">🏆  Speedrun.com</a></p>
-              <p><a href="https://www.youtube.com/@Defcon1OfficialYoutube-kn4lw">📺  Youtube</a></p>
-              <p><a href="https://discord.gg/kZz4WRbGjN">📳  Discord</a></p>
-          <p>
-            Defcon1 is a strategic simulation game designed for entertainment purposes only. 
-            The game does not promote or endorse real-world violence or warfare. 
-            All in-game events, scenarios, and actions are purely fictional and are intended to provide players with a challenging and engaging strategic experience.
-            We believe in the importance of promoting peace and understanding through respectful and responsible gameplay. 
-            Any similarities to real-life events, organizations, or individuals are purely coincidental.
-            The game by no means "exploits, dismisses or condones war"
-            Thank you for playing and understanding.
-          </p>
-        </footer>
-    </div>
-
     <script>
         document.getElementById('toggleFooter').addEventListener('click', function() {
             var footerContainer = document.getElementById('footerContainer');
@@ -206,18 +195,8 @@
             }
         });
     </script>    
-    <script src='https://storage.ko-fi.com/cdn/scripts/overlay-widget.js'></script>
-      <script>
-        kofiWidgetOverlay.draw('defcon1game', {
-          'type': 'floating-chat',
-          'floating-chat.donateButton.text': 'Support me',
-          'floating-chat.donateButton.background-color': '#00b9fe',
-          'floating-chat.donateButton.text-color': '#fff'
-        });
 
-        
-      </script>
-        <script>
+          <!--<script>
           document.addEventListener('DOMContentLoaded', () => {
               const widget = document.querySelector('.how-to-play-widget');
               const button = widget.querySelector('.how-to-play-button');
@@ -226,9 +205,89 @@
                   widget.classList.toggle('active');
               });
           });
-           </script>
+           </script>-->
+
+              <style>
+        .info-bubble {
+            position: relative;
+            display: inline-block;
+        }
+
+        .info-icon {
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .tooltip-text {
+            visibility: hidden;
+            width: 120px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -60px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .info-bubble:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
 <style>
-    nav{
+  .unread-indicator {
+    color: red;
+    font-size: 1.2em;
+    margin-left: 5px;
+  }
+  .info-bubble {
+      position: relative;
+      display: inline-block;
+  }
+
+  .info-icon {
+      font-size: 12px;
+      cursor: pointer;
+  }
+
+  .tooltip-text {
+      visibility: hidden;
+      width: 120px;
+      background-color: #555;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 5px;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      margin-left: -60px;
+      opacity: 0;
+      transition: opacity 0.3s;
+  }
+
+  .info-bubble:hover .tooltip-text {
+      visibility: visible;
+      opacity: 1;
+  }
+</style>
+</head>
+<body>
+
+</div>
+<style>
+  
+  nav{
     background-color:#e0e0e0;
     font-family: "Hoefler Text", serif;
     font-style: italic;
@@ -244,14 +303,19 @@
     font-family: "Hoefler Text", serif;
     font-style: italic;
     font-size: 30px;
+    text-decoration: none;
+
   }
   
   .linker {
     color: #407AD6;
+    text-decoration: none;
+
   }
   
   .linker-hover {
     color: #4E8EF5;
+    text-decoration: none;
   }
   
   
@@ -297,6 +361,22 @@
     text-decoration: none;
 }
 
+.active a{
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #0b338f;
+    color: white;
+    border-radius: 50px;
+    text-align: center;
+    text-decoration: none;
+    font-family: 'Karla', sans-serif;
+    margin: 5px;
+}
+
+.active a:hover {
+    background-color: #357ABD;
+    text-decoration: none;
+}
   .table {
     width: 100%;
     max-width: 100%;

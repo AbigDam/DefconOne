@@ -11,15 +11,15 @@
 <table style="margin: 0 auto; width: 50%; text-align: center;">
     <thead>
         <tr>
-            <th>Message</th>
             <th>Profile</th>
         </tr>
     </thead>
     <tbody id="userTableBody">
         {% for user in users %}
             <tr>
-                <td><a href="{% if game_id == 0 %}{% url 'DM' recipient_id=user.id %}{% else %}{% url 'message' game_id=game_id recipient_id=user.id %}{% endif %}">Message {{ user.username }}</a></td>
-                <td><a href="{% url 'profile' user_id=user.id %}">{{ user.username }}'s Profile</a></td>
+                {%if user.username != 'loser' and  user.username != 'empty' and user.username != 'closed'%}
+                <td><a style = "font-size: 20px;" href="{% url 'profile' user_id=user.id %}">{{ user.username }}'s Profile</a></td>
+                {% endif %}
             </tr>
         {% endfor %}
     </tbody>

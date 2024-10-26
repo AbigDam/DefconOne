@@ -34,10 +34,71 @@ Select Countries
         <label class="unboxed-list-instance"><input type="checkbox" name="countries" value="Italy"> 🇮🇹 🇮🇹 Italy 🇮🇹 🇮🇹</label><br>
         <label class="unboxed-list-instance"><input type="checkbox" name="countries" value="Japan"> 🇯🇵 🇯🇵 Japan 🇯🇵 🇯🇵</label><br>
         <label class="unboxed-list-instance"><input type="checkbox" name="countries" value="Cuba"> 🇨🇺 🇨🇺 Cuba 🇨🇺 🇨🇺</label><br>
+        <br>
         <label class="unboxed-list-instance"><input type="checkbox" name="countries" value="Hard"> Hard Mode </label><br>
     </fieldset>
-    <button type="submit">Submit</button>
+    <button class = "attacker" type="submit">Submit</button>
 </form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('Script loaded');
+
+        const gifPath = '/static/AWSDefcon1App/justWait.gif';  // Replace with your gif file path
+        const gifContainer = document.createElement('div');
+        const gifImage = document.createElement('img');
+
+        // Styling for the gif container
+        gifContainer.style.position = 'fixed';
+        gifContainer.style.top = '0';
+        gifContainer.style.left = '0';
+        gifContainer.style.width = '100%';
+        gifContainer.style.height = '100%';
+        gifContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';  // Semi-transparent black background
+        gifContainer.style.display = 'none';  // Hidden initially
+        gifContainer.style.justifyContent = 'center';
+        gifContainer.style.alignItems = 'center';
+        gifContainer.style.zIndex = '9999';  // Ensure it appears above all content
+
+        // Setting up the gif image
+        gifImage.src = gifPath;
+        gifImage.style.maxWidth = '90%';
+        gifImage.style.maxHeight = '90%';
+
+        gifContainer.appendChild(gifImage);
+        document.body.appendChild(gifContainer);
+
+        // Event listener for clicks and form submissions
+        document.addEventListener('click', (event) => {
+            const target = event.target;
+            if (target.classList.contains('attacker') || target.closest('button.attacker')) {
+                console.log('Attacker class element clicked');
+                gifContainer.style.display = 'flex';
+                
+                // Automatically hide the gif after a certain duration
+                setTimeout(() => {
+                    gifContainer.style.display = 'none';
+                }, 20000);  // Gif is visible for 20 seconds
+            }
+        });
+
+        // Event listener specifically for form submissions
+        document.addEventListener('submit', (event) => {
+            const target = event.target;
+            if (target.classList.contains('attacker')) {
+                console.log('Attacker class form submitted');
+                gifContainer.style.display = 'flex';
+
+                // Automatically hide the gif after a certain duration
+                setTimeout(() => {
+                    gifContainer.style.display = 'none';
+                }, 20000);  // Gif is visible for 20 seconds
+            }
+        });
+
+
+    });
+</script>
 {% endblock %}
 
 =

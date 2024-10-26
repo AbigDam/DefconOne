@@ -2,19 +2,20 @@
 {% load static %}
 
 {% block body %}
-<h2>Messages with {{ recipient.username }}</h2>
+<h2 style = "text-align: center;">Messages with {{ recipient.username }}</h2>
 <div id="messageContainer">
     {% for message in messages %}
-        <div class="message">
+        <div style = "text-align: center;" class="message">
             <strong>{{ message.sender.username }}:</strong> {{ message.text }}
         </div>
     {% endfor %}
 </div>
 
-<form method="post">
+<form style = "text-align: center;" method="post">
     {% csrf_token %}
-    <textarea name="content" placeholder="Type your message here"></textarea>
-    <button type="submit">Send</button>
+    <textarea  style = "text-align: center;" name="content" placeholder="Type your message here"></textarea>
+    <br>
+    <button style = "text-align: center;" type="submit">Send</button>
 </form>
 
 

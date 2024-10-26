@@ -1,0 +1,111 @@
+{% extends "AWSDefcon1App/layout.html" %}
+{% load static %}
+{% block body %}
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Credits and Links</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      color: #333;
+      background-color: #f7f7f7;
+      line-height: 1.6;
+      margin: 20px;
+    }
+
+    .credits-container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    h2 {
+      font-size: 1.5em;
+      color: #357ABD;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    .credits-item {
+      margin: 10px 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .credits-item img, .credits-item svg {
+      height: 24px;
+      margin-left: 5px;
+      vertical-align: middle;
+    }
+
+    .license-link {
+      color: #357ABD;
+      text-decoration: none;
+      display: inline-block;
+      font-weight: bold;
+    }
+
+    .socials-container {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .socials-container a {
+      display: block;
+      color: #357ABD;
+      font-weight: bold;
+      text-decoration: none;
+      padding: 8px 0;
+      font-size: 1.2em;
+    }
+
+    .socials-container a:hover {
+      color: #222;
+    }
+
+    .socials-header {
+      font-weight: bold;
+      font-size: 1.3em;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<div style="color: #f0f0f0; font-family: Arial, sans-serif; padding: 20px; text-align: center;">
+
+  <p style="font-size: 1.2em; margin-bottom: 5px;">
+    <a style="color: #357ABD; text-decoration: none;" href="https://defcon1.pythonanywhere.com" property="dct:title" rel="cc:attributionURL">
+      Defcon1 Game
+    </a> by ABigDam is licensed under 
+    <a href="http://creativecommons.org/licenses/by-nd/4.0/?ref=chooser-v1" target="_blank" rel="license noopener noreferrer" style="display: inline-block; color: #357ABD;">
+      CC BY-ND 4.0
+      <img style="height: 22px; margin-left: 3px; vertical-align: text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1">
+      <img style="height: 22px; margin-left: 3px; vertical-align: text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/by.svg?ref=chooser-v1">
+      <img style="height: 22px; margin-left: 3px; vertical-align: text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/nd.svg?ref=chooser-v1">
+    </a>
+  </p>
+
+  <div style="margin-top: 15px; font-size: 1.1em;">
+    <p>Logo Inspired by art from <b>I_Rules_The_Waves</b></p>
+    <p>Art and Web Design by <b>Esofayah</b></p>
+    <p>Battle animation art by <b>I_Rules_The_Waves</b></p>
+  </div>
+
+  <div style="margin-top: 20px;">
+    <p><a href="https://tng10.glitch.me/" style="color: #29b6f6; text-decoration: none; font-size: 1.2em;">🔢 Trading Number Game</a></p>
+  </div>
+
+  <div style="margin-top: 25px; font-size: 1.2em;">
+    <h3 style="color: #f0f0f0;">Socials ↓↓↓↓</h3>
+    <p><a href="https://gamejolt.com/games/defcon1/837982" style="color: #ffeb3b; text-decoration: none;">⚡ Gamejolt</a></p>
+    <p><a href="https://abigdam.itch.io/defcon1" style="color: #9c27b0; text-decoration: none;">🎮 Itch.io</a></p>
+    <p><a href="https://aero-adventures.fandom.com/wiki/Defcon1VideoGame" style="color: #4caf50; text-decoration: none;">🌐 Wiki</a></p>
+    <p><a href="https://www.speedrun.com/Defcon1" style="color: #f44336; text-decoration: none;">🏆 Speedrun.com</a></p>
+    <p><a href="https://www.youtube.com/@Defcon1OfficialYoutube-kn4lw" style="color: #2196f3; text-decoration: none;">📺 Youtube</a></p>
+    <p><a href="https://discord.gg/kZz4WRbGjN" style="color: #7289da; text-decoration: none;">📳 Discord</a></p>
+  </div>
+</div>
+
+{% endblock %}

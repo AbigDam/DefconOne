@@ -1,0 +1,38 @@
+
+{% extends "AWSDefcon1App/layout.html" %}
+
+{% block body %}
+<body>
+    <h2>Unread Messages</h2>
+    
+    <!-- Game Messages -->
+    <h3>Game Messages</h3>
+    <ul>
+        {% for message in unread_game_messages %}
+            <li>
+                    {{ sender.username }} 
+                {% if message.game_id %}
+                    (Game ID: {{ message.game_id }})
+                {% endif %}
+                - Unread: {{ message.unread_count }}
+                <a href="{% url 'message' game_id=message.game_id sender_id=message.sender %}">View Messages</a>
+            </li>
+        {% empty %}
+            <li>No unread game messages.</li>
+        {% endfor %}
+    </ul>
+    
+    <!-- Direct Messages -->
+    <h3>Direct Messages</h3>
+    <ul>
+        {% for dm in unread_dms %}
+            <li>
+                {{ sender.username }}- Unread: {{ dm.unread_count }}
+                <a href="{% url 'DM' recipient_id=dm.sender %}">View Messages</a>
+            </li>
+        {% empty %}
+            <li>No unread direct messages.</li>
+        {% endfor %}
+    </ul>
+</body>
+{% endblock %}

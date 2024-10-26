@@ -31,6 +31,11 @@
                 </form>
             </div>
         {% endif %}
+
+        {% if name != request.user.username %}
+        <a style = 'text-align: center;' href="{% url 'DM' recipient_id=user_id %}"> <h3>Message {{name}}</h3></a>
+        {% endif %}
+
     </div>
     <br>
     <br>

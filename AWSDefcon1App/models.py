@@ -86,8 +86,10 @@ class Message(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
     receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages')
     text = models.TextField()
+    read = models.BooleanField(default=False)
 
 class DM(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='DM_sent_messages')
     receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='DM_received_messages')
     text = models.TextField()
+    read = models.BooleanField(default=False)

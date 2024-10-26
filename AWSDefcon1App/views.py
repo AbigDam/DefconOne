@@ -7,11 +7,10 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from .models import User,Games,Nations,Map,Square,War,MakeAlliance,Announcements,Message,DM,Achievements
 from django.contrib.admin.views.decorators import staff_member_required
-import matplotlib.pyplot as plt
 import random
 from django.utils import timezone
 from datetime import timedelta
-from django.db.models import Q
+from django.db.models import Q, Count
 import datetime
 from datetime import datetime
 from django.db.models import Max
@@ -109,16 +108,20 @@ colors = {
 }
 def ads(request):
       return render(request, "AWSDefcon1App/ads.html")
-def articles(request):
-      return render(request, "AWSDefcon1App/articles.html")
+
+def credits(request):
+      return render(request, "AWSDefcon1App/credits.html")
 
 def error(request, exception):
       return render(request, "AWSDefcon1App/error.html")
   
 def error500(request):
     return render(request, "AWSDefcon1App/error.html")
+
+def error404(request, exception):
+    return render(request, "AWSDefcon1App/404.html")
     
-@login_required
+@login_required(login_url='login')
 def passer(request, game_id):
     user = request.user
     nation = Nations.objects.get(game = game_id, user = user)
@@ -168,12 +171,17 @@ def passer(request, game_id):
         knownnations = Nations.objects.filter(game=game_id, alliance_name=playernation.alliance_name)
     else:
         knownnations = [playernation] if playernation else []
-    return render(request, "AWSDefcon1App/game.html", {"nations": nations, "user": user, "game_id": game_id, "knownnations":knownnations})                 
+    return render(request, "AWSDefcon1App/game.html", {"nations": nations, "user": user, "game_id": game_id, "knownnations":knownnations})     
 
-@login_required
+
+@login_required(login_url='login')
 def message(request, game_id, recipient_id):
     recipient = get_object_or_404(User, id=recipient_id)
     game = get_object_or_404(Games, id=game_id)
+    unread = Message.objects.filter(sender =recipient, receiver=request.user, read=False)
+    for unreaded in unread:
+        unreaded.read = True
+        unreaded.save()    
     if request.method == 'POST':
         print("post")
         content = request.POST.get('content')
@@ -190,9 +198,13 @@ def message(request, game_id, recipient_id):
     return render(request, 'AWSDefcon1App/message.html', {'recipient': recipient, 'messages': messages, 'game_id': game_id})
 
 
-@login_required
+@login_required(login_url='login')
 def SendDM(request, recipient_id):
     recipient = get_object_or_404(User, id=recipient_id)
+    unread = DM.objects.filter(sender =recipient, receiver=request.user, read=False)
+    for unreaded in unread:
+        unreaded.read = True
+        unreaded.save()
     if request.method == 'POST':
         content = request.POST.get('content')
         DM.objects.create(sender=request.user, receiver=recipient, text=content)
@@ -204,7 +216,7 @@ def SendDM(request, recipient_id):
     return render(request, 'AWSDefcon1App/message.html', {'recipient': recipient, 'messages': messages})
 
 
-@login_required
+@login_required(login_url='login')
 def user_list(request, game_id):
     if game_id == 0:
         users = User.objects.exclude(id=request.user.id).distinct()
@@ -214,7 +226,7 @@ def user_list(request, game_id):
         users = User.objects.filter(nations__game=game).exclude(id=request.user.id).distinct()
         return render(request, 'AWSDefcon1App/user_list.html', {'users': users, 'game_id': game_id})
 
-@login_required
+@login_required(login_url='login')
 def profile(request, user_id):
     user = User.objects.get(id=user_id)
     hunWins = False
@@ -260,6 +272,7 @@ def profile(request, user_id):
 
     return render(request, 'AWSDefcon1App/profile.html', {
         'name': user.username,
+        'user_id': user.id,
         'wins': user.wins,
         'achievements': user.achievements,
         'bio': user.bio,
@@ -278,7 +291,7 @@ def creates(request):
 
 
 
-@login_required
+@login_required(login_url='login')
 def announcemnts(request, game_id):
   announces = Announcements.objects.filter(game=game_id).order_by('-start_time')
   return render(request, "AWSDefcon1App/announcements.html", {"game_id": game_id,"announces" : announces})
@@ -374,7 +387,193 @@ def beg(request, game_id):
 def index(request):
     games = Games.objects.all()
     user = request.user.username
+    for game in games:
+        gameMap = Map.objects.get(game = game)
+        if Square.objects.filter(map = gameMap).count() < 902:
+            game.delete()
+        if Nations.objects.filter(name = 'United Kingdom', game = game).count() != 1:
+            game.delete()
+
+    if not Achievements.objects.exists():
+        Achievements.objects.create(name = "Rule the World") #Own every state
+        Achievements.objects.create(name = "Cuba Wins")#Win as Cuba
+        Achievements.objects.create(name = "Cuba Rules")#Own Every state as Cuba
+        Achievements.objects.create(name = "Defcon1")#Have more then 200 Nukes
+        Achievements.objects.create(name = "100 Wins")#Have 100 wins
+
+    for game in games:
+      # Get the most recent announcement for the game
+      most_recent_announcement = Announcements.objects.filter(game=game).order_by('-start_time').first()
+      game_id = game.id
+      # Check if there is a most recent announcement
+      if most_recent_announcement:
+          # Calculate the time difference between now and the announcement's start_time
+          time_difference = timezone.now() - most_recent_announcement.start_time
+
+          if time_difference > timedelta(hours=8):
+            all_nations = Nations.objects.filter(game = game_id, player_number__lt = 8).exclude(user = User.objects.get(username = "loser")).exclude(user = User.objects.get(username = "empty")).exclude(user = User.objects.get(username = "closed"))
+            nations = Nations.objects.filter(game = game_id)
+            for nation in nations:
+                states = nation.states
+                mult = 1
+                if states <= 20:
+                    mult = 2
+                elif states < 50:
+                    mult = 1.7
+                elif states < 150:
+                    mult = 1.5
+                elif states < 200:
+                    mult = 1.4
+                elif states < 250:
+                    mult = 1
+
+                nation.divisions = nation.divisions + states * mult
+                nation.planes = nation.planes + states * 10
+                nation.boats = nation.boats + states / 2
+                nation.points += 1
+                if nation.nuke_time <= 0:
+                    nation.nukes += 1
+                else:
+                    nation.nuke_time -= 1
+                nation.attacks = 5
+                nation.requests = 10
+                nation.save()
+            Announcements.objects.create(text =f"The game has been refreshed due to inactivity", start_time = datetime.now(), game = Games.objects.get(id = game_id))
+
+    loser_nations = Nations.objects.filter(player_number__lt=8, user__username="loser")
+    for loser_nation in loser_nations:
+        game = loser_nation.game
+        if game:
+            player_number_to_update = f"player{loser_nation.player_number}"
+            setattr(game, player_number_to_update, User.objects.get(username = 'loser'))
+            game.save()
     
+    loser_nations = Nations.objects.filter(player_number__lt=8, user__username="closed")
+    for loser_nation in loser_nations:
+        game = loser_nation.game
+        if game:
+            player_number_to_update = f"player{loser_nation.player_number}"
+            setattr(game, player_number_to_update, User.objects.get(username = 'closed'))
+            game.save()
+
+    if not User.objects.filter(username='Admin').exists():
+        user = User.objects.create_superuser('Admin', 'randomdams@gmail.com', 'C0deClub')
+        user.save()
+        
+    max_game_id = Games.objects.count()
+    
+    games = Games.objects.all()
+    nationscount = 0
+    for game in games:
+        # Obtain the game_id for the current game
+        game_id = game.id
+        nations = Nations.objects.filter(game_id=game_id, player_number__lt=8)
+        nationscount = 0
+        for nation in nations:
+            if nation.user.username == 'loser':
+                nationscount += 1
+                if nationscount == 6:
+                    non_loser_nations = nations.exclude(user__username='loser')
+                    for non_loser_nation in non_loser_nations:
+                        if non_loser_nation.name == "Cuba":
+                            if non_loser_nation.user.id not in Achievements.objects.get(name = "Cuba Wins").users:
+                                achievement = Achievements.objects.get(name="Cuba Wins")
+                                users_list = achievement.users  
+                                users_list.append(non_loser_nation.user.id)  
+                                achievement.users = users_list
+                                achievement.save()
+
+                                non_loser_nation.user.achievements += 1
+                                non_loser_nation.user.save()
+                        if non_loser_nation.states == 903 or non_loser_nation.states > 903:
+                                if non_loser_nation.user.id not in Achievements.objects.get(name = "Rule the World").users:
+                                    achievement = Achievements.objects.get(name="Rule the World")
+                                    users_list = achievement.users  
+                                    users_list.append(non_loser_nation.user.id)  
+                                    achievement.users = users_list
+                                    achievement.save()
+
+                                    non_loser_nation.user.achievements += 1
+                                    non_loser_nation.user.save()
+                        if non_loser_nation.states == 903 or non_loser_nation.states > 903 and non_loser_nation.name == "Cuba" and non_loser_nation.user.id not in Achievements.objects.get(name = "Cuba Rules").users:
+                            achievement = Achievements.objects.get(name="Cuba Rules")
+                            users_list = achievement.users  
+                            users_list.append(non_loser_nation.user.id)  
+                            achievement.users = users_list
+                            achievement.save()
+
+                            non_loser_nation.user.achievements += 1
+                            non_loser_nation.user.save()
+
+                        non_loser_nation.user.wins += 1
+                        if non_loser_nation.user.wins == 100 and non_loser_nation.user.id not in Achievements.objects.get(name = "100 Wins").users:
+                            achievement = Achievements.objects.get(name="100 Wins")
+                            users_list = achievement.users  
+                            users_list.append(non_loser_nation.user.id)  
+                            achievement.users = users_list
+                            achievement.save()
+                            
+                            non_loser_nation.user.achievements += 1
+                            non_loser_nation.user.save()
+
+                        non_loser_nation.user.save()
+                    game.delete()
+                    name = non_loser_nation.user.username
+                    current_date = datetime.now()
+                    # Check if the date is December 25th
+                    if current_date.month == 12 and current_date.day == 25:
+                        # Render the Christmas win screen
+                        return render(request, "AWSDefcon1App/christmaswinner.html", {"game_id": game_id, "name": name})
+                    return render(request, "AWSDefcon1App/winner.html", {"game_id": game_id, "name":name})
+
+                    
+    next_id = 1
+    all_games = Games.objects.all()
+    lst = list(all_games.values_list('id', flat=True))
+
+    if not lst:
+        # If no game objects exist, start with ID 1
+        next_id =  1
+
+    # Step 2: Determine the range of IDs
+    else:
+        min_id = min(lst)
+        max_id = max(lst)
+
+        # Step 3: Find missing IDs
+        missing_ids = [num for num in range(min_id, max_id + 1) if num not in lst]
+
+        if missing_ids:
+            # Step 4: Return the first missing ID
+            next_id = missing_ids[0]
+        else:
+            # If no IDs are missing within the range, return the next available ID
+            next_id = max_id + 1
+
+    leaderboard = User.objects.filter(wins__gt=0).order_by('-wins').exclude(username ='closed').exclude(username ='empty').exclude(username ='loser')
+
+    games  = Games.objects.all()
+    played_games = []     
+    for game in games:
+        if is_user_in_game(game, request.user):
+            played_games.append(game)
+
+
+    games = played_games
+    
+    
+    return render(request, "AWSDefcon1App/index.html", {"games": games, "user": user, "max_game_id":max_game_id,'next_id':next_id,'leaderboard': leaderboard})
+
+def full_index(request):
+    games = Games.objects.all()
+    user = request.user.username
+    for game in games:
+        gameMap = Map.objects.get(game = game)
+        if Square.objects.filter(map = gameMap).count() < 902:
+            game.delete()
+        if Nations.objects.filter(name = 'United Kingdom', game = game).count() != 1:
+            game.delete()
+
     if not Achievements.objects.exists():
         Achievements.objects.create(name = "Rule the World") #Own every state
         Achievements.objects.create(name = "Cuba Wins")#Win as Cuba
@@ -532,7 +731,83 @@ def index(request):
             next_id = max_id + 1
 
     leaderboard = User.objects.filter(wins__gt=0).order_by('-wins')
+
+    games  = Games.objects.all()
+    played_games = []     
+    for game in games:
+        if not is_user_in_game(game, request.user):
+            played_games.append(game)
+
+
+    games = played_games
+    
+    
     return render(request, "AWSDefcon1App/index.html", {"games": games, "user": user, "max_game_id":max_game_id,'next_id':next_id,'leaderboard': leaderboard})
+
+
+def is_user_in_game(game, user):
+    # Check if request.user matches any of the player fields
+    return any([
+        game.player0 == user,
+        game.player1 == user,
+        game.player2 == user,
+        game.player3 == user,
+        game.player4 == user,
+        game.player5 == user,
+        game.player6 == user,
+        game.player7 == user,
+    ])
+
+@login_required(login_url='login')
+def unread_senders(request):
+    unread_game_messages = (
+        Message.objects.filter(receiver=request.user, read=False)
+        .values('sender', 'game_id')  # Group by sender and game_id
+        .annotate(unread_count=Count('id'))  # Count unread messages
+    )
+
+    # Unread messages in the DM model
+    unread_dms = (
+        DM.objects.filter(receiver=request.user, read=False)
+        .values('sender')  # Group by sender (no game_id for DMs)
+        .annotate(unread_count=Count('id'))
+    )
+
+    # Pass both lists to the template
+    context = {
+        'unread_game_messages': unread_game_messages,
+        'unread_dms': unread_dms,
+    }
+    return render(request, 'AWSDefcon1App/unreadmessages.html', context)
+
+@login_required(login_url='login')
+def game_maker_redirrect(request):
+    next_id = 1
+    all_games = Games.objects.all()
+    lst = list(all_games.values_list('id', flat=True))
+
+    if not lst:
+        # If no game objects exist, start with ID 1
+        next_id =  1
+
+    # Step 2: Determine the range of IDs
+    else:
+        min_id = min(lst)
+        max_id = max(lst)
+
+        # Step 3: Find missing IDs
+        missing_ids = [num for num in range(min_id, max_id + 1) if num not in lst]
+
+        if missing_ids:
+            # Step 4: Return the first missing ID
+            next_id = missing_ids[0]
+        else:
+            # If no IDs are missing within the range, return the next available ID
+            next_id = max_id + 1
+    make_game = True
+    return render(request, "AWSDefcon1App/makegame.html", {"game_id":next_id, "make_game":make_game})
+
+    
 
 @login_required(login_url='login')
 def game(request, game_id):
@@ -590,7 +865,7 @@ def logout_view(request):
 def register(request):
     if request.method == "POST":
         username = request.POST["username"]
-        email = request.POST["email"]
+        email = "noemail@email.com"
         if len(username) > 30:
           return render(request, "AWSDefcon1App/register.html", {
                 "message": "Username too long"
@@ -612,7 +887,7 @@ def register(request):
                 "message": "Username already taken."
             })
         login(request, user)
-        return HttpResponseRedirect(reverse("index"))
+        return HttpResponseRedirect(reverse("full_index"))
     else:
         return render(request, "AWSDefcon1App/register.html")
     
@@ -892,8 +1167,10 @@ def join(request, game_id, player_number):
         nation, created = Nations.objects.get_or_create(game=game, player_number=player_number)
         nation.user = request.user
         nation.save()
-        return HttpResponseRedirect(reverse("index"))
-    return render(request, 'AWSDefcon1App/join.html', {'game_id': game_id, 'player_number': player_number})
+        return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
+    
+    make_game = True
+    return render(request, 'AWSDefcon1App/join.html', {'game_id': game_id, 'player_number': player_number, 'make_game':make_game})
 
 @login_required(login_url='login')
 def battle(request,game_id):
@@ -1305,18 +1582,10 @@ def battle(request,game_id):
             if division_attack_type == "normal":
                 if chance > 1 and chance < 20:
                     division_defend_amount = int(ogd) - int(oga)*0.3
-
                 elif chance == 1:
                     division_defend_amount = int(ogd) - int(oga)*0.9
                 elif chance == 20:
                     division_defend_amount = int(ogd) - int(oga)*0.1
-                chance = random.randint(1, 20)
-                if chance > 1 and chance < 20:
-                    division_attack_amount = int(oga) - int(ogd)*0.3
-                elif chance == 1:
-                    division_attack_amount = int(oga) - int(ogd)*0.9
-                elif chance == 20:
-                    division_attack_amount = int(oga) - int(ogd)*0.1
             if division_attack_type == "encirclement":
                 if chance > 10:
                     division_defend_amount = int(ogd) - int(oga)*0.9
@@ -1328,8 +1597,10 @@ def battle(request,game_id):
                         division_defend_amount = 0
             if division_attack_amount < 0:
                         division_attack_amount = 0
-            state_changeA = oga - int(division_attack_amount) // 10
-            state_changeD = ogd - int(division_attack_amount) // 10
+            state_changeA = (oga - int(division_attack_amount)) // 10
+            state_changeD = (ogd - int(division_attack_amount)) // 10
+
+            ## Offensive Wins 
             if state_changeD < state_changeA:
                 state_change =  state_changeA - state_changeD
                 if state_change > 15:
@@ -1337,24 +1608,36 @@ def battle(request,game_id):
                 owner = Nations.objects.get(game=game_id, user=request.user)
                 stater = owner.states
                 stater = stater * 2
-                owned_squares = Square.objects.filter(owner=owner, map=Map.objects.get(game=Games.objects.get(id=game_id)))
-                controlled_squares = [square.number for square in owned_squares]
-                border_squares = []
+                owned_squares = Square.objects.filter(owner=owner, map=Map.objects.get(game=Games.objects.get(id=game_id))) ##States owned by offender
+                controlled_squares = [square.number for square in owned_squares] ##States owned by offender numbers
+                border_squares = [] ##States owned by defender that border defender
                 i = 0 
                 j = 0
-                print(state_change)
-                print(controlled_squares)
                 while i < state_change:
+                    
                     for controlled_square in controlled_squares:
-                        print(controlled_squares)
-                        print(Square.objects.get(map=Map.objects.get(game=Games.objects.get(id=game_id)), number = controlled_square).neighbors)
-                        for neighbor in Square.objects.get(map=Map.objects.get(game=Games.objects.get(id=game_id)), number = controlled_square).neighbors:
+
+                        for neighbor in Square.objects.get(map=Map.objects.get(game=Games.objects.get(id=game_id)), number = controlled_square).neighbors: #GO Through all neighbors to our nation
+                            
                             border_square = Square.objects.get(number=neighbor, map=Map.objects.get(game=Games.objects.get(id=game_id)))
                             if border_square.owner == Nations.objects.get(game = game_id, name = division_defender):
-                                border_square.owner = owner
-                                color = colors.get(owner.name)
+                                border_square.owner = owner  
+                                color = colors.get(Nations.objects.get(game=game_id, user=request.user).name)
                                 border_square.color = color
-                                border_square.save()         
+                                border_square.save()
+                                print(" ################################################################ Defender: " + division_defender)
+                                print(" ################################################################ Color: " + color)
+                                print(" ################################################################ Border_Square: " + border_square.name)
+                                print("###############################################################################")
+                                print(" ################################################################ Owner: " + owner.name)
+                                print(" ################################################################ Color: " +  border_square.color)
+                                print(" ################################################################ Border_Square: " + border_square.name)
+                                nation_attacker = Nations.objects.get(game=game_id, user=request.user) 
+                                nation_defender = Nations.objects.get(game = game_id, name = division_defender)
+                                nation_attacker.states += 1
+                                nation_defender.states -= 1
+                                nation_defender.save()
+                                nation_attacker.save()         
                                 i = i + 1
 
                         j = j + 1
@@ -1363,6 +1646,7 @@ def battle(request,game_id):
                     if j > stater:
                         break
 
+            ## Defensive Wins
             elif state_changeD >= state_changeA:
                 owner = Nations.objects.get(game = game_id, name = division_defender)
                 stater = owner.states
@@ -1376,34 +1660,39 @@ def battle(request,game_id):
                     for controlled_square in controlled_squares:
                         for neighbor in Square.objects.get(map=Map.objects.get(game=Games.objects.get(id=game_id)), number = controlled_square).neighbors:
                             border_square = Square.objects.get(number=neighbor, map=Map.objects.get(game=Games.objects.get(id=game_id)))
-                            if border_square.owner == Nations.objects.get(game = game_id, name = division_defender):
+                            if border_square.owner == Nations.objects.get(game = game_id, name = Nations.objects.get(game=game_id, user=request.user).name):
                                 border_square.owner = owner
-                                color = colors.get(owner.name)
+                                color = colors.get(division_defender)
                                 border_square.color = color
-                                border_square.save()         
+                                border_square.save()        
                                 i = i + 1
-
+                                nation_attacker = Nations.objects.get(game=game_id, user=request.user) 
+                                nation_defender = Nations.objects.get(game = game_id, name = division_defender)
+                                nation_attacker.states -= 1
+                                nation_defender.states += 1
+                                nation_defender.save()
+                                nation_attacker.save()
+                                    
                         j = j + 1
                         if j > stater:
                             break
                     if j > stater:
                         break
-
+            
+            if i > (state_changeA - state_changeD):
+                i = (state_changeA - state_changeD)
             states_lost = i
             states_gained = i
+            print(i)
             div_attackers_lost = oga - int(division_attack_amount)
             div_defenders_lost =  ogd - int(division_defend_amount)
-
+            owner = Nations.objects.get(game=game_id, user=request.user)    
             nation_attacker = Nations.objects.get(game=game_id, user=request.user) 
             nation_defender = Nations.objects.get(game = game_id, name = division_defender)
             if state_changeD <= state_changeA:
-                nation_defender.states -= states_lost
-                nation_attacker.states += states_gained
                 announcements = Announcements.objects.create(text =f"{owner.name} has defeated {division_defender} in a battle", start_time = datetime.now(), game = Games.objects.get(id = game_id))
 
             if state_changeD >= state_changeA:
-                nation_attacker.states -= states_lost
-                nation_defender.states += states_gained
                 announcements = Announcements.objects.create(text =f"{division_defender} has defeated {owner.name} in a battle", start_time = datetime.now(), game = Games.objects.get(id = game_id))
 
             nation_attacker.divisions -= div_attackers_lost
@@ -1414,7 +1703,20 @@ def battle(request,game_id):
                 nation_defender.divisions = 0
             nation_attacker.save()
             nation_defender.save()
-            
+
+        nation_defender = Nations.objects.get(game = game_id, name = request.POST.get('defender'))
+        nation_attacker = Nations.objects.get(game=game_id, user=request.user) 
+        if nation_defender.states < 0:
+            nation_attacker.states += nation_defender.states
+            nation_defender.states = 0            
+            nation_attacker.save()
+            nation_defender.save()
+
+        if nation_attacker.states < 0:
+            nation_defender.states += nation_attacker.states
+            nation_attacker.states = 0            
+            nation_defender.save()
+            nation_attacker.save()
 
         player = Nations.objects.get(game=game_id, user=request.user)
 
@@ -1427,7 +1729,7 @@ def battle(request,game_id):
 
         number = div_defender.player_number
         player_number_value = f"player{number}"
-        if div_defender.states < 1:
+        if div_defender.states <= 1:
             print("div")
             player.boats += div_defender.boats
             player.planes += div_defender.planes
@@ -1444,7 +1746,7 @@ def battle(request,game_id):
             War.objects.filter(Q(nation1=div_defender) | Q(nation2=div_defender)).delete()
 
 
-        if planes_defender.states < 1:
+        if planes_defender.states <= 1:
             print("plane")
             player.boats += planes_defender.boats
             player.planes += planes_defender.planes
@@ -1460,7 +1762,7 @@ def battle(request,game_id):
             game_instance.save()
             War.objects.filter(Q(nation1=planes_defender) | Q(nation2=planes_defender)).delete()
             
-        if boat_defender.states < 1:
+        if boat_defender.states <= 1:
             print("boat")
             player.boats += boat_defender.boats
             player.planes += boat_defender.planes
@@ -1478,7 +1780,7 @@ def battle(request,game_id):
 
         number = player.player_number
         player_number_value = f"player{number}"
-        if player.states < 1:
+        if player.states <= 1:
             if division_attack_amount:
                 div_defender.boats += player.boats
                 div_defender.planes += player.planes
@@ -1543,315 +1845,9 @@ def battle(request,game_id):
               nation.requests = 10
               nation.save()
                   
-    color_filter_dict = {
-    '#4892FF': 'invert(49%) sepia(76%) saturate(1792%) hue-rotate(196deg) brightness(100%) contrast(103%)',
-    '#ff4879': 'invert(44%) sepia(70%) saturate(2984%) hue-rotate(318deg) brightness(101%) contrast(102%)',
-    '#a3101f': 'invert(13%) sepia(96%) saturate(5796%) hue-rotate(350deg) brightness(65%) contrast(92%)',
-    '#56a552': 'invert(52%) sepia(7%) saturate(2676%) hue-rotate(69deg) brightness(105%) contrast(99%)',
-    '#62bd52': 'invert(63%) sepia(55%) saturate(456%) hue-rotate(65deg) brightness(92%) contrast(88%)',
-    '#79ebff': 'invert(81%) sepia(10%) saturate(2513%) hue-rotate(163deg) brightness(105%) contrast(103%)',
-    '#4d0019': 'invert(11%) sepia(68%) saturate(2762%) hue-rotate(320deg) brightness(73%) contrast(112%)',
-    '#c7e9b4': 'invert(90%) sepia(18%) saturate(459%) hue-rotate(49deg) brightness(101%) contrast(86%)',
-    '#623c3c': 'invert(24%) sepia(7%) saturate(5090%) hue-rotate(314deg) brightness(69%) contrast(69%)',
-    '#e79481': 'invert(61%) sepia(38%) saturate(513%) hue-rotate(323deg) brightness(103%) contrast(81%)',
-    '#def7c6': 'invert(93%) sepia(10%) saturate(818%) hue-rotate(44deg) brightness(106%) contrast(94%)',
-    '#57a1ff': 'invert(61%) sepia(39%) saturate(3550%) hue-rotate(191deg) brightness(100%) contrast(104%)',
-    '#ffffff': 'invert(100%) sepia(0%) saturate(0%) hue-rotate(171deg) brightness(107%) contrast(106%)',
-    '#c23b85': 'invert(35%) sepia(16%) saturate(7490%) hue-rotate(301deg) brightness(82%) contrast(83%)',
-    '#9b3e33': 'invert(24%) sepia(33%) saturate(4109%) hue-rotate(344deg) brightness(83%) contrast(75%)',
-    '#4993ff': 'invert(49%) sepia(76%) saturate(1792%) hue-rotate(196deg) brightness(100%) contrast(103%)',
-    '#ffa47f': 'invert(74%) sepia(49%) saturate(761%) hue-rotate(311deg) brightness(106%) contrast(101%)',
-    '#dfe5a0': 'invert(96%) sepia(97%) saturate(352%) hue-rotate(5deg) brightness(94%) contrast(90%)',
-    '#ca828b': 'invert(62%) sepia(26%) saturate(512%) hue-rotate(303deg) brightness(88%) contrast(98%)',
-    '#fff6ff': 'invert(100%) sepia(20%) saturate(3203%) hue-rotate(192deg) brightness(103%) contrast(103%)',
-    '#ffb25f': 'invert(68%) sepia(81%) saturate(387%) hue-rotate(333deg) brightness(101%) contrast(101%)',
-    '#c80a0a': 'invert(14%) sepia(57%) saturate(4472%) hue-rotate(349deg) brightness(114%) contrast(113%)',
-    '#ffff79': 'invert(96%) sepia(99%) saturate(624%) hue-rotate(341deg) brightness(107%) contrast(103%)',
-    '#ffff9b': 'invert(99%) sepia(20%) saturate(2017%) hue-rotate(337deg) brightness(105%) contrast(108%)',
-    '#33965b': 'invert(50%) sepia(25%) saturate(982%) hue-rotate(91deg) brightness(92%) contrast(91%)',
-    '#86c66c': 'invert(72%) sepia(51%) saturate(352%) hue-rotate(58deg) brightness(90%) contrast(90%)',
-    '#c3a5f5': 'invert(80%) sepia(51%) saturate(3224%) hue-rotate(203deg) brightness(103%) contrast(92%)',
-    '#ffff77': 'invert(95%) sepia(10%) saturate(2062%) hue-rotate(1deg) brightness(108%) contrast(101%)',
-    '#ac7a58': 'invert(59%) sepia(8%) saturate(2156%) hue-rotate(341deg) brightness(85%) contrast(86%)',
-    '#ff7789': 'invert(51%) sepia(17%) saturate(1640%) hue-rotate(304deg) brightness(114%) contrast(101%)',
-    '#49bb7e': 'invert(63%) sepia(25%) saturate(879%) hue-rotate(95deg) brightness(96%) contrast(87%)',
-    '#46d8cb': 'invert(68%) sepia(90%) saturate(302%) hue-rotate(121deg) brightness(93%) contrast(90%)',
-    '#2eadff': 'invert(56%) sepia(41%) saturate(3098%) hue-rotate(181deg) brightness(104%) contrast(105%)',
-    '#acbe99': 'invert(83%) sepia(13%) saturate(525%) hue-rotate(47deg) brightness(92%) contrast(76%)',
-    '#c79679': 'invert(83%) sepia(13%) saturate(525%) hue-rotate(47deg) brightness(92%) contrast(76%)',
-    '#5e5ea4': 'invert(38%) sepia(27%) saturate(1019%) hue-rotate(202deg) brightness(92%) contrast(85%)',
-    '#ffb35f': 'invert(75%) sepia(19%) saturate(1336%) hue-rotate(338deg) brightness(101%) contrast(101%)',
-    '#525252': 'invert(31%) sepia(0%) saturate(0%) hue-rotate(231deg) brightness(95%) contrast(86%)',
-    '#329a00': 'invert(42%) sepia(98%) saturate(1929%) hue-rotate(68deg) brightness(91%) contrast(101%)',
-    '#fbdf0a': 'invert(91%) sepia(24%) saturate(4904%) hue-rotate(355deg) brightness(110%) contrast(97%)',
-    '#be96fa': 'invert(64%) sepia(20%) saturate(916%) hue-rotate(221deg) brightness(97%) contrast(102%)',
-    '#fee8c8': 'invert(92%) sepia(12%) saturate(1135%) hue-rotate(319deg) brightness(107%) contrast(99%)',
-    '#b496e6': 'invert(68%) sepia(10%) saturate(2409%) hue-rotate(214deg) brightness(96%) contrast(88%)',
-    '#abbe99': 'invert(85%) sepia(20%) saturate(319%) hue-rotate(48deg) brightness(83%) contrast(92%)',
-    '#bdccff': 'invert(69%) sepia(73%) saturate(172%) hue-rotate(192deg) brightness(101%) contrast(102%)',
-    '#4696fa': 'invert(51%) sepia(44%) saturate(2757%) hue-rotate(194deg) brightness(102%) contrast(96%)',
-    '#a5e684': 'invert(84%) sepia(33%) saturate(519%) hue-rotate(47deg) brightness(97%) contrast(89%)',
-    '#68cf75': 'invert(75%) sepia(95%) saturate(261%) hue-rotate(66deg) brightness(83%) contrast(94%)',
-    '#927a30': 'invert(46%) sepia(32%) saturate(812%) hue-rotate(8deg) brightness(97%) contrast(86%)',
-    '#8b40a6': 'invert(33%) sepia(18%) saturate(3148%) hue-rotate(247deg) brightness(94%) contrast(93%)',
-    '#fff375': 'invert(83%) sepia(47%) saturate(437%) hue-rotate(1deg) brightness(106%) contrast(101%)',
-    '#3fb08d': 'invert(56%) sepia(68%) saturate(352%) hue-rotate(110deg) brightness(93%) contrast(87%)',
-    '#698948': 'invert(51%) sepia(44%) saturate(432%) hue-rotate(47deg) brightness(88%) contrast(85%)',
-    '#bea0f0': 'invert(67%) sepia(40%) saturate(756%) hue-rotate(210deg) brightness(98%) contrast(92%)',
-    '#5a771d': 'invert(36%) sepia(99%) saturate(329%) hue-rotate(38deg) brightness(94%) contrast(91%)',
-    '#c15151': 'invert(29%) sepia(16%) saturate(3802%) hue-rotate(322deg) brightness(122%) contrast(77%)',
-    '#ffbe7f': 'invert(99%) sepia(30%) saturate(7468%) hue-rotate(303deg) brightness(102%) contrast(101%)',
-    '#fabe78': 'invert(100%) sepia(98%) saturate(2728%) hue-rotate(305deg) brightness(103%) contrast(96%)',
-    '#5c927e': 'invert(57%) sepia(16%) saturate(765%) hue-rotate(106deg) brightness(90%) contrast(84%)',
-    '#685b84': 'invert(40%) sepia(7%) saturate(2312%) hue-rotate(218deg) brightness(89%) contrast(84%)',
-    '#8a9a74': 'invert(63%) sepia(13%) saturate(665%) hue-rotate(43deg) brightness(92%) contrast(87%)',
-    '#473070': 'invert(22%) sepia(16%) saturate(2205%) hue-rotate(220deg) brightness(94%) contrast(96%)',
-    '#ab6f72': 'invert(47%) sepia(30%) saturate(545%) hue-rotate(308deg) brightness(97%) contrast(81%)',
-    '#63cdfe': 'invert(77%) sepia(18%) saturate(2815%) hue-rotate(170deg) brightness(102%) contrast(99%)',
-    '#ff7847': 'invert(66%) sepia(31%) saturate(5034%) hue-rotate(330deg) brightness(101%) contrast(101%)',
-    '#53d0d9': 'invert(74%) sepia(12%) saturate(1682%) hue-rotate(135deg) brightness(98%) contrast(88%)',
-    '#809141': 'invert(55%) sepia(65%) saturate(362%) hue-rotate(32deg) brightness(85%) contrast(81%)',
-    '#c79779': 'invert(66%) sepia(14%) saturate(917%) hue-rotate(340deg) brightness(94%) contrast(90%)',
-    '#d7f0c8': 'invert(93%) sepia(28%) saturate(313%) hue-rotate(39deg) brightness(102%) contrast(88%)',
-    '#7b7cb8': 'invert(57%) sepia(11%) saturate(1473%) hue-rotate(201deg) brightness(86%) contrast(85%)',
-    '#ffeab1': 'invert(88%) sepia(21%) saturate(625%) hue-rotate(337deg) brightness(103%) contrast(105%)',
-    '#cdafff': 'invert(82%) sepia(42%) saturate(2835%) hue-rotate(199deg) brightness(100%) contrast(104%)',
-    '#fffeff': 'invert(93%) sepia(7%) saturate(622%) hue-rotate(283deg) brightness(108%) contrast(104%)',
-    '#8adba2': 'invert(83%) sepia(21%) saturate(604%) hue-rotate(84deg) brightness(92%) contrast(92%)',
-    '#456722': 'invert(28%) sepia(100%) saturate(336%) hue-rotate(47deg) brightness(97%) contrast(85%)',
-    '#c8aafa': 'invert(68%) sepia(10%) saturate(1458%) hue-rotate(219deg) brightness(104%) contrast(96%)',
-    '#92b2bf': 'invert(69%) sepia(10%) saturate(716%) hue-rotate(152deg) brightness(100%) contrast(85%)',
-    '#ff4979': 'invert(38%) sepia(58%) saturate(1973%) hue-rotate(320deg) brightness(105%) contrast(101%)',
-    '#b99beb': 'invert(70%) sepia(23%) saturate(2318%) hue-rotate(206deg) brightness(102%) contrast(84%)',
-    '#905c5c': 'invert(43%) sepia(16%) saturate(1004%) hue-rotate(314deg) brightness(90%) contrast(88%)',
-    '#651e29': 'invert(12%) sepia(67%) saturate(1955%) hue-rotate(325deg) brightness(93%) contrast(92%)',
-    '#9e8add': 'invert(68%) sepia(10%) saturate(5167%) hue-rotate(206deg) brightness(91%) contrast(89%)',
-    '#b2233b': 'invert(18%) sepia(38%) saturate(4969%) hue-rotate(333deg) brightness(96%) contrast(93%)',
-    '#c6a9f8': 'invert(74%) sepia(33%) saturate(968%) hue-rotate(203deg) brightness(95%) contrast(104%)',
-    '#905d5d': 'invert(42%) sepia(7%) saturate(2251%) hue-rotate(314deg) brightness(92%) contrast(80%)',
-    }
-    all_squares = Square.objects.filter(map = Map.objects.get(number=game_id, game = Games.objects.get(id=game_id)))
+        return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
+
     
-    all_squares_list = list(all_squares.values('name', 'color'))
-    color_filter_json = json.dumps(color_filter_dict)
-        
-    html_content = """ 
-
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>State Images with Colors</title>
-        <style>
-            canvas {
-                display: block;
-                margin: auto;
-                border: 1px solid #000;
-            }
-        </style>
-    </head>
-    <body>
-
-        <canvas id="canvas" style="background-color:skyblue;"></canvas>
-        <div style="text-align: right;" id="colorDisplay">Click on the map to see the nation.</div>
-
-        <script>
-
-            const canvas = document.getElementById('canvas');
-            const ctx = canvas.getContext('2d');
-            const colorDisplay = document.getElementById('colorDisplay');
-            const backgroundColor = 'lightblue';
-
-            // List of images and their corresponding filters
-            const images = [
-    """
-
-    # Dynamically populate the image data
-    for square in all_squares:
-        html_content += f""" {{src: '/static/AWSDefcon1App/white_image/MapChart_Map.{square.name}.png', filter: ' {color_filter_dict[square.color]} '}},\n """
-
-    html_content += """
-            ];
-
-            // Helper function to load an image
-            const loadImage = (src) => {
-                return new Promise((resolve) => {
-                    const img = new Image();
-                    img.onload = () => resolve(img);
-                    img.src = src;
-                });
-            };
-
-            // Set canvas dimensions (optional)
-            let maxWidth = 0;
-            let maxHeight = 0;
-
-            // Lazy load images when they come into view using IntersectionObserver
-            const lazyLoadImages = async (entries, observer) => {
-                for (const entry of entries) {
-                    if (entry.isIntersecting) {
-                        const imgInfo = images[entry.target.dataset.index];
-                        const img = await loadImage(imgInfo.src);
-
-                        // Adjust canvas size based on image
-                        if (img.width > maxWidth) maxWidth = img.width;
-                        if (img.height > maxHeight) maxHeight = img.height;
-                        canvas.width = maxWidth;
-                        canvas.height = maxHeight;
-
-                        // Draw image with filter
-                        ctx.save();
-                        ctx.filter = imgInfo.filter;
-                        ctx.drawImage(img, 0, 0);
-                        ctx.restore();
-
-                        // Unobserve once the image is loaded
-                        observer.unobserve(entry.target);
-                    }
-                }
-            };
-
-            // Initialize IntersectionObserver
-            const observer = new IntersectionObserver(lazyLoadImages, {
-                root: null, // Use the viewport
-                rootMargin: '0px',
-                threshold: 0.1 // Trigger when 10% of the element is visible
-            });
-
-            // Observe each image placeholder
-            images.forEach((_, index) => {
-                const placeholder = document.createElement('div');
-                placeholder.dataset.index = index;
-                document.body.appendChild(placeholder);
-                observer.observe(placeholder);
-            });
-        drawImages();
-        const colors = {
-            'United Kingdom': '#FF4777',
-            'Soviet Union': '#A2101E',
-            'Italy': '#56A151',
-            'Second Brazilian Republic': '#60BA51',
-            'Sultanate of Aussa': '#4d0019',
-            'Turkey': '#C8E9B4',
-            'Norway': '#623C3A',
-            'Iraq': '#E6927F',
-            'Saudi Arabia': '#DDF7C6',
-            'United States': '#559FFF',
-            'Albania': '#C33A84',
-            'Dominion of Canada': '#983D32',
-            'France': '#4892FF',
-            'Kingdom of Hungary': '#FFA27E',
-            'China': '#DEE39A',
-            'Chile': '#C9818A',
-            'Peru': '#fff6ff',
-            'British Raj': '#C80D09',
-            'Spain': '#FFFF77',
-            'Kingdom of Greece': '#79e8ff',
-            'Lithuania': '#ffffA0',
-            'Mexico': '#85C56B',
-            'Ethiopia': '#C3A4F4',
-            'Romania': '#ffff73',
-            'Portugal': '#319358',
-            'Bhutan': '#AA7857',
-            'Poland': '#FF7487',
-            'Australia': '#48B97C',
-            'Czechoslovakia': '#44d7c8',
-            'Sweden': '#29ADFF',
-            'Venezuela': '#AABB98',
-            'Yugoslavia': '#5D5DA1',
-            'Netherlands': '#FCAE5D',
-            'German Reich': '#525252',
-            'Bulgaria': '#329700',
-            'Belgium': '#FBDD08',
-            'South Africa': '#BD95F9',
-            'Philippines': '#B395E6',
-            'Uruguay': '#A9BD97',
-            'Argentina': '#BCCCFF',
-            'Republic of Paraguay': '#4695F9',
-            'Mengkukuo': '#A3E381',
-            'Japan': '#FDE7C4',
-            'Ireland': '#66CD75',
-            'Costa Rica': '#91792F',
-            'Cuba': '#8C40A7',
-            'Colombia': '#AABB98',
-            'Sinkiang': '#3EAE8B',
-            'Yunnan': '#688947',
-            'Dominican Republic': '#BA9EEF',
-            'Mongolia': '#58751C',
-            'Switzerland': '#BE4F4D',
-            'Ecuador': '#FFBD7C',
-            'El Salvador': '#F8BF78',
-            'Iran': '#5C927E',
-            'Xibei San Ma': '#695A87',
-            'Denmark': '#AABB98',
-            'Guangxi Clique': '#899A73',
-            'Guatemala': '#46306D',
-            'Haiti': '#AA6E71',
-            'Finland': '#ffffff',
-            'Estonia': '#60CDFD',
-            'Manchukuo': '#FF7844',
-            'Afghanistan': '#55CED6',
-            'Honduras': '#7E8F3F',
-            'Iceland': '#C79677',
-            'Siam': '#D5EFC5',
-            'Dutch East Indies': '#FFAF5D',
-            'Latvia': '#7A7AB4',
-            'Bolivian Republic': '#FFE6AF',
-            'Liberia': '#CCAEFF',
-            'Austria': '#FFFDFF',
-            'Luxembourg': '#8BD9A1',
-            'Tibet': '#446520',
-            'Nepal': '#C6A8F9',
-            'Nicaragua': '#90B1BE',
-            'British Malaya': '#FF4776',
-            'New Zealand': '#B69AEA',
-            'Oman': '#92625D',
-            'Shanxi': '#601C27',
-            'Panama': '#9C89DC',
-            'Communist China': '#A92137',
-            'Tannu Tuva': '#C3A8F6',
-            'Yemen': '#8D5F5C',
-        }
-
-        function rgbToHex(r, g, b) {
-            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
-        }
-
-        function getColorAtPixel(event) {
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            const x = (event.clientX - rect.left) * scaleX;
-            const y = (event.clientY - rect.top) * scaleY;
-            const imageData = ctx.getImageData(x, y, 1, 1).data;
-            const colorHex = rgbToHex(imageData[0], imageData[1], imageData[2]);
-            console.log(colorHex); // Debugging: Logs the color hex code to console
-            return colorHex;
-        }
-
-        function getNationFromColor(color) {
-            for (const [nation, hex] of Object.entries(colors)) {
-                // Fix 1: Use strict comparison with the color hex in uppercase
-                if (hex.toUpperCase() === color) {
-                    return nation;
-                }
-            }
-            return "the border"; // This means no matching color was found
-        }
-
-        canvas.addEventListener('click', (event) => {
-            const color = getColorAtPixel(event);
-            const nation = getNationFromColor(color);
-            colorDisplay.textContent = `You clicked on ${nation}`;
-        });
-        </script>
-        <div class="how-to-play-widget">
-            <button class="how-to-play-button">How to Play</button>
-            <div class="how-to-play-content">
-                <p style = "color: black">If your coming back after a while, go to the announcement page to see what you missed. Here you can see the map of the world. At the top of the screen, players will find several tabs such as Map, Ask For Aid, Wars, and more. These tabs provide different functionalities and options to manage your nation and its interactions with others.</p>
-        </div>
-  </div>
-    """
-    file_path = "AWSDefcon1App/templates/AWSDefcon1App/JSMap.html"
-    return render(request, "AWSDefcon1App/JSMap.html",{'html_content': html_content ,"game_id":game_id})        
         
 @login_required(login_url = 'login')
 def diplomacy(request,game_id):
@@ -2085,11 +2081,11 @@ def current_wars(request,game_id):
             game_instance.player_field_name = User.objects.get(username='loser')
             game_instance.save()
             maper = Map.objects.get(number=game_id, game = Games.objects.get(id=game_id))
-            enemy_squares = Square.objects.filter(map=maper, owner=loser.name)
+            enemy_squares = Square.objects.filter(map=maper, owner=loser)
             print("Number of enemy squares:", len(enemy_squares))
             for square in enemy_squares:
-                square.owner = winner.name
-                color = colors.get(winner.name)
+                square.owner = winner
+                color = colors.get(request.POST.get('winner'))
                 square.color = color
                 square.save()
 
@@ -2098,189 +2094,162 @@ def current_wars(request,game_id):
     else:
         return render(request, 'AWSDefcon1App/current_wars.html', {'wars': wars, 'playernation': playernation, "game_id":game_id, "allies":allies})
 
-@login_required
+@login_required(login_url='login')
 def map(request, game_id):
     color_filter_dict = {
-        '#4892FF': 'invert(49%) sepia(76%) saturate(1792%) hue-rotate(196deg) brightness(100%) contrast(103%)',
-        '#ff4879': 'invert(44%) sepia(70%) saturate(2984%) hue-rotate(318deg) brightness(101%) contrast(102%)',
-        '#a3101f': 'invert(13%) sepia(96%) saturate(5796%) hue-rotate(350deg) brightness(65%) contrast(92%)',
-        '#56a552': 'invert(52%) sepia(7%) saturate(2676%) hue-rotate(69deg) brightness(105%) contrast(99%)',
-        '#62bd52': 'invert(63%) sepia(55%) saturate(456%) hue-rotate(65deg) brightness(92%) contrast(88%)',
-        '#79ebff': 'invert(81%) sepia(10%) saturate(2513%) hue-rotate(163deg) brightness(105%) contrast(103%)',
-        '#4d0019': 'invert(11%) sepia(68%) saturate(2762%) hue-rotate(320deg) brightness(73%) contrast(112%)',
-        '#c7e9b4': 'invert(90%) sepia(18%) saturate(459%) hue-rotate(49deg) brightness(101%) contrast(86%)',
-        '#623c3c': 'invert(24%) sepia(7%) saturate(5090%) hue-rotate(314deg) brightness(69%) contrast(69%)',
-        '#e79481': 'invert(61%) sepia(38%) saturate(513%) hue-rotate(323deg) brightness(103%) contrast(81%)',
-        '#def7c6': 'invert(93%) sepia(10%) saturate(818%) hue-rotate(44deg) brightness(106%) contrast(94%)',
-        '#57a1ff': 'invert(61%) sepia(39%) saturate(3550%) hue-rotate(191deg) brightness(100%) contrast(104%)',
-        '#ffffff': 'invert(100%) sepia(0%) saturate(0%) hue-rotate(171deg) brightness(107%) contrast(106%)',
-        '#c23b85': 'invert(35%) sepia(16%) saturate(7490%) hue-rotate(301deg) brightness(82%) contrast(83%)',
-        '#9b3e33': 'invert(24%) sepia(33%) saturate(4109%) hue-rotate(344deg) brightness(83%) contrast(75%)',
-        '#4993ff': 'invert(49%) sepia(76%) saturate(1792%) hue-rotate(196deg) brightness(100%) contrast(103%)',
-        '#ffa47f': 'invert(74%) sepia(49%) saturate(761%) hue-rotate(311deg) brightness(106%) contrast(101%)',
-        '#dfe5a0': 'invert(96%) sepia(97%) saturate(352%) hue-rotate(5deg) brightness(94%) contrast(90%)',
-        '#ca828b': 'invert(62%) sepia(26%) saturate(512%) hue-rotate(303deg) brightness(88%) contrast(98%)',
-        '#fff6ff': 'invert(100%) sepia(20%) saturate(3203%) hue-rotate(192deg) brightness(103%) contrast(103%)',
-        '#ffb25f': 'invert(68%) sepia(81%) saturate(387%) hue-rotate(333deg) brightness(101%) contrast(101%)',
-        '#c80a0a': 'invert(14%) sepia(57%) saturate(4472%) hue-rotate(349deg) brightness(114%) contrast(113%)',
-        '#ffff79': 'invert(96%) sepia(99%) saturate(624%) hue-rotate(341deg) brightness(107%) contrast(103%)',
-        '#ffff9b': 'invert(99%) sepia(20%) saturate(2017%) hue-rotate(337deg) brightness(105%) contrast(108%)',
-        '#33965b': 'invert(50%) sepia(25%) saturate(982%) hue-rotate(91deg) brightness(92%) contrast(91%)',
-        '#86c66c': 'invert(72%) sepia(51%) saturate(352%) hue-rotate(58deg) brightness(90%) contrast(90%)',
-        '#c3a5f5': 'invert(80%) sepia(51%) saturate(3224%) hue-rotate(203deg) brightness(103%) contrast(92%)',
-        '#ffff77': 'invert(95%) sepia(10%) saturate(2062%) hue-rotate(1deg) brightness(108%) contrast(101%)',
-        '#ac7a58': 'invert(59%) sepia(8%) saturate(2156%) hue-rotate(341deg) brightness(85%) contrast(86%)',
-        '#ff7789': 'invert(51%) sepia(17%) saturate(1640%) hue-rotate(304deg) brightness(114%) contrast(101%)',
-        '#49bb7e': 'invert(63%) sepia(25%) saturate(879%) hue-rotate(95deg) brightness(96%) contrast(87%)',
-        '#46d8cb': 'invert(68%) sepia(90%) saturate(302%) hue-rotate(121deg) brightness(93%) contrast(90%)',
-        '#2eadff': 'invert(56%) sepia(41%) saturate(3098%) hue-rotate(181deg) brightness(104%) contrast(105%)',
-        '#acbe99': 'invert(83%) sepia(13%) saturate(525%) hue-rotate(47deg) brightness(92%) contrast(76%)',
-        '#c79679': 'invert(83%) sepia(13%) saturate(525%) hue-rotate(47deg) brightness(92%) contrast(76%)',
-        '#5e5ea4': 'invert(38%) sepia(27%) saturate(1019%) hue-rotate(202deg) brightness(92%) contrast(85%)',
-        '#ffb35f': 'invert(75%) sepia(19%) saturate(1336%) hue-rotate(338deg) brightness(101%) contrast(101%)',
-        '#525252': 'invert(31%) sepia(0%) saturate(0%) hue-rotate(231deg) brightness(95%) contrast(86%)',
-        '#329a00': 'invert(42%) sepia(98%) saturate(1929%) hue-rotate(68deg) brightness(91%) contrast(101%)',
-        '#fbdf0a': 'invert(91%) sepia(24%) saturate(4904%) hue-rotate(355deg) brightness(110%) contrast(97%)',
-        '#be96fa': 'invert(64%) sepia(20%) saturate(916%) hue-rotate(221deg) brightness(97%) contrast(102%)',
-        '#fee8c8': 'invert(92%) sepia(12%) saturate(1135%) hue-rotate(319deg) brightness(107%) contrast(99%)',
-        '#b496e6': 'invert(68%) sepia(10%) saturate(2409%) hue-rotate(214deg) brightness(96%) contrast(88%)',
-        '#abbe99': 'invert(85%) sepia(20%) saturate(319%) hue-rotate(48deg) brightness(83%) contrast(92%)',
-        '#bdccff': 'invert(69%) sepia(73%) saturate(172%) hue-rotate(192deg) brightness(101%) contrast(102%)',
-        '#4696fa': 'invert(51%) sepia(44%) saturate(2757%) hue-rotate(194deg) brightness(102%) contrast(96%)',
-        '#a5e684': 'invert(84%) sepia(33%) saturate(519%) hue-rotate(47deg) brightness(97%) contrast(89%)',
-        '#68cf75': 'invert(75%) sepia(95%) saturate(261%) hue-rotate(66deg) brightness(83%) contrast(94%)',
-        '#927a30': 'invert(46%) sepia(32%) saturate(812%) hue-rotate(8deg) brightness(97%) contrast(86%)',
-        '#8b40a6': 'invert(33%) sepia(18%) saturate(3148%) hue-rotate(247deg) brightness(94%) contrast(93%)',
-        '#fff375': 'invert(83%) sepia(47%) saturate(437%) hue-rotate(1deg) brightness(106%) contrast(101%)',
-        '#3fb08d': 'invert(56%) sepia(68%) saturate(352%) hue-rotate(110deg) brightness(93%) contrast(87%)',
-        '#698948': 'invert(51%) sepia(44%) saturate(432%) hue-rotate(47deg) brightness(88%) contrast(85%)',
-        '#bea0f0': 'invert(67%) sepia(40%) saturate(756%) hue-rotate(210deg) brightness(98%) contrast(92%)',
-        '#5a771d': 'invert(36%) sepia(99%) saturate(329%) hue-rotate(38deg) brightness(94%) contrast(91%)',
-        '#c15151': 'invert(29%) sepia(16%) saturate(3802%) hue-rotate(322deg) brightness(122%) contrast(77%)',
-        '#ffbe7f': 'invert(99%) sepia(30%) saturate(7468%) hue-rotate(303deg) brightness(102%) contrast(101%)',
-        '#fabe78': 'invert(100%) sepia(98%) saturate(2728%) hue-rotate(305deg) brightness(103%) contrast(96%)',
-        '#5c927e': 'invert(57%) sepia(16%) saturate(765%) hue-rotate(106deg) brightness(90%) contrast(84%)',
-        '#685b84': 'invert(40%) sepia(7%) saturate(2312%) hue-rotate(218deg) brightness(89%) contrast(84%)',
-        '#8a9a74': 'invert(63%) sepia(13%) saturate(665%) hue-rotate(43deg) brightness(92%) contrast(87%)',
-        '#473070': 'invert(22%) sepia(16%) saturate(2205%) hue-rotate(220deg) brightness(94%) contrast(96%)',
-        '#ab6f72': 'invert(47%) sepia(30%) saturate(545%) hue-rotate(308deg) brightness(97%) contrast(81%)',
-        '#63cdfe': 'invert(77%) sepia(18%) saturate(2815%) hue-rotate(170deg) brightness(102%) contrast(99%)',
-        '#ff7847': 'invert(66%) sepia(31%) saturate(5034%) hue-rotate(330deg) brightness(101%) contrast(101%)',
-        '#53d0d9': 'invert(74%) sepia(12%) saturate(1682%) hue-rotate(135deg) brightness(98%) contrast(88%)',
-        '#809141': 'invert(55%) sepia(65%) saturate(362%) hue-rotate(32deg) brightness(85%) contrast(81%)',
-        '#c79779': 'invert(66%) sepia(14%) saturate(917%) hue-rotate(340deg) brightness(94%) contrast(90%)',
-        '#d7f0c8': 'invert(93%) sepia(28%) saturate(313%) hue-rotate(39deg) brightness(102%) contrast(88%)',
-        '#7b7cb8': 'invert(57%) sepia(11%) saturate(1473%) hue-rotate(201deg) brightness(86%) contrast(85%)',
-        '#ffeab1': 'invert(88%) sepia(21%) saturate(625%) hue-rotate(337deg) brightness(103%) contrast(105%)',
-        '#cdafff': 'invert(82%) sepia(42%) saturate(2835%) hue-rotate(199deg) brightness(100%) contrast(104%)',
-        '#fffeff': 'invert(93%) sepia(7%) saturate(622%) hue-rotate(283deg) brightness(108%) contrast(104%)',
-        '#8adba2': 'invert(83%) sepia(21%) saturate(604%) hue-rotate(84deg) brightness(92%) contrast(92%)',
-        '#456722': 'invert(28%) sepia(100%) saturate(336%) hue-rotate(47deg) brightness(97%) contrast(85%)',
-        '#c8aafa': 'invert(68%) sepia(10%) saturate(1458%) hue-rotate(219deg) brightness(104%) contrast(96%)',
-        '#92b2bf': 'invert(69%) sepia(10%) saturate(716%) hue-rotate(152deg) brightness(100%) contrast(85%)',
-        '#ff4979': 'invert(38%) sepia(58%) saturate(1973%) hue-rotate(320deg) brightness(105%) contrast(101%)',
-        '#b99beb': 'invert(70%) sepia(23%) saturate(2318%) hue-rotate(206deg) brightness(102%) contrast(84%)',
-        '#905c5c': 'invert(43%) sepia(16%) saturate(1004%) hue-rotate(314deg) brightness(90%) contrast(88%)',
-        '#651e29': 'invert(12%) sepia(67%) saturate(1955%) hue-rotate(325deg) brightness(93%) contrast(92%)',
-        '#9e8add': 'invert(68%) sepia(10%) saturate(5167%) hue-rotate(206deg) brightness(91%) contrast(89%)',
-        '#b2233b': 'invert(18%) sepia(38%) saturate(4969%) hue-rotate(333deg) brightness(96%) contrast(93%)',
-        '#c6a9f8': 'invert(74%) sepia(33%) saturate(968%) hue-rotate(203deg) brightness(95%) contrast(104%)',
-        '#905d5d': 'invert(42%) sepia(7%) saturate(2251%) hue-rotate(314deg) brightness(92%) contrast(80%)',
-        }
-    all_squares = Square.objects.filter(map = Map.objects.get(number=game_id, game = Games.objects.get(id=game_id)))
-    
+    '#4892FF': 'invert(49%) sepia(76%) saturate(1792%) hue-rotate(196deg) brightness(100%) contrast(103%)',
+    '#ff4879': 'invert(44%) sepia(70%) saturate(2984%) hue-rotate(318deg) brightness(101%) contrast(102%)',
+    '#a3101f': 'invert(13%) sepia(96%) saturate(5796%) hue-rotate(350deg) brightness(65%) contrast(92%)',
+    '#56a552': 'invert(52%) sepia(7%) saturate(2676%) hue-rotate(69deg) brightness(105%) contrast(99%)',
+    '#62bd52': 'invert(63%) sepia(55%) saturate(456%) hue-rotate(65deg) brightness(92%) contrast(88%)',
+    '#79ebff': 'invert(81%) sepia(10%) saturate(2513%) hue-rotate(163deg) brightness(105%) contrast(103%)',
+    '#4d0019': 'invert(11%) sepia(68%) saturate(2762%) hue-rotate(320deg) brightness(73%) contrast(112%)',
+    '#c7e9b4': 'invert(90%) sepia(18%) saturate(459%) hue-rotate(49deg) brightness(101%) contrast(86%)',
+    '#623c3c': 'invert(24%) sepia(7%) saturate(5090%) hue-rotate(314deg) brightness(69%) contrast(69%)',
+    '#e79481': 'invert(61%) sepia(38%) saturate(513%) hue-rotate(323deg) brightness(103%) contrast(81%)',
+    '#def7c6': 'invert(93%) sepia(10%) saturate(818%) hue-rotate(44deg) brightness(106%) contrast(94%)',
+    '#57a1ff': 'invert(61%) sepia(39%) saturate(3550%) hue-rotate(191deg) brightness(100%) contrast(104%)',
+    '#ffffff': 'invert(100%) sepia(0%) saturate(0%) hue-rotate(171deg) brightness(107%) contrast(106%)',
+    '#c23b85': 'invert(35%) sepia(16%) saturate(7490%) hue-rotate(301deg) brightness(82%) contrast(83%)',
+    '#9b3e33': 'invert(24%) sepia(33%) saturate(4109%) hue-rotate(344deg) brightness(83%) contrast(75%)',
+    '#4993ff': 'invert(49%) sepia(76%) saturate(1792%) hue-rotate(196deg) brightness(100%) contrast(103%)',
+    '#ffa47f': 'invert(74%) sepia(49%) saturate(761%) hue-rotate(311deg) brightness(106%) contrast(101%)',
+    '#dfe5a0': 'invert(96%) sepia(97%) saturate(352%) hue-rotate(5deg) brightness(94%) contrast(90%)',
+    '#ca828b': 'invert(62%) sepia(26%) saturate(512%) hue-rotate(303deg) brightness(88%) contrast(98%)',
+    '#fff6ff': 'invert(100%) sepia(20%) saturate(3203%) hue-rotate(192deg) brightness(103%) contrast(103%)',
+    '#ffb25f': 'invert(68%) sepia(81%) saturate(387%) hue-rotate(333deg) brightness(101%) contrast(101%)',
+    '#c80a0a': 'invert(14%) sepia(57%) saturate(4472%) hue-rotate(349deg) brightness(114%) contrast(113%)',
+    '#ffff79': 'invert(96%) sepia(99%) saturate(624%) hue-rotate(341deg) brightness(107%) contrast(103%)',
+    '#ffff9b': 'invert(99%) sepia(20%) saturate(2017%) hue-rotate(337deg) brightness(105%) contrast(108%)',
+    '#33965b': 'invert(50%) sepia(25%) saturate(982%) hue-rotate(91deg) brightness(92%) contrast(91%)',
+    '#86c66c': 'invert(72%) sepia(51%) saturate(352%) hue-rotate(58deg) brightness(90%) contrast(90%)',
+    '#c3a5f5': 'invert(80%) sepia(51%) saturate(3224%) hue-rotate(203deg) brightness(103%) contrast(92%)',
+    '#ffff77': 'invert(95%) sepia(10%) saturate(2062%) hue-rotate(1deg) brightness(108%) contrast(101%)',
+    '#ac7a58': 'invert(59%) sepia(8%) saturate(2156%) hue-rotate(341deg) brightness(85%) contrast(86%)',
+    '#ff7789': 'invert(51%) sepia(17%) saturate(1640%) hue-rotate(304deg) brightness(114%) contrast(101%)',
+    '#49bb7e': 'invert(63%) sepia(25%) saturate(879%) hue-rotate(95deg) brightness(96%) contrast(87%)',
+    '#46d8cb': 'invert(68%) sepia(90%) saturate(302%) hue-rotate(121deg) brightness(93%) contrast(90%)',
+    '#2eadff': 'invert(56%) sepia(41%) saturate(3098%) hue-rotate(181deg) brightness(104%) contrast(105%)',
+    '#acbe99': 'invert(83%) sepia(13%) saturate(525%) hue-rotate(47deg) brightness(92%) contrast(76%)',
+    '#c79679': 'invert(83%) sepia(13%) saturate(525%) hue-rotate(47deg) brightness(92%) contrast(76%)',
+    '#5e5ea4': 'invert(38%) sepia(27%) saturate(1019%) hue-rotate(202deg) brightness(92%) contrast(85%)',
+    '#ffb35f': 'invert(75%) sepia(19%) saturate(1336%) hue-rotate(338deg) brightness(101%) contrast(101%)',
+    '#525252': 'invert(31%) sepia(0%) saturate(0%) hue-rotate(231deg) brightness(95%) contrast(86%)',
+    '#329a00': 'invert(42%) sepia(98%) saturate(1929%) hue-rotate(68deg) brightness(91%) contrast(101%)',
+    '#fbdf0a': 'invert(91%) sepia(24%) saturate(4904%) hue-rotate(355deg) brightness(110%) contrast(97%)',
+    '#be96fa': 'invert(64%) sepia(20%) saturate(916%) hue-rotate(221deg) brightness(97%) contrast(102%)',
+    '#fee8c8': 'invert(92%) sepia(12%) saturate(1135%) hue-rotate(319deg) brightness(107%) contrast(99%)',
+    '#b496e6': 'invert(68%) sepia(10%) saturate(2409%) hue-rotate(214deg) brightness(96%) contrast(88%)',
+    '#abbe99': 'invert(85%) sepia(20%) saturate(319%) hue-rotate(48deg) brightness(83%) contrast(92%)',
+    '#bdccff': 'invert(69%) sepia(73%) saturate(172%) hue-rotate(192deg) brightness(101%) contrast(102%)',
+    '#4696fa': 'invert(51%) sepia(44%) saturate(2757%) hue-rotate(194deg) brightness(102%) contrast(96%)',
+    '#a5e684': 'invert(84%) sepia(33%) saturate(519%) hue-rotate(47deg) brightness(97%) contrast(89%)',
+    '#68cf75': 'invert(75%) sepia(95%) saturate(261%) hue-rotate(66deg) brightness(83%) contrast(94%)',
+    '#927a30': 'invert(46%) sepia(32%) saturate(812%) hue-rotate(8deg) brightness(97%) contrast(86%)',
+    '#8b40a6': 'invert(33%) sepia(18%) saturate(3148%) hue-rotate(247deg) brightness(94%) contrast(93%)',
+    '#fff375': 'invert(83%) sepia(47%) saturate(437%) hue-rotate(1deg) brightness(106%) contrast(101%)',
+    '#3fb08d': 'invert(56%) sepia(68%) saturate(352%) hue-rotate(110deg) brightness(93%) contrast(87%)',
+    '#698948': 'invert(51%) sepia(44%) saturate(432%) hue-rotate(47deg) brightness(88%) contrast(85%)',
+    '#bea0f0': 'invert(67%) sepia(40%) saturate(756%) hue-rotate(210deg) brightness(98%) contrast(92%)',
+    '#5a771d': 'invert(36%) sepia(99%) saturate(329%) hue-rotate(38deg) brightness(94%) contrast(91%)',
+    '#c15151': 'invert(29%) sepia(16%) saturate(3802%) hue-rotate(322deg) brightness(122%) contrast(77%)',
+    '#ffbe7f': 'invert(99%) sepia(30%) saturate(7468%) hue-rotate(303deg) brightness(102%) contrast(101%)',
+    '#fabe78': 'invert(100%) sepia(98%) saturate(2728%) hue-rotate(305deg) brightness(103%) contrast(96%)',
+    '#5c927e': 'invert(57%) sepia(16%) saturate(765%) hue-rotate(106deg) brightness(90%) contrast(84%)',
+    '#685b84': 'invert(40%) sepia(7%) saturate(2312%) hue-rotate(218deg) brightness(89%) contrast(84%)',
+    '#8a9a74': 'invert(63%) sepia(13%) saturate(665%) hue-rotate(43deg) brightness(92%) contrast(87%)',
+    '#473070': 'invert(22%) sepia(16%) saturate(2205%) hue-rotate(220deg) brightness(94%) contrast(96%)',
+    '#ab6f72': 'invert(47%) sepia(30%) saturate(545%) hue-rotate(308deg) brightness(97%) contrast(81%)',
+    '#63cdfe': 'invert(77%) sepia(18%) saturate(2815%) hue-rotate(170deg) brightness(102%) contrast(99%)',
+    '#ff7847': 'invert(66%) sepia(31%) saturate(5034%) hue-rotate(330deg) brightness(101%) contrast(101%)',
+    '#53d0d9': 'invert(74%) sepia(12%) saturate(1682%) hue-rotate(135deg) brightness(98%) contrast(88%)',
+    '#809141': 'invert(55%) sepia(65%) saturate(362%) hue-rotate(32deg) brightness(85%) contrast(81%)',
+    '#c79779': 'invert(66%) sepia(14%) saturate(917%) hue-rotate(340deg) brightness(94%) contrast(90%)',
+    '#d7f0c8': 'invert(93%) sepia(28%) saturate(313%) hue-rotate(39deg) brightness(102%) contrast(88%)',
+    '#7b7cb8': 'invert(57%) sepia(11%) saturate(1473%) hue-rotate(201deg) brightness(86%) contrast(85%)',
+    '#ffeab1': 'invert(88%) sepia(21%) saturate(625%) hue-rotate(337deg) brightness(103%) contrast(105%)',
+    '#cdafff': 'invert(82%) sepia(42%) saturate(2835%) hue-rotate(199deg) brightness(100%) contrast(104%)',
+    '#fffeff': 'invert(93%) sepia(7%) saturate(622%) hue-rotate(283deg) brightness(108%) contrast(104%)',
+    '#8adba2': 'invert(83%) sepia(21%) saturate(604%) hue-rotate(84deg) brightness(92%) contrast(92%)',
+    '#456722': 'invert(28%) sepia(100%) saturate(336%) hue-rotate(47deg) brightness(97%) contrast(85%)',
+    '#c8aafa': 'invert(68%) sepia(10%) saturate(1458%) hue-rotate(219deg) brightness(104%) contrast(96%)',
+    '#92b2bf': 'invert(69%) sepia(10%) saturate(716%) hue-rotate(152deg) brightness(100%) contrast(85%)',
+    '#ff4979': 'invert(38%) sepia(58%) saturate(1973%) hue-rotate(320deg) brightness(105%) contrast(101%)',
+    '#b99beb': 'invert(70%) sepia(23%) saturate(2318%) hue-rotate(206deg) brightness(102%) contrast(84%)',
+    '#905c5c': 'invert(43%) sepia(16%) saturate(1004%) hue-rotate(314deg) brightness(90%) contrast(88%)',
+    '#651e29': 'invert(12%) sepia(67%) saturate(1955%) hue-rotate(325deg) brightness(93%) contrast(92%)',
+    '#9e8add': 'invert(68%) sepia(10%) saturate(5167%) hue-rotate(206deg) brightness(91%) contrast(89%)',
+    '#b2233b': 'invert(18%) sepia(38%) saturate(4969%) hue-rotate(333deg) brightness(96%) contrast(93%)',
+    '#c6a9f8': 'invert(74%) sepia(33%) saturate(968%) hue-rotate(203deg) brightness(95%) contrast(104%)',
+    '#905d5d': 'invert(42%) sepia(7%) saturate(2251%) hue-rotate(314deg) brightness(92%) contrast(80%)',
+    }
+    all_squares = Square.objects.filter(map=Map.objects.get(number=game_id, game=Games.objects.get(id=game_id)))
     all_squares_list = list(all_squares.values('name', 'color'))
-    color_filter_json = json.dumps(color_filter_dict)
-            
-    html_content = """ 
+    
+    html_content = """
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>State Images with Colors</title>
+        <style>
+            canvas {
+                display: block;
+                margin: auto;
+                border: 1px solid #000;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas id="canvas" style="background-color:skyblue;"></canvas>
+        <div style="text-align: center;" id="colorDisplay">Click on the map to see the nation.</div>
 
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>State Images with Colors</title>
-            <style>
-                canvas {
-                    display: block;
-                    margin: auto;
-                    border: 1px solid #000;
-                }
-            </style>
-        </head>
-        <body>
+        <script>
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            const colorDisplay = document.getElementById('colorDisplay');
+            canvas.width = 1120;
+            canvas.height = 480;
 
-            <canvas id="canvas" style="background-color:skyblue;"></canvas>
-            <div style="text-align: right;" id="colorDisplay">Click on the map to see the nation.</div>
-
-            <script>
-
-                const canvas = document.getElementById('canvas');
-                const ctx = canvas.getContext('2d');
-                const colorDisplay = document.getElementById('colorDisplay');
-                const backgroundColor = 'lightblue';
-
-                // List of images and their corresponding filters
-                const images = [
-        """
-
-        # Dynamically populate the image data
-    for square in all_squares:
-        html_content += f""" {{src: '/static/AWSDefcon1App/white_image/MapChart_Map.{square.name}.png', filter: ' {color_filter_dict[square.color]} '}},\n """
-
+            // List of images and their corresponding filters
+            const images = [
+    """
+    
+    for square in all_squares_list:
+        square_name = square['name']
+        square_color = square['color']
+        html_content += f"{{src: '/static/AWSDefcon1App/white_image/MapChart_Map.{square_name}.png', filter: '{color_filter_dict[square_color]}' }},\n"
+    
     html_content += """
-                ];
+            ];
 
-                // Helper function to load an image
-                const loadImage = (src) => {
+            let loadedImages = [];
+
+            const loadImages = () => {
+                return Promise.all(images.map(imageData => {
                     return new Promise((resolve) => {
                         const img = new Image();
-                        img.onload = () => resolve(img);
-                        img.src = src;
+                        img.onload = () => {
+                            resolve({img, filter: imageData.filter});
+                        };
+                        img.src = imageData.src;
                     });
-                };
+                }));
+            };
 
-                // Set canvas dimensions (optional)
-                let maxWidth = 0;
-                let maxHeight = 0;
+            loadImages().then((results) => {
+                loadedImages = results;
+                drawImages();
+            });
 
-                // Lazy load images when they come into view using IntersectionObserver
-                const lazyLoadImages = async (entries, observer) => {
-                    for (const entry of entries) {
-                        if (entry.isIntersecting) {
-                            const imgInfo = images[entry.target.dataset.index];
-                            const img = await loadImage(imgInfo.src);
-
-                            // Adjust canvas size based on image
-                            if (img.width > maxWidth) maxWidth = img.width;
-                            if (img.height > maxHeight) maxHeight = img.height;
-                            canvas.width = maxWidth;
-                            canvas.height = maxHeight;
-
-                            // Draw image with filter
-                            ctx.save();
-                            ctx.filter = imgInfo.filter;
-                            ctx.drawImage(img, 0, 0);
-                            ctx.restore();
-
-                            // Unobserve once the image is loaded
-                            observer.unobserve(entry.target);
-                        }
-                    }
-                };
-
-                // Initialize IntersectionObserver
-                const observer = new IntersectionObserver(lazyLoadImages, {
-                    root: null, // Use the viewport
-                    rootMargin: '0px',
-                    threshold: 0.1 // Trigger when 10% of the element is visible
+            const drawImages = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                loadedImages.forEach(({img, filter}) => {
+                    ctx.save();
+                    ctx.filter = filter;
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    ctx.restore();
                 });
+            };
 
-                // Observe each image placeholder
-                images.forEach((_, index) => {
-                    const placeholder = document.createElement('div');
-                    placeholder.dataset.index = index;
-                    document.body.appendChild(placeholder);
-                    observer.observe(placeholder);
-                });
-            drawImages();
             const colors = {
                 'United Kingdom': '#FF4777',
                 'Soviet Union': '#A2101E',
@@ -2367,54 +2336,44 @@ def map(request, game_id):
                 'Tannu Tuva': '#C3A8F6',
                 'Yemen': '#8D5F5C',
             }
+        const hexToRgb = (hex) => {
+            const bigint = parseInt(hex.slice(1), 16);
+            const r = (bigint >> 16) & 255;
+            const g = (bigint >> 8) & 255;
+            const b = bigint & 255;
+            return `rgb(${r}, ${g}, ${b})`;
+        };
 
-            function rgbToHex(r, g, b) {
-                return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
-            }
+        // Create a reverse map of RGB colors to country names
+        const rgbToCountry = {};
+        for (const country in colors) {
+            const rgbColor = hexToRgb(colors[country]);
+            rgbToCountry[rgbColor] = country;
+        }
 
-            function getColorAtPixel(event) {
-                const rect = canvas.getBoundingClientRect();
-                const scaleX = canvas.width / rect.width;
-                const scaleY = canvas.height / rect.height;
-                const x = (event.clientX - rect.left) * scaleX;
-                const y = (event.clientY - rect.top) * scaleY;
-                const imageData = ctx.getImageData(x, y, 1, 1).data;
-                const colorHex = rgbToHex(imageData[0], imageData[1], imageData[2]);
-                console.log(colorHex); // Debugging: Logs the color hex code to console
-                return colorHex;
-            }
+        canvas.addEventListener('click', (event) => {
+            const { offsetX, offsetY } = event;
+            const imageData = ctx.getImageData(offsetX, offsetY, 1, 1).data;
+            const rgb = `rgb(${imageData[0]}, ${imageData[1]}, ${imageData[2]})`;
 
-            function getNationFromColor(color) {
-                for (const [nation, hex] of Object.entries(colors)) {
-                    // Fix 1: Use strict comparison with the color hex in uppercase
-                    if (hex.toUpperCase() === color) {
-                        return nation;
-                    }
-                }
-                return "the border"; // This means no matching color was found
-            }
+            // Find the corresponding country for the clicked color
+            const country = rgbToCountry[rgb] || "the ocean";
+            colorDisplay.textContent = `You clicked on: ${country}`;
+        });
+        </script>
+    </body>
 
-            canvas.addEventListener('click', (event) => {
-                const color = getColorAtPixel(event);
-                const nation = getNationFromColor(color);
-                colorDisplay.textContent = `You clicked on ${nation}`;
-            });
-            </script>
-            <div class="how-to-play-widget">
-                <button class="how-to-play-button">How to Play</button>
-                <div class="how-to-play-content">
-                    <p style = "color: black">If your coming back after a while, go to the announcement page to see what you missed. Here you can see the map of the world. At the top of the screen, players will find several tabs such as Map, Ask For Aid, Wars, and more. These tabs provide different functionalities and options to manage your nation and its interactions with others.</p>
-            </div>
-    </div>
-        """
+    """
     
     file_path = "AWSDefcon1App/templates/AWSDefcon1App/JSMap.html"
+
     return render(request, "AWSDefcon1App/JSMap.html",{'html_content': html_content ,"game_id":game_id})
 
     
 def makegame(request,game_id):
     if request.method == 'GET':
-          return render(request, "AWSDefcon1App/makegame.html", {"game_id":game_id})
+        make_game = True
+        return render(request, "AWSDefcon1App/makegame.html", {"game_id":next_id, "make_game":make_game})
     if game_id > 6:
       folder_path = 'AWSDefcon1App/static/AWSDefcon1App'
       file_path = f'{folder_path}/map{game_id}.png'
@@ -12866,313 +12825,4 @@ def makegame(request,game_id):
     square_instance.coastal = True
     square_instance.save()
 
-    color_filter_dict = {
-        '#4892FF': 'invert(49%) sepia(76%) saturate(1792%) hue-rotate(196deg) brightness(100%) contrast(103%)',
-        '#ff4879': 'invert(44%) sepia(70%) saturate(2984%) hue-rotate(318deg) brightness(101%) contrast(102%)',
-        '#a3101f': 'invert(13%) sepia(96%) saturate(5796%) hue-rotate(350deg) brightness(65%) contrast(92%)',
-        '#56a552': 'invert(52%) sepia(7%) saturate(2676%) hue-rotate(69deg) brightness(105%) contrast(99%)',
-        '#62bd52': 'invert(63%) sepia(55%) saturate(456%) hue-rotate(65deg) brightness(92%) contrast(88%)',
-        '#79ebff': 'invert(81%) sepia(10%) saturate(2513%) hue-rotate(163deg) brightness(105%) contrast(103%)',
-        '#4d0019': 'invert(11%) sepia(68%) saturate(2762%) hue-rotate(320deg) brightness(73%) contrast(112%)',
-        '#c7e9b4': 'invert(90%) sepia(18%) saturate(459%) hue-rotate(49deg) brightness(101%) contrast(86%)',
-        '#623c3c': 'invert(24%) sepia(7%) saturate(5090%) hue-rotate(314deg) brightness(69%) contrast(69%)',
-        '#e79481': 'invert(61%) sepia(38%) saturate(513%) hue-rotate(323deg) brightness(103%) contrast(81%)',
-        '#def7c6': 'invert(93%) sepia(10%) saturate(818%) hue-rotate(44deg) brightness(106%) contrast(94%)',
-        '#57a1ff': 'invert(61%) sepia(39%) saturate(3550%) hue-rotate(191deg) brightness(100%) contrast(104%)',
-        '#ffffff': 'invert(100%) sepia(0%) saturate(0%) hue-rotate(171deg) brightness(107%) contrast(106%)',
-        '#c23b85': 'invert(35%) sepia(16%) saturate(7490%) hue-rotate(301deg) brightness(82%) contrast(83%)',
-        '#9b3e33': 'invert(24%) sepia(33%) saturate(4109%) hue-rotate(344deg) brightness(83%) contrast(75%)',
-        '#4993ff': 'invert(49%) sepia(76%) saturate(1792%) hue-rotate(196deg) brightness(100%) contrast(103%)',
-        '#ffa47f': 'invert(74%) sepia(49%) saturate(761%) hue-rotate(311deg) brightness(106%) contrast(101%)',
-        '#dfe5a0': 'invert(96%) sepia(97%) saturate(352%) hue-rotate(5deg) brightness(94%) contrast(90%)',
-        '#ca828b': 'invert(62%) sepia(26%) saturate(512%) hue-rotate(303deg) brightness(88%) contrast(98%)',
-        '#fff6ff': 'invert(100%) sepia(20%) saturate(3203%) hue-rotate(192deg) brightness(103%) contrast(103%)',
-        '#ffb25f': 'invert(68%) sepia(81%) saturate(387%) hue-rotate(333deg) brightness(101%) contrast(101%)',
-        '#c80a0a': 'invert(14%) sepia(57%) saturate(4472%) hue-rotate(349deg) brightness(114%) contrast(113%)',
-        '#ffff79': 'invert(96%) sepia(99%) saturate(624%) hue-rotate(341deg) brightness(107%) contrast(103%)',
-        '#ffff9b': 'invert(99%) sepia(20%) saturate(2017%) hue-rotate(337deg) brightness(105%) contrast(108%)',
-        '#33965b': 'invert(50%) sepia(25%) saturate(982%) hue-rotate(91deg) brightness(92%) contrast(91%)',
-        '#86c66c': 'invert(72%) sepia(51%) saturate(352%) hue-rotate(58deg) brightness(90%) contrast(90%)',
-        '#c3a5f5': 'invert(80%) sepia(51%) saturate(3224%) hue-rotate(203deg) brightness(103%) contrast(92%)',
-        '#ffff77': 'invert(95%) sepia(10%) saturate(2062%) hue-rotate(1deg) brightness(108%) contrast(101%)',
-        '#ac7a58': 'invert(59%) sepia(8%) saturate(2156%) hue-rotate(341deg) brightness(85%) contrast(86%)',
-        '#ff7789': 'invert(51%) sepia(17%) saturate(1640%) hue-rotate(304deg) brightness(114%) contrast(101%)',
-        '#49bb7e': 'invert(63%) sepia(25%) saturate(879%) hue-rotate(95deg) brightness(96%) contrast(87%)',
-        '#46d8cb': 'invert(68%) sepia(90%) saturate(302%) hue-rotate(121deg) brightness(93%) contrast(90%)',
-        '#2eadff': 'invert(56%) sepia(41%) saturate(3098%) hue-rotate(181deg) brightness(104%) contrast(105%)',
-        '#acbe99': 'invert(83%) sepia(13%) saturate(525%) hue-rotate(47deg) brightness(92%) contrast(76%)',
-        '#c79679': 'invert(83%) sepia(13%) saturate(525%) hue-rotate(47deg) brightness(92%) contrast(76%)',
-        '#5e5ea4': 'invert(38%) sepia(27%) saturate(1019%) hue-rotate(202deg) brightness(92%) contrast(85%)',
-        '#ffb35f': 'invert(75%) sepia(19%) saturate(1336%) hue-rotate(338deg) brightness(101%) contrast(101%)',
-        '#525252': 'invert(31%) sepia(0%) saturate(0%) hue-rotate(231deg) brightness(95%) contrast(86%)',
-        '#329a00': 'invert(42%) sepia(98%) saturate(1929%) hue-rotate(68deg) brightness(91%) contrast(101%)',
-        '#fbdf0a': 'invert(91%) sepia(24%) saturate(4904%) hue-rotate(355deg) brightness(110%) contrast(97%)',
-        '#be96fa': 'invert(64%) sepia(20%) saturate(916%) hue-rotate(221deg) brightness(97%) contrast(102%)',
-        '#fee8c8': 'invert(92%) sepia(12%) saturate(1135%) hue-rotate(319deg) brightness(107%) contrast(99%)',
-        '#b496e6': 'invert(68%) sepia(10%) saturate(2409%) hue-rotate(214deg) brightness(96%) contrast(88%)',
-        '#abbe99': 'invert(85%) sepia(20%) saturate(319%) hue-rotate(48deg) brightness(83%) contrast(92%)',
-        '#bdccff': 'invert(69%) sepia(73%) saturate(172%) hue-rotate(192deg) brightness(101%) contrast(102%)',
-        '#4696fa': 'invert(51%) sepia(44%) saturate(2757%) hue-rotate(194deg) brightness(102%) contrast(96%)',
-        '#a5e684': 'invert(84%) sepia(33%) saturate(519%) hue-rotate(47deg) brightness(97%) contrast(89%)',
-        '#68cf75': 'invert(75%) sepia(95%) saturate(261%) hue-rotate(66deg) brightness(83%) contrast(94%)',
-        '#927a30': 'invert(46%) sepia(32%) saturate(812%) hue-rotate(8deg) brightness(97%) contrast(86%)',
-        '#8b40a6': 'invert(33%) sepia(18%) saturate(3148%) hue-rotate(247deg) brightness(94%) contrast(93%)',
-        '#fff375': 'invert(83%) sepia(47%) saturate(437%) hue-rotate(1deg) brightness(106%) contrast(101%)',
-        '#3fb08d': 'invert(56%) sepia(68%) saturate(352%) hue-rotate(110deg) brightness(93%) contrast(87%)',
-        '#698948': 'invert(51%) sepia(44%) saturate(432%) hue-rotate(47deg) brightness(88%) contrast(85%)',
-        '#bea0f0': 'invert(67%) sepia(40%) saturate(756%) hue-rotate(210deg) brightness(98%) contrast(92%)',
-        '#5a771d': 'invert(36%) sepia(99%) saturate(329%) hue-rotate(38deg) brightness(94%) contrast(91%)',
-        '#c15151': 'invert(29%) sepia(16%) saturate(3802%) hue-rotate(322deg) brightness(122%) contrast(77%)',
-        '#ffbe7f': 'invert(99%) sepia(30%) saturate(7468%) hue-rotate(303deg) brightness(102%) contrast(101%)',
-        '#fabe78': 'invert(100%) sepia(98%) saturate(2728%) hue-rotate(305deg) brightness(103%) contrast(96%)',
-        '#5c927e': 'invert(57%) sepia(16%) saturate(765%) hue-rotate(106deg) brightness(90%) contrast(84%)',
-        '#685b84': 'invert(40%) sepia(7%) saturate(2312%) hue-rotate(218deg) brightness(89%) contrast(84%)',
-        '#8a9a74': 'invert(63%) sepia(13%) saturate(665%) hue-rotate(43deg) brightness(92%) contrast(87%)',
-        '#473070': 'invert(22%) sepia(16%) saturate(2205%) hue-rotate(220deg) brightness(94%) contrast(96%)',
-        '#ab6f72': 'invert(47%) sepia(30%) saturate(545%) hue-rotate(308deg) brightness(97%) contrast(81%)',
-        '#63cdfe': 'invert(77%) sepia(18%) saturate(2815%) hue-rotate(170deg) brightness(102%) contrast(99%)',
-        '#ff7847': 'invert(66%) sepia(31%) saturate(5034%) hue-rotate(330deg) brightness(101%) contrast(101%)',
-        '#53d0d9': 'invert(74%) sepia(12%) saturate(1682%) hue-rotate(135deg) brightness(98%) contrast(88%)',
-        '#809141': 'invert(55%) sepia(65%) saturate(362%) hue-rotate(32deg) brightness(85%) contrast(81%)',
-        '#c79779': 'invert(66%) sepia(14%) saturate(917%) hue-rotate(340deg) brightness(94%) contrast(90%)',
-        '#d7f0c8': 'invert(93%) sepia(28%) saturate(313%) hue-rotate(39deg) brightness(102%) contrast(88%)',
-        '#7b7cb8': 'invert(57%) sepia(11%) saturate(1473%) hue-rotate(201deg) brightness(86%) contrast(85%)',
-        '#ffeab1': 'invert(88%) sepia(21%) saturate(625%) hue-rotate(337deg) brightness(103%) contrast(105%)',
-        '#cdafff': 'invert(82%) sepia(42%) saturate(2835%) hue-rotate(199deg) brightness(100%) contrast(104%)',
-        '#fffeff': 'invert(93%) sepia(7%) saturate(622%) hue-rotate(283deg) brightness(108%) contrast(104%)',
-        '#8adba2': 'invert(83%) sepia(21%) saturate(604%) hue-rotate(84deg) brightness(92%) contrast(92%)',
-        '#456722': 'invert(28%) sepia(100%) saturate(336%) hue-rotate(47deg) brightness(97%) contrast(85%)',
-        '#c8aafa': 'invert(68%) sepia(10%) saturate(1458%) hue-rotate(219deg) brightness(104%) contrast(96%)',
-        '#92b2bf': 'invert(69%) sepia(10%) saturate(716%) hue-rotate(152deg) brightness(100%) contrast(85%)',
-        '#ff4979': 'invert(38%) sepia(58%) saturate(1973%) hue-rotate(320deg) brightness(105%) contrast(101%)',
-        '#b99beb': 'invert(70%) sepia(23%) saturate(2318%) hue-rotate(206deg) brightness(102%) contrast(84%)',
-        '#905c5c': 'invert(43%) sepia(16%) saturate(1004%) hue-rotate(314deg) brightness(90%) contrast(88%)',
-        '#651e29': 'invert(12%) sepia(67%) saturate(1955%) hue-rotate(325deg) brightness(93%) contrast(92%)',
-        '#9e8add': 'invert(68%) sepia(10%) saturate(5167%) hue-rotate(206deg) brightness(91%) contrast(89%)',
-        '#b2233b': 'invert(18%) sepia(38%) saturate(4969%) hue-rotate(333deg) brightness(96%) contrast(93%)',
-        '#c6a9f8': 'invert(74%) sepia(33%) saturate(968%) hue-rotate(203deg) brightness(95%) contrast(104%)',
-        '#905d5d': 'invert(42%) sepia(7%) saturate(2251%) hue-rotate(314deg) brightness(92%) contrast(80%)',
-        }
-    all_squares = Square.objects.filter(map = Map.objects.get(number=game_id, game = Games.objects.get(id=game_id)))
-    
-    all_squares_list = list(all_squares.values('name', 'color'))
-    color_filter_json = json.dumps(color_filter_dict)
-            
-    html_content = """ 
-
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>State Images with Colors</title>
-            <style>
-                canvas {
-                    display: block;
-                    margin: auto;
-                    border: 1px solid #000;
-                }
-            </style>
-        </head>
-        <body>
-
-            <canvas id="canvas" style="background-color:skyblue;"></canvas>
-            <div style="text-align: right;" id="colorDisplay">Click on the map to see the nation.</div>
-
-            <script>
-
-                const canvas = document.getElementById('canvas');
-                const ctx = canvas.getContext('2d');
-                const colorDisplay = document.getElementById('colorDisplay');
-                const backgroundColor = 'lightblue';
-
-                // List of images and their corresponding filters
-                const images = [
-        """
-
-        # Dynamically populate the image data
-    for square in all_squares:
-        html_content += f""" {{src: '/static/AWSDefcon1App/white_image/MapChart_Map.{square.name}.png', filter: ' {color_filter_dict[square.color]} '}},\n """
-
-    html_content += """
-                ];
-
-                // Helper function to load an image
-                const loadImage = (src) => {
-                    return new Promise((resolve) => {
-                        const img = new Image();
-                        img.onload = () => resolve(img);
-                        img.src = src;
-                    });
-                };
-
-                // Set canvas dimensions (optional)
-                let maxWidth = 0;
-                let maxHeight = 0;
-
-                // Lazy load images when they come into view using IntersectionObserver
-                const lazyLoadImages = async (entries, observer) => {
-                    for (const entry of entries) {
-                        if (entry.isIntersecting) {
-                            const imgInfo = images[entry.target.dataset.index];
-                            const img = await loadImage(imgInfo.src);
-
-                            // Adjust canvas size based on image
-                            if (img.width > maxWidth) maxWidth = img.width;
-                            if (img.height > maxHeight) maxHeight = img.height;
-                            canvas.width = maxWidth;
-                            canvas.height = maxHeight;
-
-                            // Draw image with filter
-                            ctx.save();
-                            ctx.filter = imgInfo.filter;
-                            ctx.drawImage(img, 0, 0);
-                            ctx.restore();
-
-                            // Unobserve once the image is loaded
-                            observer.unobserve(entry.target);
-                        }
-                    }
-                };
-
-                // Initialize IntersectionObserver
-                const observer = new IntersectionObserver(lazyLoadImages, {
-                    root: null, // Use the viewport
-                    rootMargin: '0px',
-                    threshold: 0.1 // Trigger when 10% of the element is visible
-                });
-
-                // Observe each image placeholder
-                images.forEach((_, index) => {
-                    const placeholder = document.createElement('div');
-                    placeholder.dataset.index = index;
-                    document.body.appendChild(placeholder);
-                    observer.observe(placeholder);
-                });
-            drawImages();
-            const colors = {
-                'United Kingdom': '#FF4777',
-                'Soviet Union': '#A2101E',
-                'Italy': '#56A151',
-                'Second Brazilian Republic': '#60BA51',
-                'Sultanate of Aussa': '#4d0019',
-                'Turkey': '#C8E9B4',
-                'Norway': '#623C3A',
-                'Iraq': '#E6927F',
-                'Saudi Arabia': '#DDF7C6',
-                'United States': '#559FFF',
-                'Albania': '#C33A84',
-                'Dominion of Canada': '#983D32',
-                'France': '#4892FF',
-                'Kingdom of Hungary': '#FFA27E',
-                'China': '#DEE39A',
-                'Chile': '#C9818A',
-                'Peru': '#fff6ff',
-                'British Raj': '#C80D09',
-                'Spain': '#FFFF77',
-                'Kingdom of Greece': '#79e8ff',
-                'Lithuania': '#ffffA0',
-                'Mexico': '#85C56B',
-                'Ethiopia': '#C3A4F4',
-                'Romania': '#ffff73',
-                'Portugal': '#319358',
-                'Bhutan': '#AA7857',
-                'Poland': '#FF7487',
-                'Australia': '#48B97C',
-                'Czechoslovakia': '#44d7c8',
-                'Sweden': '#29ADFF',
-                'Venezuela': '#AABB98',
-                'Yugoslavia': '#5D5DA1',
-                'Netherlands': '#FCAE5D',
-                'German Reich': '#525252',
-                'Bulgaria': '#329700',
-                'Belgium': '#FBDD08',
-                'South Africa': '#BD95F9',
-                'Philippines': '#B395E6',
-                'Uruguay': '#A9BD97',
-                'Argentina': '#BCCCFF',
-                'Republic of Paraguay': '#4695F9',
-                'Mengkukuo': '#A3E381',
-                'Japan': '#FDE7C4',
-                'Ireland': '#66CD75',
-                'Costa Rica': '#91792F',
-                'Cuba': '#8C40A7',
-                'Colombia': '#AABB98',
-                'Sinkiang': '#3EAE8B',
-                'Yunnan': '#688947',
-                'Dominican Republic': '#BA9EEF',
-                'Mongolia': '#58751C',
-                'Switzerland': '#BE4F4D',
-                'Ecuador': '#FFBD7C',
-                'El Salvador': '#F8BF78',
-                'Iran': '#5C927E',
-                'Xibei San Ma': '#695A87',
-                'Denmark': '#AABB98',
-                'Guangxi Clique': '#899A73',
-                'Guatemala': '#46306D',
-                'Haiti': '#AA6E71',
-                'Finland': '#ffffff',
-                'Estonia': '#60CDFD',
-                'Manchukuo': '#FF7844',
-                'Afghanistan': '#55CED6',
-                'Honduras': '#7E8F3F',
-                'Iceland': '#C79677',
-                'Siam': '#D5EFC5',
-                'Dutch East Indies': '#FFAF5D',
-                'Latvia': '#7A7AB4',
-                'Bolivian Republic': '#FFE6AF',
-                'Liberia': '#CCAEFF',
-                'Austria': '#FFFDFF',
-                'Luxembourg': '#8BD9A1',
-                'Tibet': '#446520',
-                'Nepal': '#C6A8F9',
-                'Nicaragua': '#90B1BE',
-                'British Malaya': '#FF4776',
-                'New Zealand': '#B69AEA',
-                'Oman': '#92625D',
-                'Shanxi': '#601C27',
-                'Panama': '#9C89DC',
-                'Communist China': '#A92137',
-                'Tannu Tuva': '#C3A8F6',
-                'Yemen': '#8D5F5C',
-            }
-
-            function rgbToHex(r, g, b) {
-                return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
-            }
-
-            function getColorAtPixel(event) {
-                const rect = canvas.getBoundingClientRect();
-                const scaleX = canvas.width / rect.width;
-                const scaleY = canvas.height / rect.height;
-                const x = (event.clientX - rect.left) * scaleX;
-                const y = (event.clientY - rect.top) * scaleY;
-                const imageData = ctx.getImageData(x, y, 1, 1).data;
-                const colorHex = rgbToHex(imageData[0], imageData[1], imageData[2]);
-                console.log(colorHex); // Debugging: Logs the color hex code to console
-                return colorHex;
-            }
-
-            function getNationFromColor(color) {
-                for (const [nation, hex] of Object.entries(colors)) {
-                    // Fix 1: Use strict comparison with the color hex in uppercase
-                    if (hex.toUpperCase() === color) {
-                        return nation;
-                    }
-                }
-                return "the border"; // This means no matching color was found
-            }
-
-            canvas.addEventListener('click', (event) => {
-                const color = getColorAtPixel(event);
-                const nation = getNationFromColor(color);
-                colorDisplay.textContent = `You clicked on ${nation}`;
-            });
-            </script>
-            <div class="how-to-play-widget">
-                <button class="how-to-play-button">How to Play</button>
-                <div class="how-to-play-content">
-                    <p style = "color: black">If your coming back after a while, go to the announcement page to see what you missed. Here you can see the map of the world. At the top of the screen, players will find several tabs such as Map, Ask For Aid, Wars, and more. These tabs provide different functionalities and options to manage your nation and its interactions with others.</p>
-            </div>
-    </div>
-        """
-    
-    file_path = "AWSDefcon1App/templates/AWSDefcon1App/JSMap.html"
-    return render(request, "AWSDefcon1App/JSMap.html",{'html_content': html_content ,"game_id":game_id})
+    return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
