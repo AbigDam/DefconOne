@@ -22,10 +22,12 @@ Select Countries
     }
 </style>
 
-<form method="POST" action="{% url 'makegame' game_id=game_id %}" class="centered">
+<form method="POST" action="{% url 'makegame' game_id=game_id %}" class="centered"> <div class="info-bubble"> 
     {% csrf_token %}
     <fieldset>
-        <legend>Select Countries:</legend>
+        <legend>Select Countries: </legend> 
+        
+        <br>
         <label class="unboxed-list-instance"><input type="checkbox" name="countries" value="UK"> 🇬🇧 🇬🇧 UK 🇬🇧 🇬🇧</label><br>
         <label class="unboxed-list-instance"><input type="checkbox" name="countries" value="USA"> 🇺🇸 🇺🇸 USA 🇺s 🇺s</label><br>
         <label class="unboxed-list-instance"><input type="checkbox" name="countries" value="France"> 🇫🇷 🇫🇷 France 🇫🇷 🇫🇷</label><br>
@@ -37,7 +39,7 @@ Select Countries
         <br>
         <label class="unboxed-list-instance"><input type="checkbox" name="countries" value="Hard"> Hard Mode </label><br>
     </fieldset>
-    <button class = "attacker" type="submit">Submit</button>
+    <button class = "attacker" type="submit">Submit</button>  <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">The Un-Selected countries will appear on the map but will be unplayable</span> </div> 
 </form>
 
 <script>
@@ -89,10 +91,6 @@ Select Countries
                 console.log('Attacker class form submitted');
                 gifContainer.style.display = 'flex';
 
-                // Automatically hide the gif after a certain duration
-                setTimeout(() => {
-                    gifContainer.style.display = 'none';
-                }, 20000);  // Gif is visible for 20 seconds
             }
         });
 

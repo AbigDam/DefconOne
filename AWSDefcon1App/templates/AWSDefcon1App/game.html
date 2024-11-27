@@ -6,17 +6,17 @@
         <table class="table table-striped table-sm">
             <thead>
                 <tr>
-                    <th scope="col">Player</th>
-                    <th scope="col">Name</th>
-                    <th scope="col">States</th>
-                    <th scope="col">Divisions</th>
-                    <th scope="col">Boats</th>
-                    <th scope="col">Planes</th>
-                    <th scope="col">Alliance Name</th>
-                    <th scope="col">Points</th>
-                    <th scope="col">Nuke Time</th>
-                    <th scope="col">Nukes</th>
-                    <th scope="col">Spies</th>
+                    <th scope="col">Player  <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">Username of Player</span> </div> </th>
+                    <th scope="col">Name <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">Name of Country</span> </div> </th>
+                    <th scope="col">States <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">Amount of land (determines production) </span> </div> </th>
+                    <th scope="col">Divisions <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">Amount of Soldiers</span> </div> </th>
+                    <th scope="col">Boats  <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">Amount of Boats</span> </div> </th>
+                    <th scope="col">Planes <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">Amount of Planes</span> </div> </th>
+                    <th scope="col">Alliance Name <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">Name of Alliance</span> </div> </th>
+                    <th scope="col">Points <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">Points can be spent at the Focus tab to buy soldeirs, planes, etc.</span> </div> </th>
+                    <th scope="col">Nuke Time <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">Amount of turns left before you get nukes</span> </div> </th>
+                    <th scope="col">Nukes <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">The amount of nukes you have</span> </div> </th>
+                    <th scope="col">Spies <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">Spies can be used to run missions in the Spy tab</span> </div> </th>
                 </tr>
             </thead>
             <tbody>
@@ -38,43 +38,105 @@
             </tbody>
         </table>
     </div>
-    <h3>Nations</h3>
-    <div>
-        <table class="table table-striped table-sm">
-            <thead>
-                <tr>
-                    <th scope="col">Player</th>
-                    <th scope="col">Name</th>
-                    <th scope="col">States</th>
-                    <th scope="col">Alliance Name</th>
-                    <th scope="col">Times Nuked</th>
-                    <th scope="col">Attacks Left</th>
-                    <th scope="col">Hostility</th>
-                    <!-- Add more columns as needed -->
-                </tr>
-            </thead>
-            <tbody>
-                {% for nation in nations %}
-                    <tr>
-                        <td scope="row">{{ nation.user.username }}</td>
-                        <td scope="row">{{ nation.name }}</td>
-                        <td scope="row"> {{ nation.states }} </td>
-                        <td scope="row">{{ nation.alliance_name }}</td>
-                        <td scope="row">{{ nation.nuked }}</td>
-                        <td scope="row">{{ nation.attacks }}</td>
-                        <td scope="row">{{ nation.friendlyness }}</td>
-                        <!-- Add more cells as needed -->
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>    
-</div>
-<div class="how-to-play-widget">
-    <button class="how-to-play-button">How to Play</button>
-    <div class="how-to-play-content">
-        <p style = "color: black">Here you can see information about you and your allies.  States is the amount of land, which determines how much stuff you get each turn.  Its a good measure of power.  Divisions is the number of soldiers, which determines victory in ground battles and encirclements.  Planes determine air battles, bombing, and nuclear bombings.  Boats determine naval battles and landings.  Points are reasources you can trade in as national focuses.  Nuke time is the time left before you get nukes.  Spies is what determines the success of spy missions</p>
-</div>
+
+    <h3>Other Nations</h3>
+    <div style="display: flex; align-items: center; margin-bottom: 10px;">
+        <!-- Search Input -->
+        <input 
+            id="searchInput" 
+            type="text" 
+            placeholder="Search by Name" 
+            style="flex: 1; padding: 8px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; display: none;" 
+        />
+    
+        <!-- Toggle Button -->
+        <button 
+            id="toggleTableButton" 
+            style="
+                margin-left: 10px;
+                padding: 8px 16px;
+                font-size: 16px;
+                border: none;
+                border-radius: 5px;
+                background-color: #007bff;
+                color: white;
+                cursor: pointer;
+                box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+                transition: background-color 0.3s, transform 0.2s;
+            "
+        >
+            Show Other Nations
+        </button>
+    </div>
+    
+    <!-- Table -->
+    <table id="nationsTable" class="table table-striped table-sm" style="display: none;">
+        <thead>
+            <tr>
+                <th scope="col">Player</th>
+                <th scope="col">Name</th>
+                <th scope="col">States</th>
+                <th scope="col">Alliance Name</th>
+                <th scope="col">Times Nuked</th>
+                <th scope="col">Attacks Left</th>
+                <th scope="col">Hostility</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for nation in nations %}
+            <tr>
+                <td scope="row">{{ nation.user.username }}</td>
+                <td scope="row">{{ nation.name }}</td>
+                <td scope="row">{{ nation.states }}</td>
+                <td scope="row">{{ nation.alliance_name }}</td>
+                <td scope="row">{{ nation.nuked }}</td>
+                <td scope="row">{{ nation.attacks }}</td>
+                <td scope="row">{{ nation.friendlyness }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <!-- JavaScript -->
+    <script>
+        // Elements
+        const toggleTableButton = document.getElementById('toggleTableButton');
+        const nationsTable = document.getElementById('nationsTable');
+        const searchInput = document.getElementById('searchInput');
+        
+        // Toggle Functionality
+        toggleTableButton.addEventListener('click', () => {
+            if (nationsTable.style.display === 'none') {
+                nationsTable.style.display = '';
+                searchInput.style.display = 'none';
+                toggleTableButton.textContent = 'Look-up Specific Nation';
+            } else {
+                nationsTable.style.display = 'none';
+                searchInput.style.display = '';
+                toggleTableButton.textContent = 'Search';
+            }
+        });
+    
+        // Search Functionality
+        searchInput.addEventListener('input', () => {
+            const filter = searchInput.value.toLowerCase();
+            const rows = nationsTable.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+            for (const row of rows) {
+                const name = row.cells[1].textContent.toLowerCase(); // Name is in the 2nd column (index 1)
+                row.style.display = name.includes(filter) ? '' : 'none';
+            }
+        });
+        // Button Hover Effect
+        toggleTableButton.addEventListener('mouseenter', () => {
+            toggleTableButton.style.backgroundColor = '#0056b3';
+            toggleTableButton.style.transform = 'translateY(-2px)';
+        });
+        toggleTableButton.addEventListener('mouseleave', () => {
+            toggleTableButton.style.backgroundColor = '#007bff';
+            toggleTableButton.style.transform = 'translateY(0)';
+        });
+    </script>
+        
 {% endblock %}
 
 

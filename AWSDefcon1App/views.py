@@ -730,7 +730,7 @@ def full_index(request):
             # If no IDs are missing within the range, return the next available ID
             next_id = max_id + 1
 
-    leaderboard = User.objects.filter(wins__gt=0).order_by('-wins')
+    leaderboard = User.objects.filter(wins__gt=0).order_by('-wins').exclude(username ='closed').exclude(username ='empty').exclude(username ='loser')
 
     games  = Games.objects.all()
     played_games = []     
@@ -1140,7 +1140,7 @@ def spies(request, game_id):
 def join(request, game_id, player_number):
     game = get_object_or_404(Games, id=game_id)
 
-    if request.method == 'POST':
+    if request.method == 'POST' or request.method == 'GET':
         player_field = f"player{player_number}"
 
         # Check if the player already has a spot in any player field

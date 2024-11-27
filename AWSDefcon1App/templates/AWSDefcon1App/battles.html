@@ -3,14 +3,12 @@
 {% block body %}
 <h2 style = "text-align: center;" >Battles</h2>
 <h3 style = "text-align: center;">Battles Left: {{ attacks_left }}</h3>
-    <h4 style = "text-align: center;">This will take a long time to load</h4>
-    <h4 style = "text-align: center;">Make sure not to press the button more than once</h4>
 
           {% if owner.nukes > 0 %}
 <form method="post" action="{% url 'battle' game_id=game_id %}" style="text-align: center;">
     {% csrf_token %}
     
-    <label for="selected_nation" style="font-weight: bold;">Select a Nation:</label><br>
+    <label for="selected_nation" style="font-weight: bold;">Select a Nation:</label><br>  <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">Declare War on a nation first before trying to battle them</span></div>
     <select name="defender" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc; width: 200px; font-size: 16px;">
         {% for nation in nations_at_war %}
             <option value="{{ nation.name }}">{{ nation.name }}</option>
@@ -79,7 +77,7 @@
     <form  method="post" action="{% url 'battle' game_id=game_id %}" style="text-align: center;">
         {% csrf_token %}
         
-        <label for="selected_nation" style="font-weight: bold;">Select a Nation:</label><br>
+        <label for="selected_nation" style="font-weight: bold;">Select a Nation:</label><br>  <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">Declare War on a nation first before trying to battle them</span></div>
         <select name="defender" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc; width: 200px; font-size: 16px;">
             {% for nation in nations_at_war %}
                 <option value="{{ nation.name }}">{{ nation.name }}</option>
@@ -133,21 +131,34 @@
     </form>
         {% endif %}
           <br> <br>  
-<a class="linker" style="text-align: center; display: block;" href="{% url 'passer' game_id=game_id %}">Click here to pass your turn without fighting any battles</a>
-     <br>  <br>  <br>  
+          <div style="display: flex; justify-content: center; align-items: center;">
+            <a class="linker" 
+               style="display: inline-block; width: 50px; height: 50px; background-color: #007bff; color: white; text-align: center; line-height: 50px; border-radius: 50%; text-decoration: none; font-size: 14px; transition: background-color 0.3s ease;" 
+               href="{% url 'passer' game_id=game_id %}">
+               Pass
+            </a>
+            <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">This will prevent you from fighting until all other players have passed or fought 5 battles</span> </div>
+
+        </div>
+        
+            
+       
+       
+       <br>  <br>  <br>  
         <table class="table table-striped table-sm">
             <thead>
                 <tr>
-                    <th scope="col">Player</th>
-                    <th scope="col">Name</th>
-                    <th scope="col">States</th>
-                    <th scope="col">Divisions</th>
-                    <th scope="col">Boats</th>
-                    <th scope="col">Planes</th>
-                    <th scope="col">Alliance Name</th>
-                    <th scope="col">Points</th>
-                    <th scope="col">Nuke Time</th>
-                    <th scope="col">Nukes</th>
+                    <th scope="col">Player  <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">Username of Player</span> </div> </th>
+                    <th scope="col">Name <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">Name of Country</span> </div> </th>
+                    <th scope="col">States <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">Amount of land (determines production) </span> </div> </th>
+                    <th scope="col">Divisions <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">Amount of Soldiers</span> </div> </th>
+                    <th scope="col">Boats  <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">Amount of Boats</span> </div> </th>
+                    <th scope="col">Planes <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">Amount of Planes</span> </div> </th>
+                    <th scope="col">Alliance Name <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">Name of Alliance</span> </div> </th>
+                    <th scope="col">Points <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">Points can be spent at the Focus tab to buy soldeirs, planes, etc.</span> </div> </th>
+                    <th scope="col">Nuke Time <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">Amount of turns left before you get nukes</span> </div> </th>
+                    <th scope="col">Nukes <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">The amount of nukes you have</span> </div> </th>
+                    <th scope="col">Spies <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">Spies can be used to run missions in the Spy tab</span> </div> </th>
                 </tr>
             </thead>
             <tbody>
@@ -166,7 +177,7 @@
             </tbody>
         </table>
 
-
+        <br><br><br>
                
 
 
@@ -218,11 +229,7 @@
                     if (target.classList.contains('attacker')) {
                         console.log('Attacker class form submitted');
                         gifContainer.style.display = 'flex';
-        
-                        // Automatically hide the gif after a certain duration
-                        setTimeout(() => {
-                            gifContainer.style.display = 'none';
-                        }, 20000);  // Gif is visible for 20 seconds
+    
                     }
                 });
         

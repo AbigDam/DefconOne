@@ -1,7 +1,7 @@
 {% extends "AWSDefcon1App/layout.html" %}
 
 {% block body %}
-    <h2 style = "text-align: center;">Current Fights</h2>
+    <h2 style = "text-align: center;">Current Wars</h2>
     <table class="table table-striped">
         <thead>
             <tr>
@@ -33,10 +33,5 @@
             {% endfor %}
         </tbody>
     </table>
-    <div class="how-to-play-widget">
-        <button class="how-to-play-button">How to Play</button>
-        <div class="how-to-play-content">
-            <p style = "color: black">This is a list of all current conflicts.  To start a new war, click the Declare War tab.  To end a war, either surrender, oo request an alliance from the Alliance tab.  Surrendering is only possible in a defensive war</p>
-    </div>
 
 {% endblock %}
