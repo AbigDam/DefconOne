@@ -7,3 +7,4 @@ sqlparse==0.5.1
 tzdata==2024.1
 wheel==0.44.0
 whitenoise==6.7.0
+Pillow
