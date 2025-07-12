@@ -6,7 +6,7 @@
 
 
 
-<form method="post" action="{% url 'beg' game_id=game_id %}">
+    <form method="post" action="{% url 'beg' game_id=game_id %}">
 
     {% csrf_token %}
     <h3 style = "text-align: center;">Requests Left: {{requesters}}</h3>

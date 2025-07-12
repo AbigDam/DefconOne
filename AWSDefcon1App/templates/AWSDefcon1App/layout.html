@@ -4,17 +4,17 @@
 <html lang="en">
 <meta charset="UTF-8">
 <meta name="ezoic-site-verification" content="gdlvsSoJ5tzab9BJUp13HaQXwFqF2H" />
-<head>
+<head class = "wrapper">
     <title>{% block title %}Defcon One{% endblock %}</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
     <link href="{% static 'static\AWSDefcon1App\styles.css' %}" rel="stylesheet">
 </head>
-<body>
+<body class = "wrapper">
     <header>
         <!-- Logo section -->
         <section>
             <a href = "{% url 'index' %}"><img style= "position: fixed; width:70px; height:auto; border-radius: 40%;" id="logo" src="/static/AWSDefcon1App/Defcon1Logo.png" alt="Your Logo"> </a>
-            <img id="musicButton" style="width:60px; position: fixed; right: 6%;" src="/static/AWSDefcon1App/AudioMutedIcon.png" alt="Play Music">
+            <img id="musicButton" style="width:60px; position: fixed; left: 100px; top:1%; border-radius: 100%;" src="/static/AWSDefcon1App/AudioMutedIcon.png" alt="Play Music">
             <h1 style = "text-align: center; top: 6%;">Defcon1</h1>
         </section>
     
@@ -137,38 +137,14 @@
     <li class="{% if request.path|slice:':5' == '/map/' %}active{% else %}nav-item{% endif %}">
       <a class="nav-link" href="{% url 'map' game_id=game_id %}">Map</a>
         </li>
-        <li class="{% if request.path|slice:':5' == '/beg/' %}active{% else %}nav-item{% endif %}">
-          <a class="nav-link" href="{% url 'beg' game_id=game_id %}">Ask for Aid</a>
-      </li>
-      <li class="{% if request.path|slice:':14' == '/current_wars/' %}active{% else %}nav-item{% endif %}">
-        <a class="nav-link" href="{% url 'current_wars' game_id=game_id %}">Wars</a>
-      </li>
       <li class="{% if request.path|slice:':6' == '/game/' %}active{% else %}nav-item{% endif %}">
         <a class="nav-link" href="{% url 'game' game_id=game_id %}">Statistics</a>
       </li>
-      <li class="{% if request.path|slice:':8' == '/battle/' %}active{% else %}nav-item{% endif %}">
-        <a class="nav-link" href="{% url 'battle' game_id=game_id %}">Battle</a>
-      </li>
-      <li class="{% if request.path|slice:':5' == '/war/' %}active{% else %}nav-item{% endif %}">
-        <a class="nav-link" href="{% url 'war' game_id=game_id %}">Declare War</a>
-      </li>
-      <li class="{% if request.path|slice:':14' == '/makealliance/' %}active{% else %}nav-item{% endif %}">
-        <a class="nav-link" href="{% url 'makealliance' game_id=game_id %}">Alliance</a>
-      </li>
-      <li class="{% if request.path|slice:':6' == '/send/' %}active{% else %}nav-item{% endif %}">
-        <a class="nav-link" href="{% url 'send' game_id=game_id %}">Send Supplies</a>
-      </li>
-      <li class="{% if request.path|slice:':7' == '/focus/' %}active{% else %}nav-item{% endif %}">
-        <a class="nav-link" href="{% url 'focus' game_id=game_id %}">Focus</a>
-      </li>
       <li class="{% if request.path|slice:':14' == '/announcement/' %}active{% else %}nav-item{% endif %}">
-        <a class="nav-link" href="{% url 'announcement' game_id=game_id %}">Announcements</a>
+        <a class="nav-link" href="{% url 'announcement' game_id=game_id %}">History</a>
       </li>
       <li class="{% if request.path|slice:':7' == '/users/' %}active{% else %}nav-item{% endif %}">
-        <a class="nav-link" href="{% url 'user_list' game_id=game_id %}">In-Game Message</a>
-      </li>
-      <li class="{% if request.path|slice:':7' == '/spies/' %}active{% else %}nav-item{% endif %}">
-        <a class="nav-link" href="{% url 'spies' game_id=game_id %}">Spies</a>
+        <a class="nav-link" href="{% url 'user_list' game_id=game_id %}">Message</a>
       </li>
   </ul>
 {% endif %}
@@ -178,7 +154,7 @@
     </header>
     
     <!-- Main content area -->
-    <main>
+    <main class = "wrapper">
       <br>
         {% block body %}
         {% endblock %}
@@ -286,7 +262,31 @@
 
 </div>
 <style>
-  
+@media (min-width: 1600px) {
+    .wrapper {
+        width: 100%;
+        height: 100%;
+    }
+}
+@media (min-width: 430px) and (max-width: 1600px) {
+    .wrapper {
+        width: 1600px;
+        margin: 0 auto; /* This centers the wrapper if there's space */
+    }
+}
+
+@media(max-width: 430px) {
+    .wrapper {
+        transform-origin: center;
+        width: 100vh;  /* Height becomes the width */
+        height: 100vw; /* Width becomes the height */
+        overflow-x: hidden;
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+}
+
   nav{
     background-color:#e0e0e0;
     font-family: "Hoefler Text", serif;
@@ -458,6 +458,66 @@
 .how-to-play-widget.active .how-to-play-content {
     display: block;
 }
+    /* Initially hide the buttons */
+    #showDiv1, #showDiv2 {
+        display: none;
+    }
+
+    /* Style the buttons */
+    .toggle-button {
+        background-color: #0a0daa; /* Green background */
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+        margin: 10px;
+        transition: background-color 0.3s;
+        text-align: center;
+    }
+
+    /* Hover effect for buttons */
+    .toggle-button:hover {
+        background-color: #0e0ae4; /* Slightly darker green */
+    }
+
+    /* Focus effect for buttons */
+    .toggle-button:focus {
+        outline: none;
+        box-shadow: 0 0 10px #0d2fc7; /* Green glow effect */
+    }
+
 
 </style>
+
+
+<script type="text/javascript">
+  window.SDK_OPTIONS = {
+     gameId: "your_game_id_here",
+     onEvent: function (a) {
+        switch (a.name) {
+           case "SDK_GAME_PAUSE":
+              // pause game logic / mute audio
+              break;
+           case "SDK_GAME_START":
+              // advertisement done, resume game logic and unmute audio
+              break;
+           case "SDK_READY":
+              // when sdk is ready
+              break;
+        }
+     }
+  };
+(function (a, b, c) {
+  var d = a.getElementsByTagName(b)[0];
+  a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk");
+</script>
+
+<script>
+sdk.showBanner();
+</script>
+
+
 </html>

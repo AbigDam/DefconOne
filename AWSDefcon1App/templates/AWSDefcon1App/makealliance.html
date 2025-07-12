@@ -21,14 +21,22 @@
 <br><br>
 <ul style="list-style-type: none; padding: 0; text-align: center;">
     {% for alliance in alliances %}
-        <li>
             <span style="font-weight: bold;">{{ alliance.nation1.name }} is asking for you to join their team</span>
             <form method="post" action="{% url 'makealliance' game_id=game_id %}">
                 {% csrf_token %}
+                
+                <!-- Accepting nation -->
                 <input type="hidden" name="accepting_nation" value="{{ alliance.nation1.name }}">
-                <button type="submit" style="background-color: #000000; color: white; padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer;">Join Their Team</button>
-            </form>
-        </li>
+                <button type="submit" name="action" value="accept" style="background: none; border: none; padding: 0; cursor: pointer;">
+                    <img src="/static/AWSDefcon1App/Alliance.png" alt="Accept">
+                </button>
+                
+                <!-- Rejecting nation -->
+                <input type="hidden" name="rejected_nation" value="{{ alliance.nation1.name }}">
+                <button type="submit" name="action" value="reject" style="background: none; border: none; padding: 0; cursor: pointer;">
+                    <img src="/static/AWSDefcon1App/Alliance_Reject.png" alt="Reject">
+                </button>
+            </form>            
     {% endfor %}
 </ul>
 

@@ -32,6 +32,7 @@ urlpatterns = [
     path('ads', views.ads, name='ads'),
     path('credits', views.credits, name='credits'),
     path('game_maker_redirrect', views.game_maker_redirrect, name='game_maker_redirrect'),
+    path('ads.txt', views.gameMonetize, name='gameMonetize'),
 
 ]
 handler404 = 'AWSDefcon1App.views.error404'

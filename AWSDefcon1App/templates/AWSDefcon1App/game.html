@@ -95,8 +95,40 @@
             </tr>
             {% endfor %}
         </tbody>
+        
     </table>
-    
+    <h2 style = "text-align: center;">Current Wars</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th style="font-size: 20px;">Attacker</th>
+                <th style="font-size: 20px; text-align: right; vertical-align: top;">Defender</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for war in wars %}
+            <tr>
+                {% if war.nation1 == playernation %}
+                    <td style="color: red; font-weight: bold; font-size: 18px;"> {{ war.nation1.name }}</td>
+                {% else %}
+                    <td style="color: rgb(255, 255, 255); font-size: 18px;"> {{ war.nation1.name }}</td>
+                {% endif %}
+                <td style="font-size: 18px; text-align: right; vertical-align: top;">
+                    {% if war.nation2 == playernation %}
+                        <span style="color: red; font-weight: bold;"> {{ war.nation2.name }}</span>
+                        <form method="post" action="{% url 'current_wars' game_id=game_id %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="winner" value="{{ war.nation1.name }}">
+                            <button type="submit">Surrender</button>
+                        </form>
+                    {% else %}
+                        <span style="color: white;"> {{ war.nation2.name }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
     <!-- JavaScript -->
     <script>
         // Elements
@@ -126,6 +158,7 @@
                 row.style.display = name.includes(filter) ? '' : 'none';
             }
         });
+
         // Button Hover Effect
         toggleTableButton.addEventListener('mouseenter', () => {
             toggleTableButton.style.backgroundColor = '#0056b3';
