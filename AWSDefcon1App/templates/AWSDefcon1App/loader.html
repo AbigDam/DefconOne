@@ -1,0 +1,19 @@
+{% extends "AWSDefcon1App/layout.html" %}
+{% block body %}
+
+<div id="loading-message" style="text-align: center; margin-top: 100px;">
+    <h2>Loading...</h2>
+    <h3>Please wait while we prepare your map.</h3>
+  </div>
+
+  <form id="loaderForm" method="POST" action="{% url 'loader' game_id=game_id %}">
+    {% csrf_token %}
+  </form>
+
+  <script>
+    window.onload = () => {
+      document.getElementById("loaderForm").submit();
+    };
+  </script>
+
+{% endblock %}

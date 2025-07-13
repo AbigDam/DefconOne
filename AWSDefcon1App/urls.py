@@ -24,6 +24,7 @@ urlpatterns = [
     path('announcement/<int:game_id>', views.announcemnts, name='announcement'),
     path('message/<int:game_id>/<int:recipient_id>', views.message, name='message'),
     path('passer/<int:game_id>', views.passer, name='passer'),
+    path('loader/<int:game_id>', views.loader, name='loader'),
     path('users/<int:game_id>', views.user_list, name='user_list'),
     path('profile/<int:user_id>', views.profile, name='profile'),
     path('DM/<int:recipient_id>', views.SendDM, name='DM'),

@@ -1765,80 +1765,81 @@ def battle(request, game_id):
               nation.save()
 
         if division_attack_amount or boat_attack_type == "amphibious":
-            canvas_width, canvas_height = 1120, 480
-            final_image = Image.new("RGBA", (canvas_width, canvas_height), (0, 0, 0, 0))
+            return HttpResponseRedirect(reverse('loader', kwargs={'game_id': game_id}))
         
-            game = Games.objects.only("id").get(id=game_id)
-            map_obj = Map.objects.only("id", "number").get(number=game_id, game=game)
-        
-            # Pre-cache existing images
-            white_image_dir = "AWSDefcon1App/static/AWSDefcon1App/white_image"
-            existing_images = set(os.listdir(white_image_dir))
-        
-            squares = Square.objects.filter(map=map_obj).only("name", "color")
-        
-            for square in squares:
-                  name = square.name
-                  hex_color = square.color
-        
-                  filename = f"MapChart_Map.{name}.png"
-                  if filename not in existing_images:
-                      continue
-        
-                  image_path = os.path.join(white_image_dir, filename)
-        
-                  try:
-                      img = Image.open(image_path).convert("RGBA")
-                  except Exception:
-                      continue
-        
-                  r, g, b = int(hex_color[1:3], 16), int(hex_color[3:5], 16), int(hex_color[5:7], 16)
-                  r_img, _, _, alpha = img.split()
-        
-                  # Colorize only the R channel (all black image)
-                  colorized = ImageOps.colorize(r_img, black=(r, g, b), white=(r, g, b))
-                  colorized.putalpha(alpha)
-        
-                  final_image.alpha_composite(colorized)
-
-
-            output_path = f"AWSDefcon1App/static/AWSDefcon1App/MapChart_Game_{game_id}.png"
-            def upload_pil_image_to_imgbb(pil_image, api_key):
-                # Save image to a BytesIO buffer
-                buffer = io.BytesIO()
-                pil_image.save(buffer, format="PNG", optimize=True)
-                buffer.seek(0)
-
-                # Encode image in base64
-                encoded_image = base64.b64encode(buffer.read())
-
-                # Upload to ImgBB
-                response = requests.post(
-                    "https://api.imgbb.com/1/upload",
-                    data={
-                        "key": api_key,
-                        "image": encoded_image,
-                    }
-                )
-
-                result = response.json()
-                if result["success"]:
-                    return result["data"]["url"], result["data"]["delete_url"] # Direct image URL
-                else:
-                    raise Exception("Image upload failed: " + str(result))
-
-            image_url, delete_url = upload_pil_image_to_imgbb(final_image, api_key)
-            map_instance = Map.objects.get(game_id=game_id)
-            delete_response = requests.delete(map_instance.deleteURL)
-            
-            map_instance.URL = image_url
-            map_instance.deleteURL = delete_url
-            map_instance.save()
         return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
-                  
 
-    
-        
+
+@login_required(login_url='login')
+def loader(request, game_id):
+    if request.method == "GET":
+        return render(request, 'AWSDefcon1App/loader.html', {'game_id': game_id})
+
+    if request.method == "POST":
+        canvas_width, canvas_height = 1120, 480
+        final_image = Image.new("RGBA", (canvas_width, canvas_height), (0, 0, 0, 0))
+
+        game = Games.objects.only("id").get(id=game_id)
+        map_obj = Map.objects.only("id", "number").get(number=game_id, game=game)
+
+        white_image_dir = "AWSDefcon1App/static/AWSDefcon1App/white_image"
+        existing_images = set(os.listdir(white_image_dir))
+
+        squares = Square.objects.filter(map=map_obj).only("name", "color")
+
+        for square in squares:
+            name = square.name
+            hex_color = square.color
+            filename = f"MapChart_Map.{name}.png"
+
+            if filename not in existing_images:
+                continue
+
+            image_path = os.path.join(white_image_dir, filename)
+            try:
+                img = Image.open(image_path).convert("RGBA")
+            except Exception:
+                continue
+
+            r, g, b = int(hex_color[1:3], 16), int(hex_color[3:5], 16), int(hex_color[5:7], 16)
+            r_img, _, _, alpha = img.split()
+            colorized = ImageOps.colorize(r_img, black=(r, g, b), white=(r, g, b))
+            colorized.putalpha(alpha)
+            final_image.alpha_composite(colorized)
+
+        def upload_pil_image_to_imgbb(pil_image, api_key):
+            buffer = io.BytesIO()
+            pil_image.save(buffer, format="PNG", optimize=True)
+            buffer.seek(0)
+            encoded_image = base64.b64encode(buffer.read())
+            response = requests.post(
+                "https://api.imgbb.com/1/upload",
+                data={
+                    "key": api_key,
+                    "image": encoded_image,
+                }
+            )
+            result = response.json()
+            if result["success"]:
+                return result["data"]["url"], result["data"]["delete_url"]
+            else:
+                raise Exception("Image upload failed: " + str(result))
+
+        image_url, delete_url = upload_pil_image_to_imgbb(final_image, api_key)
+
+        map_instance = Map.objects.get(game_id=game_id)
+        if map_instance.deleteURL:
+            try:
+                requests.get(map_instance.deleteURL)
+            except:
+                pass  # silently fail
+
+        map_instance.URL = image_url
+        map_instance.deleteURL = delete_url
+        map_instance.save()
+
+        return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
+
 @login_required(login_url = 'login')
 def diplomacy(request,game_id):
     return render(request, 'AWSDefcon1App/diplomacy.html', {'game_id':game_id})
