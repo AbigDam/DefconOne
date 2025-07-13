@@ -1235,7 +1235,8 @@ def battle(request, game_id):
     elif request.method == 'POST':
         if attacks_left <= 0:
             return HttpResponseBadRequest("You have already fought all your battles for the day. Please click the back button to return to the game")
-
+            
+        changed_squares = []
         owner.attacks -= 1
         owner.save()
         
@@ -1350,6 +1351,7 @@ def battle(request, game_id):
                     color = colors.get(owner.name)
                     fallen_state.color = color
                     fallen_state.save()
+                    changed_squares.append(fallen_state)
                     player = Nations.objects.get(game=game_id, user=request.user)
                     defender = Nations.objects.get(game = game_id, name = boat_defender)
                     player.states += 1
@@ -1505,270 +1507,382 @@ def battle(request, game_id):
                     War.objects.filter(Q(nation1=enemy) | Q(nation2=enemy)).delete()
 
         if division_attack_amount:
-            if int(division_attack_amount) > Nations.objects.get(game=game_id, user=request.user).divisions:
-                division_attack_amount = Nations.objects.get(game=game_id, user=request.user).divisions  
-            oga = int(division_attack_amount)
-            ogd = int(division_defend_amount)
-            chance = random.randint(1, 20)
-            if division_attack_type == "normal":
-                if chance > 1 and chance < 20:
-                    division_defend_amount = int(ogd) - int(oga)*0.3
-                elif chance == 1:
-                    division_defend_amount = int(ogd) - int(oga)*0.9
-                elif chance == 20:
-                    division_defend_amount = int(ogd) - int(oga)*0.1
-            if division_attack_type == "encirclement":
-                if chance > 10:
-                    division_defend_amount = int(ogd) - int(oga)*0.9
-                    division_attack_amount = int(oga) - int(ogd)*0.1
-                elif chance < 10:
-                    division_defend_amount = int(ogd) - int(oga)*0.1
-                    division_attack_amount = int(oga) - int(ogd)*0.9
-            if division_defend_amount < 0:
-                        division_defend_amount = 0
-            if division_attack_amount < 0:
-                        division_attack_amount = 0
-            state_changeA = (oga - int(division_attack_amount)) // 10
-            state_changeD = (ogd - int(division_attack_amount)) // 10
+            # Fetch attacker and defender nations only once
+            attacker_nation = Nations.objects.get(game=game_id, user=request.user)
+            defender_nation = Nations.objects.get(game=game_id, name=division_defender)
 
+            # Clamp attack amount to available divisions
+            oga = min(int(division_attack_amount), attacker_nation.divisions)
+            ogd = defender_nation.divisions
+
+            chance = random.randint(1, 20)
+
+            if division_attack_type == "normal":
+                if 1 < chance < 20:
+                    division_defend_amount = ogd - int(oga * 0.3)
+                elif chance == 1:
+                    division_defend_amount = ogd - int(oga * 0.9)
+                elif chance == 20:
+                    division_defend_amount = ogd - int(oga * 0.1)
+                division_attack_amount = oga  # No attacker loss in normal attack
+
+            elif division_attack_type == "encirclement":
+                if chance > 10:
+                    division_defend_amount = ogd - int(oga * 0.9)
+                    division_attack_amount = oga - int(ogd * 0.1)
+                else:
+                    division_defend_amount = ogd - int(oga * 0.1)
+                    division_attack_amount = oga - int(ogd * 0.9)
+
+            # Clamp to zero if negative
+            division_defend_amount = max(0, division_defend_amount)
+            division_attack_amount = max(0, division_attack_amount)
+
+            # Calculate state changes
+            state_changeA = (oga - division_attack_amount) // 10
+            state_changeD = (ogd - division_attack_amount) // 10
+
+            
             ## Offensive Wins 
             if state_changeD < state_changeA:
-                state_change =  state_changeA - state_changeD
-                if state_change > 15:
-                    state_change = 15
-                owner = Nations.objects.get(game=game_id, user=request.user)
-                stater = owner.states
-                stater = stater * 2
-                owned_squares = Square.objects.filter(owner=owner, map=Map.objects.get(game=Games.objects.get(id=game_id))) ##States owned by offender
-                controlled_squares = [square.number for square in owned_squares] ##States owned by offender numbers
-                border_squares = [] ##States owned by defender that border defender
-                i = 0 
-                j = 0
-                while i < state_change:
-                    
-                    for controlled_square in controlled_squares:
+                state_change = min(state_changeA - state_changeD, 15)
 
-                        for neighbor in Square.objects.get(map=Map.objects.get(game=Games.objects.get(id=game_id)), number = controlled_square).neighbors: #GO Through all neighbors to our nation
-                            
-                            border_square = Square.objects.get(number=neighbor, map=Map.objects.get(game=Games.objects.get(id=game_id)))
-                            if border_square.owner == Nations.objects.get(game = game_id, name = division_defender):
-                                border_square.owner = owner  
-                                color = colors.get(Nations.objects.get(game=game_id, user=request.user).name)
-                                border_square.color = color
-                                border_square.save()
-                                nation_attacker = Nations.objects.get(game=game_id, user=request.user) 
-                                nation_defender = Nations.objects.get(game = game_id, name = division_defender)
-                                nation_attacker.states += 1
-                                nation_defender.states -= 1
-                                nation_defender.save()
-                                nation_attacker.save()         
-                                i = i + 1
+                owner = Nations.objects.select_related("game").get(game=game_id, user=request.user)
+                defender = Nations.objects.get(game=game_id, name=division_defender)
+                game = Games.objects.only("id").get(id=game_id)
+                map_obj = Map.objects.only("id").get(game=game)
 
-                        j = j + 1
-                        if j > stater:
-                            break
-                    if j > stater:
+                # Get owned squares only once
+                owned_squares = Square.objects.filter(owner=owner, map=map_obj).only("number")
+                controlled_numbers = set(sq.number for sq in owned_squares)
+
+                # Pre-fetch all neighbor squares to reduce queries
+                all_squares = Square.objects.filter(map=map_obj).only("number", "owner", "color", "neighbors")
+                square_dict = {sq.number: sq for sq in all_squares}
+
+                captured = 0
+                max_iterations = len(controlled_numbers) * 2  # Same logic as stater = states * 2
+                iterations = 0
+                attacker_color = colors.get(owner.name)
+
+                for num in controlled_numbers:
+                    if iterations > max_iterations or captured >= state_change:
                         break
+
+                    square = square_dict.get(num)
+                    if not square or not square.neighbors:
+                        continue
+
+                    for neighbor_num in square.neighbors:
+                        neighbor = square_dict.get(neighbor_num)
+                        if not neighbor or neighbor.owner_id != defender.id:
+                            continue
+
+                        # Capture square
+                        neighbor.owner = owner
+                        neighbor.color = attacker_color
+                        changed_squares.append(neighbor)
+                        neighbor.save()
+
+                        # Adjust nation stats
+                        owner.states += 1
+                        defender.states -= 1
+                        captured += 1
+
+                        if captured >= state_change:
+                            break
+
+                    iterations += 1
+
 
             ## Defensive Wins
             elif state_changeD >= state_changeA:
-                owner = Nations.objects.get(game = game_id, name = division_defender)
-                stater = owner.states
-                stater = stater * 3
-                owned_squares = Square.objects.filter(owner=owner, map=Map.objects.get(game=Games.objects.get(id=game_id)))
-                controlled_squares = [square.number for square in owned_squares]
-                border_squares = []
-                i = 0
-                j = 0
-                while i < 10:
-                    for controlled_square in controlled_squares:
-                        for neighbor in Square.objects.get(map=Map.objects.get(game=Games.objects.get(id=game_id)), number = controlled_square).neighbors:
-                            border_square = Square.objects.get(number=neighbor, map=Map.objects.get(game=Games.objects.get(id=game_id)))
-                            if border_square.owner == Nations.objects.get(game = game_id, name = Nations.objects.get(game=game_id, user=request.user).name):
-                                border_square.owner = owner
-                                color = colors.get(division_defender)
-                                border_square.color = color
-                                border_square.save()        
-                                i = i + 1
-                                nation_attacker = Nations.objects.get(game=game_id, user=request.user) 
-                                nation_defender = Nations.objects.get(game = game_id, name = division_defender)
-                                nation_attacker.states -= 1
-                                nation_defender.states += 1
-                                nation_defender.save()
-                                nation_attacker.save()
-                                    
-                        j = j + 1
-                        if j > stater:
-                            break
-                    if j > stater:
+                game = Games.objects.only("id").get(id=game_id)
+                map_obj = Map.objects.only("id").get(game=game)
+
+                defender = Nations.objects.select_related("game").get(game=game_id, name=division_defender)
+                attacker = Nations.objects.get(game=game_id, user=request.user)
+
+                # Precompute state-change attempts
+                max_swaps = 10
+                stater = defender.states * 3
+
+                # Squares owned by defender
+                owned_squares = Square.objects.filter(owner=defender, map=map_obj).only("number")
+                controlled_numbers = set(sq.number for sq in owned_squares)
+
+                # Pre-fetch all relevant squares
+                all_squares = Square.objects.filter(map=map_obj).only("number", "owner", "color", "neighbors")
+                square_dict = {sq.number: sq for sq in all_squares}
+
+                attacker_name = attacker.name
+                defender_color = colors.get(defender.name)
+
+                swapped = 0
+                iterations = 0
+
+                for num in controlled_numbers:
+                    if iterations > stater or swapped >= max_swaps:
                         break
-            
-            if i > (state_changeA - state_changeD):
-                i = (state_changeA - state_changeD)
-            states_lost = i
-            states_gained = i
-            div_attackers_lost = oga - int(division_attack_amount)
-            div_defenders_lost =  ogd - int(division_defend_amount)
-            owner = Nations.objects.get(game=game_id, user=request.user)    
-            nation_attacker = Nations.objects.get(game=game_id, user=request.user) 
-            nation_defender = Nations.objects.get(game = game_id, name = division_defender)
-            if state_changeD <= state_changeA:
-                announcements = Announcements.objects.create(text =f"{owner.name} has defeated {division_defender} in a battle", start_time = datetime.now(), game = Games.objects.get(id = game_id))
 
-            if state_changeD >= state_changeA:
-                announcements = Announcements.objects.create(text =f"{division_defender} has defeated {owner.name} in a battle", start_time = datetime.now(), game = Games.objects.get(id = game_id))
+                    square = square_dict.get(num)
+                    if not square or not square.neighbors:
+                        continue
 
-            nation_attacker.divisions -= div_attackers_lost
-            nation_defender.divisions -= div_defenders_lost  
-            if nation_attacker.divisions < 0:
-                nation_attacker.divisions = 0
-            if nation_defender.divisions < 0:
-                nation_defender.divisions = 0
-            nation_attacker.save()
-            nation_defender.save()
+                    for neighbor_num in square.neighbors:
+                        neighbor = square_dict.get(neighbor_num)
+                        if not neighbor or neighbor.owner_id != attacker.id:
+                            continue
 
-        nation_defender = Nations.objects.get(game = game_id, name = request.POST.get('defender'))
-        nation_attacker = Nations.objects.get(game=game_id, user=request.user) 
-        if nation_defender.states < 0:
-            nation_attacker.states += nation_defender.states
-            nation_defender.states = 0            
-            nation_attacker.save()
-            nation_defender.save()
-
-        if nation_attacker.states < 0:
-            nation_defender.states += nation_attacker.states
-            nation_attacker.states = 0            
-            nation_defender.save()
-            nation_attacker.save()
-
-        player = Nations.objects.get(game=game_id, user=request.user)
-
-        if division_defender:
-            div_defender = Nations.objects.get(game = game_id, name = division_defender)
-        if planes_defender:
-            planes_defender = Nations.objects.get(game = game_id, name = planes_defender)
-        if boat_defender:
-            boat_defender = Nations.objects.get(game = game_id, name = boat_defender)
-
-        number = div_defender.player_number
-        player_number_value = f"player{number}"
-        if div_defender.states <= 1:
-            player.boats += div_defender.boats
-            player.planes += div_defender.planes
-            div_defender.boats = 0
-            div_defender.planes = 0
-            div_defender.user = User.objects.get(username='loser')
-            div_defender.divisions = 0
-            div_defender.alliance_name = ''
-            div_defender.save()
-            player.save()
-            game_instance = Games.objects.get(id=game_id)
-            game_instance.enemy_player_number = User.objects.get(username='loser')
-            game_instance.save()
-            War.objects.filter(Q(nation1=div_defender) | Q(nation2=div_defender)).delete()
+                        # Flip control
+                        neighbor.owner = defender
+                        neighbor.color = defender_color
+                        changed_squares.append(neighbor)
+                        neighbor.save()
 
 
-        if planes_defender.states <= 1:
-            player.boats += planes_defender.boats
-            player.planes += planes_defender.planes
-            div_defender.boats = 0
-            div_defender.planes = 0
-            planes_defender.user = User.objects.get(username='loser')
-            planes_defender.divisions = 0
-            planes_defender.alliance_name = ''
-            planes_defender.save()
-            player.save()
-            game_instance = Games.objects.get(id=game_id)
-            game_instance.enemy_player_number = User.objects.get(username='loser')
-            game_instance.save()
-            War.objects.filter(Q(nation1=planes_defender) | Q(nation2=planes_defender)).delete()
-            
-        if boat_defender.states <= 1:
-            player.boats += boat_defender.boats
-            player.planes += boat_defender.planes
-            div_defender.boats = 0
-            div_defender.planes = 0
-            boat_defender.user = User.objects.get(username='loser')
-            boat_defender.divisions = 0
-            boat_defender.alliance_name = ''
-            boat_defender.save()
-            player.save()
-            game_instance = Games.objects.get(id=game_id)
-            game_instance.enemy_player_number = User.objects.get(username='loser')
-            game_instance.save()
-            War.objects.filter(Q(nation1=boat_defender) | Q(nation2=boat_defender)).delete()
+                        attacker.states -= 1
+                        defender.states += 1
+                        swapped += 1
 
-        number = player.player_number
-        player_number_value = f"player{number}"
-        if player.states <= 1:
-            if division_attack_amount:
-                div_defender.boats += player.boats
-                div_defender.planes += player.planes
-                player.user = User.objects.get(username='loser')
-                player.divisions = 0
-                player.alliance_name = ''
-                War.objects.filter(Q(nation1=player) | Q(nation2=player)).delete()
-            elif boat_attack_amount:
-                boat_defender.boats += player.boats
-                boat_defender.planes += player.planes
-                player.user = User.objects.get(username='loser')
-                player.divisions = 0
-                player.alliance_name = ''
-                War.objects.filter(Q(nation1=player) | Q(nation2=player)).delete()
-            game_instance = Games.objects.get(id=game_id)
-            game_instance.player_number_value = User.objects.get(username='loser')
-            game_instance.save()
-                               
-        if division_defender:
-            div_defender.save()
-        if planes_defender:
-            planes_defender.save() 
-        if boat_defender:
-            boat_defender.save()
+                        if swapped >= max_swaps:
+                            break
 
-        player.save()
+                    iterations += 1
+
+                    # Save nations once
+                    attacker.save()
+                    defender.save()
+
         
-        all_nations = Nations.objects.filter(game = game_id, player_number__lt = 8).exclude(user = User.objects.get(username = "loser")).exclude(user = User.objects.get(username = "empty")).exclude(user = User.objects.get(username = "closed"))
-        i = 0
-        j = 0
-        for nation in all_nations:
-          i += 1
-          if nation.attacks == 0:
-            j += 1
-        j += 2
-        if i < j:
-          nations = Nations.objects.filter(game = game_id)
-          for nation in nations:
-              states = nation.states
-              mult = 1
-              if states <= 20:
-                  mult = 2
-              elif states < 50:
-                  mult = 1.7
-              elif states < 150:
-                  mult = 1.5
-              elif states < 200:
-                  mult = 1.4
-              elif states < 250:
-                  mult = 1
 
-              nation.divisions = nation.divisions + states * mult
-              nation.planes = nation.planes + states * 10
-              nation.boats = nation.boats + states / 2
-              nation.points += 1
-              if nation.nuke_time <= 0:
-                  nation.nukes += 1
-              else:
-                  nation.nuke_time -= 1
-              nation.attacks = 5
-              nation.requests = 10
-              nation.save()
+            div_attackers_lost = oga - int(division_attack_amount)
+            div_defenders_lost = ogd - int(division_defend_amount)
+
+            # Pre-fetch once
+            game = Games.objects.only("id").get(id=game_id)
+            attacker = Nations.objects.get(game=game_id, user=request.user)
+            defender_name = request.POST.get('defender')
+            defender = Nations.objects.get(game=game_id, name=defender_name)
+
+            # Announcements
+            if state_changeD <= state_changeA:
+                Announcements.objects.create(
+                    text=f"{attacker.name} has defeated {division_defender} in a battle",
+                    start_time=datetime.now(),
+                    game=game
+                )
+            else:
+                Announcements.objects.create(
+                    text=f"{division_defender} has defeated {attacker.name} in a battle",
+                    start_time=datetime.now(),
+                    game=game
+                )
+
+            # Clamp divisions
+            attacker.divisions = max(0, attacker.divisions - div_attackers_lost)
+            defender.divisions = max(0, defender.divisions - div_defenders_lost)
+
+            # Clamp states
+            if defender.states < 0:
+                attacker.states += defender.states  # subtracts a negative = adds loss
+                defender.states = 0
+
+            if attacker.states < 0:
+                defender.states += attacker.states
+                attacker.states = 0
+
+            # Save both once
+            attacker.save()
+            defender.save()
+
+            player = Nations.objects.get(game=game_id, user=request.user)
+            game_instance = Games.objects.get(id=game_id)
+            loser_user = User.objects.get(username='loser')
+
+            # Store references to defenders
+            defenders = {
+                "div": request.POST.get("division_defender"),
+                "planes": request.POST.get("planes_defender"),
+                "boats": request.POST.get("boat_defender")
+            }
+
+            # Get Nation instances for each
+            for key in defenders:
+                if defenders[key]:
+                    defenders[key] = Nations.objects.get(game=game_id, name=defenders[key])
+                else:
+                    defenders[key] = None
+
+            def handle_defeat(defender):
+                if defender and defender.states <= 1:
+                    player.boats += defender.boats
+                    player.planes += defender.planes
+
+                    defender.boats = 0
+                    defender.planes = 0
+                    defender.divisions = 0
+                    defender.user = loser_user
+                    defender.alliance_name = ''
+                    defender.save()
+
+                    War.objects.filter(Q(nation1=defender) | Q(nation2=defender)).delete()
+
+                    # If needed, update the correct enemy_player_number
+                    if hasattr(game_instance, 'enemy_player_number'):
+                        game_instance.enemy_player_number = loser_user
+
+            # Apply defeat handler to all
+            handle_defeat(defenders["div"])
+            handle_defeat(defenders["planes"])
+            handle_defeat(defenders["boats"])
+
+            # Handle player defeat
+            if player.states <= 1:
+                # Determine who beat the player
+                winner = None
+                if division_attack_amount:
+                    winner = defenders["div"]
+                elif boat_attack_amount:
+                    winner = defenders["boats"]
+
+                if winner:
+                    winner.boats += player.boats
+                    winner.planes += player.planes
+                    winner.save()
+
+                player.user = loser_user
+                player.divisions = 0
+                player.alliance_name = ''
+                War.objects.filter(Q(nation1=player) | Q(nation2=player)).delete()
+
+                # Replace correct player_number slot
+                setattr(game_instance, f"player{player.player_number}", loser_user)
+
+            # Save updates
+            player.save()
+            game_instance.save()
+
+
+        # Preload 'special' users once
+        loser_user = User.objects.get(username="loser")
+        empty_user = User.objects.get(username="empty")
+        closed_user = User.objects.get(username="closed")
+
+        # Get active nations
+        active_nations = Nations.objects.filter(
+            game=game_id,
+            player_number__lt=8
+        ).exclude(
+            user__in=[loser_user, empty_user, closed_user]
+        )
+
+        # Check how many players have completed their turn
+        players_ready = sum(1 for nation in active_nations if nation.attacks == 0)
+
+        # Allow two extra players not required to play
+        if len(active_nations) < players_ready + 2:
+            all_nations = Nations.objects.filter(game=game_id)
+            for nation in all_nations:
+                states = nation.states
+
+                # Production multiplier based on number of states
+                if states <= 20:
+                    mult = 2
+                elif states < 50:
+                    mult = 1.7
+                elif states < 150:
+                    mult = 1.5
+                elif states < 200:
+                    mult = 1.4
+                elif states < 250:
+                    mult = 1
+                else:
+                    mult = 0.8  # You may want to penalize huge nations? Optional.
+
+                # Apply production values
+                nation.divisions += int(states * mult)
+                nation.planes += states * 10
+                nation.boats += states // 2
+                nation.points += 1
+                nation.nuke_time -= 1
+
+                if nation.nuke_time <= 0:
+                    nation.nukes += 1
+                    nation.nuke_time = 5  # Reset or leave at 0 if auto-generating
+                nation.attacks = 5
+                nation.requests = 10
+                nation.save()
 
         if division_attack_amount or boat_attack_type == "amphibious":
-            return HttpResponseRedirect(reverse('loader', kwargs={'game_id': game_id}))
+            canvas_width, canvas_height = 1120, 480
+
+
+            try:
+                game = Games.objects.get(id=game_id)
+                map_obj = Map.objects.get(number=game_id, game=game)
+            except (Games.DoesNotExist, Map.DoesNotExist):
+                return HttpResponseBadRequest("Invalid game or map.")
+            
+            response = requests.get(map_obj.URL)
+            final_image = Image.open(io.BytesIO(response.content)).convert("RGBA")
+            white_image_dir = "AWSDefcon1App/static/AWSDefcon1App/white_image"
+            existing_images = set(os.listdir(white_image_dir))
+
+            for square in changed_squares:
+                filename = f"MapChart_Map.{square.name}.png"
+                if filename not in existing_images:
+                    continue
+
+                image_path = os.path.join(white_image_dir, filename)
+                try:
+                    img = Image.open(image_path).convert("RGBA")
+                    r, g, b = tuple(int(square.color[i:i+2], 16) for i in (1, 3, 5))  # hex to RGB
+                    r_img, _, _, alpha = img.split()
+                    colorized = ImageOps.colorize(r_img, black=(r, g, b), white=(r, g, b))
+                    colorized.putalpha(alpha)
+                    final_image.alpha_composite(colorized)
+                except Exception as e:
+                    print(f"Error processing {filename}: {e}")
+                    continue
+
+            def upload_pil_image_to_imgbb(pil_image, api_key):
+                try:
+                    buffer = io.BytesIO()
+                    pil_image.save(buffer, format="PNG", optimize=True)
+                    encoded_image = base64.b64encode(buffer.getvalue())
+
+                    response = requests.post(
+                        "https://api.imgbb.com/1/upload",
+                        data={"key": api_key, "image": encoded_image}
+                    )
+                    result = response.json()
+                    if result.get("success"):
+                        return result["data"]["url"], result["data"]["delete_url"]
+                    else:
+                        raise Exception(result)
+                except Exception as e:
+                    print(f"Image upload failed: {e}")
+                    raise
+
+            # Upload final image and update Map
+            try:
+                image_url, delete_url = upload_pil_image_to_imgbb(final_image, api_key)
+                map_instance = Map.objects.get(game_id=game_id)
+
+                if map_instance.deleteURL:
+                    try:
+                        requests.get(map_instance.deleteURL)
+                    except requests.RequestException as e:
+                        print(f"Failed to delete old image: {e}")
+
+                map_instance.URL = image_url
+                map_instance.deleteURL = delete_url
+                map_instance.save()
+            except Exception as e:
+                return HttpResponse(f"Image upload failed: {e}", status=500)
         
         return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
-
 
 @login_required(login_url='login')
 def loader(request, game_id):
@@ -1779,66 +1893,70 @@ def loader(request, game_id):
         canvas_width, canvas_height = 1120, 480
         final_image = Image.new("RGBA", (canvas_width, canvas_height), (0, 0, 0, 0))
 
-        game = Games.objects.only("id").get(id=game_id)
-        map_obj = Map.objects.only("id", "number").get(number=game_id, game=game)
+        try:
+            game = Games.objects.get(id=game_id)
+            map_obj = Map.objects.get(number=game_id, game=game)
+        except (Games.DoesNotExist, Map.DoesNotExist):
+            return HttpResponseBadRequest("Invalid game or map.")
 
         white_image_dir = "AWSDefcon1App/static/AWSDefcon1App/white_image"
         existing_images = set(os.listdir(white_image_dir))
 
-        squares = Square.objects.filter(map=map_obj).only("name", "color")
-
-        for square in squares:
-            name = square.name
-            hex_color = square.color
-            filename = f"MapChart_Map.{name}.png"
-
+        for square in Square.objects.filter(map=map_obj).only("name", "color"):
+            filename = f"MapChart_Map.{square.name}.png"
             if filename not in existing_images:
                 continue
 
             image_path = os.path.join(white_image_dir, filename)
             try:
                 img = Image.open(image_path).convert("RGBA")
-            except Exception:
+                r, g, b = tuple(int(square.color[i:i+2], 16) for i in (1, 3, 5))  # hex to RGB
+                r_img, _, _, alpha = img.split()
+                colorized = ImageOps.colorize(r_img, black=(r, g, b), white=(r, g, b))
+                colorized.putalpha(alpha)
+                final_image.alpha_composite(colorized)
+            except Exception as e:
+                print(f"Error processing {filename}: {e}")
                 continue
 
-            r, g, b = int(hex_color[1:3], 16), int(hex_color[3:5], 16), int(hex_color[5:7], 16)
-            r_img, _, _, alpha = img.split()
-            colorized = ImageOps.colorize(r_img, black=(r, g, b), white=(r, g, b))
-            colorized.putalpha(alpha)
-            final_image.alpha_composite(colorized)
-
         def upload_pil_image_to_imgbb(pil_image, api_key):
-            buffer = io.BytesIO()
-            pil_image.save(buffer, format="PNG", optimize=True)
-            buffer.seek(0)
-            encoded_image = base64.b64encode(buffer.read())
-            response = requests.post(
-                "https://api.imgbb.com/1/upload",
-                data={
-                    "key": api_key,
-                    "image": encoded_image,
-                }
-            )
-            result = response.json()
-            if result["success"]:
-                return result["data"]["url"], result["data"]["delete_url"]
-            else:
-                raise Exception("Image upload failed: " + str(result))
-
-        image_url, delete_url = upload_pil_image_to_imgbb(final_image, api_key)
-
-        map_instance = Map.objects.get(game_id=game_id)
-        if map_instance.deleteURL:
             try:
-                requests.get(map_instance.deleteURL)
-            except:
-                pass  # silently fail
+                buffer = io.BytesIO()
+                pil_image.save(buffer, format="PNG", optimize=True)
+                encoded_image = base64.b64encode(buffer.getvalue())
 
-        map_instance.URL = image_url
-        map_instance.deleteURL = delete_url
-        map_instance.save()
+                response = requests.post(
+                    "https://api.imgbb.com/1/upload",
+                    data={"key": api_key, "image": encoded_image}
+                )
+                result = response.json()
+                if result.get("success"):
+                    return result["data"]["url"], result["data"]["delete_url"]
+                else:
+                    raise Exception(result)
+            except Exception as e:
+                print(f"Image upload failed: {e}")
+                raise
+
+        # Upload final image and update Map
+        try:
+            image_url, delete_url = upload_pil_image_to_imgbb(final_image, api_key)
+            map_instance = Map.objects.get(game_id=game_id)
+
+            if map_instance.deleteURL:
+                try:
+                    requests.get(map_instance.deleteURL)
+                except requests.RequestException as e:
+                    print(f"Failed to delete old image: {e}")
+
+            map_instance.URL = image_url
+            map_instance.deleteURL = delete_url
+            map_instance.save()
+        except Exception as e:
+            return HttpResponse(f"Image upload failed: {e}", status=500)
 
         return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
+
 
 @login_required(login_url = 'login')
 def diplomacy(request,game_id):

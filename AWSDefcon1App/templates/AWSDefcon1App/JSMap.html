@@ -104,9 +104,31 @@
                 
                 <div style="display: none;" id="canvasContainer">
                     <canvas id="canvas" style="background-color:skyblue;"></canvas> 
-                    <h3><div style="text-align: center;" id="colorDisplay">Click on the map to interact with a nation</div></h3>
-                </div>
-                
+                    <h3>
+                        <div style="text-align: center;" id="colorDisplay">
+                            Click on the map to interact with a nation
+                            <br>
+                            <a href="{% url 'loader' game_id=game_id %}" class="reload-map-button">↻ Reload Map</a>
+                        </div>
+                    </h3>
+                        </div>
+                        <style>
+                        .reload-map-button {
+                            display: inline-block;
+                            margin-top: 10px;
+                            padding: 6px 12px;
+                            background-color: #2c3e50;
+                            color: white;
+                            text-decoration: none;
+                            font-size: 14px;
+                            border-radius: 6px;
+                            transition: background-color 0.3s;
+                        }
+
+                        .reload-map-button:hover {
+                            background-color: #1a252f;
+                        }
+                        </style>           
                 <div id = "peace-form" style="text-align: center; display: none;">
                     <form method="post" action="{% url 'war' game_id=game_id %}">
                         {% csrf_token %}
