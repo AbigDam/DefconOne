@@ -9,3 +9,4 @@ wheel
 whitenoise==6.7.0
 Pillow
 gunicorn
+requests
