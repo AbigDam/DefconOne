@@ -8,5 +8,3 @@ tzdata==2024.1
 wheel
 whitenoise==6.7.0
 Pillow
-setuptools==65.0
-pip==21.0
