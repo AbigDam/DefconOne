@@ -15,7 +15,9 @@ DEBUG = False
 
 ALLOWED_HOSTS = ['defcon1.pythonanywhere.com','https://defcon1.pythonanywhere.com', '127.0.0.1',"defcon1.glitch.me",'defconone.glitch.me','defconone.onrender.com']
 
-
+CSRF_TRUSTED_ORIGINS = [
+    'defconone.onrender.com',
+]
 
 
 # Application definition
