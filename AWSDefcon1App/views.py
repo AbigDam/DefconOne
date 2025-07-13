@@ -1908,14 +1908,8 @@ def loader(request, game_id, reload):
     if request.method == "POST":
         canvas_width, canvas_height = 1120, 480
         final_image = Image.new("RGBA", (canvas_width, canvas_height), (0, 0, 0, 0))
-
-        try:
-            game = Games.objects.get(id=game_id)
-            map_obj = Map.objects.get(number=game_id, game=game)
-        except (Games.DoesNotExist, Map.DoesNotExist):
-            return bad_request(request, title="User Error", message= "You chose a game that doesn't exsist!")
-            return HttpResponseBadRequest("Invalid game or map.")
-
+        game = Games.objects.get(id=game_id)
+        map_obj = Map.objects.get(number=game_id, game=game)
         white_image_dir = "AWSDefcon1App/static/AWSDefcon1App/white_image"
         existing_images = set(os.listdir(white_image_dir))
 
@@ -1955,7 +1949,6 @@ def loader(request, game_id, reload):
                 print(f"Image upload failed: {e}")
                 raise
 
-        # Upload final image and update Map
         try:
             image_url, delete_url = upload_pil_image_to_imgbb(final_image, api_key)
             map_instance = Map.objects.get(game_id=game_id)
@@ -1971,6 +1964,7 @@ def loader(request, game_id, reload):
             map_instance.save()
         except Exception as e:
             return HttpResponse(f"Image upload failed: {e}", status=500)
+        
         if reload == 1:
             return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
         else:  
@@ -4287,4 +4281,42 @@ def makegame(request,game_id):
     
 
     announcements = Announcements.objects.create(text =f"The game starts", start_time = datetime.now(), game = Games.objects.get(id = game_id))
-    return HttpResponseRedirect(reverse('loader', kwargs={'game_id': game_id, 'reload':0}))
+    
+    def upload_pil_image_to_imgbb(pil_image, api_key):
+        try:
+            buffer = io.BytesIO()
+            pil_image.save(buffer, format="PNG", optimize=True)
+            encoded_image = base64.b64encode(buffer.getvalue())
+
+            response = requests.post(
+                "https://api.imgbb.com/1/upload",
+                data={"key": api_key, "image": encoded_image}
+            )
+            result = response.json()
+            if result.get("success"):
+                return result["data"]["url"], result["data"]["delete_url"]
+            else:
+                raise Exception(result)
+        except Exception as e:
+            print(f"Image upload failed: {e}")
+            raise
+
+    final_image = Image.open("AWSDefcon1App/static/AWSDefcon1App/starting_image.png")
+    try:
+        image_url, delete_url = upload_pil_image_to_imgbb(final_image, api_key)
+        map_instance = Map.objects.get(game_id=game_id)
+
+        if map_instance.deleteURL:
+            try:
+                requests.get(map_instance.deleteURL)
+            except requests.RequestException as e:
+                print(f"Failed to delete old image: {e}")
+
+        map_instance.URL = image_url
+        map_instance.deleteURL = delete_url
+        map_instance.save()
+    except Exception as e:
+        return HttpResponse(f"Image upload failed: {e}", status=500)
+    
+
+    return HttpResponseRedirect(reverse('full_index'))
