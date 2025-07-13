@@ -1,0 +1,1281 @@
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Aberdeenshire')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Abkhazia')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Abruzzo')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Abu Dhabi')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Aden')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Agder')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Akhtubinsk')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Alabama')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Alaska')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Albania')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Aleppo')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Alexandria')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Algiers')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Amapa')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Antalya')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Antofagasta')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Aquitaine')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Araucania')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Arequipa')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Arica y Tarapaca')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Arkhangelsk')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Asir Makkah')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Astrakhan')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Asturias')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Atacama')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Attica')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Aysen')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Bahia')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Baja California')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Beijing')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Beja')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Benghasi')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Benue')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Bismarck')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Bohuslan')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Bolivar')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Bombay')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Bouches du Rhone')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Baluchistan')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Brabant')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'British Columbia')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'British Guyana')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'British Honduras')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'British Somaliland')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Brittany')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Burgas')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Burma')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Bursa')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Cairo')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Calabria')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'California')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Cameroon')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Campania')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Cape')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Casablanca')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Cataluna')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Ceara')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Cebu')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Central Islands')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Central Macedonia')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Cerro Largo')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Ceylon')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Chiapas')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Chubut')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Chugoku')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Chukchi Peninsula')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Chukotka')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Connaught')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Constantine')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Corsica')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Costa Rica')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Cote Nord')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Crimea')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Cuba')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Cumbria')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Cundinamarca')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Cyprus')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Dagestan')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Dahomey')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Dalian')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Dalmatia')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Dammam')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Danzig')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Derna')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Durango')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Districts of Ontario')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Dominican Republic')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'East Anglia')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'East Bengal')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'East Hebei')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'East Midlands')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Easter Island')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Eastern Desert')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Ecuador')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Edirne')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'El Agheila')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'El Salvador')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Emilia Romagna')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Epirus')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Equatorial Guinea')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Eritrea')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Ermland Masuren')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Espirito Santo')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Fars')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Finnmark')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Florida')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'French Guiana')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'French India')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'French Somaliland')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Friesland')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Fujian')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Gabes')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Gabon')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Galicia')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Gambia')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Garissa')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Gavleborg')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Gdynia')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Georgia')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Georgia US')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Ghana')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Gibraltar')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Gilan')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Gloucestershire')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Goa')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Gotland')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Granada')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Greater London Area')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Greenland')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Guangdong')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Guangzhou')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Guangzhouwan')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Guatemala')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Guerrero')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Guinea')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Gujarat')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Guryev')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Haida Gwaii')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Hainan')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Haiti')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Hannover')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Harju')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Hatay')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Hawaii')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Hebei')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Helgeland')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Hinterpommern')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Hokkaido')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Hokuriku')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Holland')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Holstein')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Iceland')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Illinois')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Indiana')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Istanbul')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Istria')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Ivory Coast')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Iwo Jima')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Izmir')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Izmit')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Jalisco')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Jamaica')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Java')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Jehol')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Jiangsu')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Jubaland')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Jylland')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Kalimantan')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Kalmykia')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Kamchatka')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Kansai')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Kanto')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Karakalpakstan')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Karas')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Karjala')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Kassala')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Kastamonu')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Khabarovsk')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Kherson')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Khiva')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Khomas')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Khuzestan')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Konigsberg')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Koshinetsu')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Kunene')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Kuopio')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Kurzeme')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Kuwait')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Kymi')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Kyushu')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Labrador')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Lagos')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Lanark')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Lancashire')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Languedoc')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Lappi')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Lebanon')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Leinster')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Leningrad')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Lesser Sunda Islands')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Liberia')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Lima')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Lisbon')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Litorale')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Loire')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Lothian')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Louisiana')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Lourenco Marques')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Luanda')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Luga')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Luzon')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Madagascar')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Madinah')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Madras')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Madurai')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Manica e Sofala')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Magallanes')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Malatya')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Manila')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Maranhao')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Maryland')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Matrouh')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Maurice')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Mauritania')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Mecklenburg')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Memel')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Mersin')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Middle Congo')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Midi Pyrenees')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Mindanao')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Miranda')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Mississippi')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Mombasa')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Montenegro')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Munster')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Muntenia')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Murcia')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Murmansk')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Mykolaiv')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Mysore')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Nanning')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Nenets')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'New Brunswick')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'New Caledonia')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'New England')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'New Jersey')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'New South Wales')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'New York')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Newfoundland')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Nicaragua')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Nikolayevsk')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Nord du Quebec')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Nord Pas de Calais')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Nordland')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Normandy')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Norrbotten')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'North Angola')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'North Borneo')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'North Carolina')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'North Island')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'North Korea')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'North Queensland')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'North Sakhalin')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'North West Australia')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Northern Epirus')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Northern Ireland')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Northern Malay')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Northern Manitoba')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Northern Ontario')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Northern Territory')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Northumberland')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Nova Scotia')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Nunavut')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Oaxaca')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Odessa')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Okhotsk')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Okinawa')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Olonets')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Oman')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Onega')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Orissa')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Oslofjord')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Ostergotland')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Ouest du Quebec')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Oulu')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Pais Vasco')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Palestine')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Pampas')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Panama')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Panama Canal')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Papua')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Para')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Parana')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Parnu')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Paysandu')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Peloponnese')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Pennsylvania')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Pernambuco')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Petsamo')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Piaui')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Picardy')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Piemonte')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Poitou')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Porto')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Portuguese Guinea')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Portuguese Timor')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Puglia')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Pyrenees Atlantiques')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Qatar')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Qingdao')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Queensland')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Region Mesopotamica')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Riga')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Rio de Janeiro')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Rio de Oro')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Rio Grande do Norte')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Rio Negro')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Rostov')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Rub al Khali')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Saint Lawrence')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Salekhard')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Samar')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Saguenay')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Samsun')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Santa Catarina')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Santa Cruz AR')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Santiago')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Sao Paulo')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Sardegna')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Savoy')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Schleswig')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Scottish Highlands')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Senegal')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Sevilla')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Shandong')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Shanghai')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Shikoku')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Shkoder')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Siam')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Sicilia')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Sidi Ifni')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Sierra Leone')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Sinai')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Sind')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Singapore')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Sistan')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Sjaelland')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Skane')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Smaland')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Sochi')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Sodermalm')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Solomon Islands')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Sonderjylland')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Sonora')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'South Australia')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'South Carolina')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'South Georgia')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'South Island')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'South Korea')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'South Sakhalin')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'South West Angola')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'South West Australia')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'South West England')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Southern Bessarabia')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Southern Indochina')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Spanish Africa')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Suez')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Sulawesi')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Sumatra')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Suriname')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Sussex')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Tabuk')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Taiwan')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Tamaulipas')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Tanganyika')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Tasmania')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Tehran')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Telemark')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Texas')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'The Moluccas')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Thrace')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Tierra del Fuego')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Togo')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Tohoku')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Tokai')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Tonkin')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Toscana')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Trabzon')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Tripoli')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Troms')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Trondelag')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Tunisia')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Turku')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Upper British Columbia')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Uruguay')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Ust Urt')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Uusimaa')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Vaasa')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Valencia')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Vancouver Island')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Var')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Vasterbotten')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Vastergotland')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Veneto')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Veracruz')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Vestlandet')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Victoria')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Vidzeme')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Virginia')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Virumaa')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Vlaanderen')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Vladivostok')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Vorpommern')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Washington')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Weser Ems')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'West Bengal')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'West Papua')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Western Australia')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Yamalia')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Yorkshire')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Yucatan')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Zambezia Mocambique')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Zaporozhe')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Zara')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Zemaitija')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Zemgale')
+    square_instance.coastal = True
+    square_instance.save()
+    square_instance = Square.objects.get(map=Map.objects.get(number=game_id, game = game_obj), name = 'Zhejiang')
+    square_instance.coastal = True
+    square_instance.save()

@@ -6,7 +6,7 @@
     <h3>Please wait while we prepare your map.</h3>
   </div>
 
-  <form id="loaderForm" method="POST" action="{% url 'loader' game_id=game_id %}">
+  <form id="loaderForm" method="POST" action="{% url 'loader' game_id=game_id reload=reload %}">
     {% csrf_token %}
   </form>
 

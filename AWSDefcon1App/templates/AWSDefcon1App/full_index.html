@@ -1,4 +1,3 @@
-
 {% extends "AWSDefcon1App/layout.html" %}
 
 {% block body %}
@@ -9,7 +8,7 @@
     {% for game in games %}
       <div class="game">
         <hr>
-        <div class="info-bubble"> <h3><a class="game-link button" href="{% url 'map' game_id=game.id %}">Enter Game</a> <span class="info-icon">🛈</span> </h3>  <span class="tooltip-text">This will take you to the games map, allowing you to play the game!</span> </div> 
+        <div class="info-bubble"> <h3><a class="game-link button" >Unable to Enter Game</a> <span class="info-icon">🛈</span> </h3>  <span class="tooltip-text">Join as as a nation before entering the game</span> </div> 
         <div class="game-info">
           <p class="boxed-list-instance"> UK: 
             {% if game.player1.username == request.user.username %}
@@ -18,6 +17,8 @@
               <span class="defeated-text">Defeated</span>
             {% elif game.player1.username == 'closed' %}
               <span class="bot-text">John Defcon(Bot)</span>
+            {% elif game.player1.username == 'empty' %}
+              <a class="player-link button" href="{% url 'joingame' game_id=game.id player_number=1 %}">Join as Player 1</a>
             {% else %}
               {{ game.player1.username }}
             {% endif %}
@@ -29,6 +30,8 @@
               <span class="defeated-text">Defeated</span>
             {% elif game.player2.username == 'closed' %}
               <span class="bot-text">John Defcon(Bot)</span>
+            {% elif game.player2.username == 'empty' %}
+              <a class="player-link button" href="{% url 'joingame' game_id=game.id player_number=2 %}">Join as Player 2</a>
             {% else %}
               {{ game.player2.username }}
             {% endif %}
@@ -41,6 +44,8 @@
               <span class="defeated-text">Defeated</span>
             {% elif game.player3.username == 'closed' %}
               <span class="bot-text">John Defcon(Bot)</span>
+            {% elif game.player3.username == 'empty' %}
+              <a class="player-link button" href="{% url 'joingame' game_id=game.id player_number=3 %}">Join as Player 3</a>
             {% else %}
               {{ game.player3.username }}
             {% endif %}
@@ -53,6 +58,8 @@
               <span class="defeated-text">Defeated</span>
             {% elif game.player4.username == 'closed' %}
               <span class="bot-text">John Defcon(Bot)</span>
+            {% elif game.player4.username == 'empty' %}
+              <a class="player-link button" href="{% url 'joingame' game_id=game.id player_number=4 %}">Join as Player 4</a>
             {% else %}
               {{ game.player4.username }}
             {% endif %}
@@ -65,6 +72,8 @@
               <span class="defeated-text">Defeated</span>
             {% elif game.player5.username == 'closed' %}
               <span class="bot-text">John Defcon(Bot)</span>
+            {% elif game.player5.username == 'empty' %}
+              <a class="player-link button" href="{% url 'joingame' game_id=game.id player_number=5 %}">Join as Player 5</a>
             {% else %}
               {{ game.player5.username }}
             {% endif %}
@@ -77,6 +86,8 @@
               <span class="defeated-text">Defeated</span>
             {% elif game.player6.username == 'closed' %}
               <span class="bot-text">John Defcon(Bot)</span>
+            {% elif game.player6.username == 'empty' %}
+              <a class="player-link button" href="{% url 'joingame' game_id=game.id player_number=6 %}">Join as Player 6</a>
             {% else %}
               {{ game.player6.username }}
             {% endif %}
@@ -89,6 +100,8 @@
               <span class="defeated-text">Defeated</span>
             {% elif game.player7.username == 'closed' %}
               <span class="bot-text">John Defcon(Bot)</span>
+            {% elif game.player7.username == 'empty' %}
+              <a class="player-link button" href="{% url 'joingame' game_id=game.id player_number=7 %}">Join as Player 7</a>
             {% else %}
               {{ game.player7.username }}
             {% endif %}
@@ -101,6 +114,8 @@
               <span class="defeated-text">Defeated</span>
             {% elif game.player0.username == 'closed' %}
               <span class="bot-text">John Defcon(Bot)</span>
+            {% elif game.player0.username == 'empty' %}
+              <a class="player-link button" href="{% url 'joingame' game_id=game.id player_number=0 %}">Join as Player 8</a>
             {% else %}
               {{ game.player0.username }}
             {% endif %}

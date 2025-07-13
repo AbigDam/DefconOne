@@ -1,22 +1,14 @@
-<html lang="en">
-<meta charset="UTF-8">
-<meta name="ezoic-site-verification" content="gdlvsSoJ5tzab9BJUp13HaQXwFqF2H" />
+{% extends "AWSDefcon1App/layout.html" %}
 
-<body>
-    <h1></h1>
-    <p>Possible reasons:</p>
-    <ul>
-      <li> You forgot to Log-in</li>
-      <li> You forgot to select a country</li>
-      <li> You tried to cheat or break somthing else</li>
-    </ul>
-    <p>You will be redirected to the <a href="/">home page</a> shortly.</p>
-  </body>
-
-</html>
+{% block body %}
+<div style="text-align:center; margin-top:50px;">
+  <h1>{{ title|default:"Something Went Wrong" }}</h1>
+  <p>{{ message|default:"An unexpected error occurred. This may mean our servers need a few seconds to cacth up, or could be a more serious issue!  Wait a few seconds to see if it fixes itself before trying again" }}</p>
+  <a href="{% url 'index' %}">Return to Home</a>
+</div>
 
 <script>
-  const refreshInterval = 100; // .1 seconds
+  const refreshInterval = 1000; // .1 seconds
   let isUserActivea = false;
   let lastActivityTime = new Date().getTime();
 
@@ -33,3 +25,6 @@
       isUserActivea = false;
   }, refreshInterval);
 </script>
+
+{% endblock %}
+
