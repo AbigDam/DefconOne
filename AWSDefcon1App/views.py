@@ -21,6 +21,11 @@ import json
 from PIL import Image, ImageOps
 import os
 from glob import glob
+import requests
+import base64
+import io
+
+api_key = "ba9263b16b26bece76964b0b4cad6b6d"
 
 colors = {
     'United Kingdom': '#ff4879',
@@ -46,14 +51,14 @@ colors = {
     'Lithuania': '#ffff9b',
     'Mexico': '#86c66c',
     'Ethiopia': '#c3a5f5',
-    'Romania': '#ffff77',
+    'Romania': "#9e9e00", #Spain
     'Portugal': '#33965b',
     'Bhutan': '#ac7a58',
     'Poland': '#ff7789',
     'Australia': '#49bb7e',
     'Czechoslovakia': '#46d8cb',
     'Sweden': '#2eadff',
-    'Venezuela': '#acbe99',
+    'Venezuela': '#70b626', #Denmark
     'Yugoslavia': '#5e5ea4',
     'Netherlands': '#ffb35f',
     'German Reich': '#525252',
@@ -79,7 +84,7 @@ colors = {
     'El Salvador': '#fabe78',
     'Iran': '#5c927e',
     'Xibei San Ma': '#685b84',
-    'Denmark': '#c79679',
+    'Denmark': '#e25c0e', #Iceland
     'Guangxi Clique': '#8a9a74',
     'Guatemala': '#473070',
     'Haiti': '#ab6f72',
@@ -87,25 +92,25 @@ colors = {
     'Estonia': '#63cdfe',
     'Manchukuo': '#ff7847',
     'Afghanistan': '#53d0d9',
-    'Honduras': '#809141',
+    'Honduras': '#B6E01F', #Guanxi Clique
     'Iceland': '#c79779',
     'Siam': '#d7f0c8',
-    'Dutch East Indies': '#ffb25f',
+    'Dutch East Indies': '#5b21e2', #Netherlands
     'Latvia': '#7b7cb8',
     'Bolivian Republic': '#ffeab1',
     'Liberia': '#cdafff',
-    'Austria': '#fffeff',
+    'Austria': '#a999f0', #Finland
     'Luxembourg': '#8adba2',
     'Tibet': '#456722',
     'Nepal': '#c8aafa',
     'Nicaragua': '#92b2bf',
-    'British Malaya': '#ff4979',
+    'British Malaya': '#e623d5', #Britain
     'New Zealand': '#b99beb',
-    'Oman': '#905c5c',
+    'Oman': '#905c5c', #Yemen
     'Shanxi': '#651e29',
     'Panama': '#9e8add',
     'Communist China': '#b2233b',
-    'Tannu Tuva': '#c6a9f8',
+    'Tannu Tuva': '#e94a4a', #Nepal
     'Yemen': '#905d5d',
 }
 def ads(request):
@@ -1795,11 +1800,40 @@ def battle(request, game_id):
                   colorized.putalpha(alpha)
         
                   final_image.alpha_composite(colorized)
-                  
-                  output_path = f"AWSDefcon1App/static/AWSDefcon1App/MapChart_Game_{game_id}.png"
+
+
+            output_path = f"AWSDefcon1App/static/AWSDefcon1App/MapChart_Game_{game_id}.png"
+            def upload_pil_image_to_imgbb(pil_image, api_key):
+                # Save image to a BytesIO buffer
+                buffer = io.BytesIO()
+                pil_image.save(buffer, format="PNG", optimize=True)
+                buffer.seek(0)
+
+                # Encode image in base64
+                encoded_image = base64.b64encode(buffer.read())
+
+                # Upload to ImgBB
+                response = requests.post(
+                    "https://api.imgbb.com/1/upload",
+                    data={
+                        "key": api_key,
+                        "image": encoded_image,
+                    }
+                )
+
+                result = response.json()
+                if result["success"]:
+                    return result["data"]["url"], result["data"]["delete_url"] # Direct image URL
+                else:
+                    raise Exception("Image upload failed: " + str(result))
+
+            image_url, delete_url = upload_pil_image_to_imgbb(final_image, api_key)
+            map_instance = Map.objects.get(game_id=game_id)
+            delete_response = requests.delete(map_instance.deleteURL)
             
-            final_image.save(output_path, optimize=True)
-            
+            map_instance.URL = image_url
+            map_instance.deleteURL = delete_url
+            map_instance.save()
         return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
                   
 
@@ -2084,7 +2118,8 @@ def map(request, game_id):
         if nation.friendlyness == 0 or nation.friendlyness < 1:
             nation.friendlyness = 1
 
-    return render(request, "AWSDefcon1App/JSMap.html",{"game_id":game_id ,'PlayerAAA':PlayerAAA,'alliances':alliances, 'nation_name_at_war':nation_name_at_war, 'nations_at_war':nations_at_war,'attacks_left':attacks_left, 'owner':owner, "requesters":requesters, "knownnations":knownnations, 'announce':announce, 'nations':nations})
+    image_filename = Map.objects.get(game = game).URL
+    return render(request, "AWSDefcon1App/JSMap.html",{"game_id":game_id ,'image_filename':image_filename,'PlayerAAA':PlayerAAA,'alliances':alliances, 'nation_name_at_war':nation_name_at_war, 'nations_at_war':nations_at_war,'attacks_left':attacks_left, 'owner':owner, "requesters":requesters, "knownnations":knownnations, 'announce':announce, 'nations':nations})
 
     
 def makegame(request,game_id):
@@ -2694,7 +2729,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Romania"))
     square_instance.name = "Banat"
-    square_instance.color = "#ffff77"
+    square_instance.color = "#9e9e00"
     square_instance.save()
     j += 1
     
@@ -2742,7 +2777,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Romania"))
     square_instance.name = "Bessarabia"
-    square_instance.color = "#ffff77"
+    square_instance.color = "#9e9e00"
     square_instance.save()
     j += 1
     
@@ -2808,7 +2843,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Venezuela"))
     square_instance.name = "Bolivar"
-    square_instance.color = "#acbe99"
+    square_instance.color = "#70b626"
     square_instance.save()
     j += 1
     
@@ -2904,7 +2939,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Romania"))
     square_instance.name = "Bucovina"
-    square_instance.color = "#ffff77"
+    square_instance.color = "#9e9e00"
     square_instance.save()
     j += 1
     
@@ -3246,7 +3281,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Romania"))
     square_instance.name = "Crisana"
-    square_instance.color = "#ffff77"
+    square_instance.color = "#9e9e00"
     square_instance.save()
     j += 1
     
@@ -3384,7 +3419,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Romania"))
     square_instance.name = "Dobrudja"
-    square_instance.color = "#ffff77"
+    square_instance.color = "#9e9e00"
     square_instance.save()
     j += 1
     
@@ -3798,7 +3833,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Denmark"))
     square_instance.name = "Greenland"
-    square_instance.color = "#c79679"
+    square_instance.color = "#e25c0e"
     square_instance.save()
     j += 1
     
@@ -4026,7 +4061,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Honduras"))
     square_instance.name = "Honduras"
-    square_instance.color = "#809141"
+    square_instance.color = "#B6E01F"
     square_instance.save()
     j += 1
     
@@ -4194,7 +4229,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Dutch East Indies"))
     square_instance.name = "Java"
-    square_instance.color = "#ffb25f"
+    square_instance.color = "#5b21e2"
     square_instance.save()
     j += 1
     
@@ -4248,7 +4283,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Denmark"))
     square_instance.name = "Jylland"
-    square_instance.color = "#c79679"
+    square_instance.color = "#e25c0e"
     square_instance.save()
     j += 1
     
@@ -4266,7 +4301,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Dutch East Indies"))
     square_instance.name = "Kalimantan"
-    square_instance.color = "#ffb25f"
+    square_instance.color = "#5b21e2"
     square_instance.save()
     j += 1
     
@@ -4746,7 +4781,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Dutch East Indies"))
     square_instance.name = "Lesser Sunda Islands"
-    square_instance.color = "#ffb25f"
+    square_instance.color = "#5b21e2"
     square_instance.save()
     j += 1
     
@@ -4866,7 +4901,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Austria"))
     square_instance.name = "Lower Austria"
-    square_instance.color = "#fffeff"
+    square_instance.color = "#a999f0"
     square_instance.save()
     j += 1
     
@@ -5166,7 +5201,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Venezuela"))
     square_instance.name = "Miranda"
-    square_instance.color = "#acbe99"
+    square_instance.color = "#70b626"
     square_instance.save()
     j += 1
     
@@ -5190,7 +5225,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Romania"))
     square_instance.name = "Moldova"
-    square_instance.color = "#ffff77"
+    square_instance.color = "#9e9e00"
     square_instance.save()
     j += 1
     
@@ -5256,7 +5291,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Romania"))
     square_instance.name = "Muntenia"
-    square_instance.color = "#ffff77"
+    square_instance.color = "#9e9e00"
     square_instance.save()
     j += 1
     
@@ -5490,7 +5525,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "British Malaya"))
     square_instance.name = "North Borneo"
-    square_instance.color = "#ff4979"
+    square_instance.color = "#e623d5"
     square_instance.save()
     j += 1
     
@@ -5550,7 +5585,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Romania"))
     square_instance.name = "North Transylvania"
-    square_instance.color = "#ffff77"
+    square_instance.color = "#9e9e00"
     square_instance.save()
     j += 1
     
@@ -5724,7 +5759,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Romania"))
     square_instance.name = "Oltenia"
-    square_instance.color = "#ffff77"
+    square_instance.color = "#9e9e00"
     square_instance.save()
     j += 1
     
@@ -6456,7 +6491,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "British Malaya"))
     square_instance.name = "Singapore"
-    square_instance.color = "#ff4979"
+    square_instance.color = "#e623d5"
     square_instance.save()
     j += 1
     
@@ -6480,7 +6515,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Denmark"))
     square_instance.name = "Sjaelland"
-    square_instance.color = "#c79679"
+    square_instance.color = "#e25c0e"
     square_instance.save()
     j += 1
     
@@ -6540,7 +6575,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Denmark"))
     square_instance.name = "Sonderjylland"
-    square_instance.color = "#c79679"
+    square_instance.color = "#e25c0e"
     square_instance.save()
     j += 1
     
@@ -6624,7 +6659,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Romania"))
     square_instance.name = "Southern Bessarabia"
-    square_instance.color = "#ffff77"
+    square_instance.color = "#9e9e00"
     square_instance.save()
     j += 1
     
@@ -6732,13 +6767,13 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Dutch East Indies"))
     square_instance.name = "Sulawesi"
-    square_instance.color = "#ffb25f"
+    square_instance.color = "#5b21e2"
     square_instance.save()
     j += 1
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Dutch East Indies"))
     square_instance.name = "Sumatra"
-    square_instance.color = "#ffb25f"
+    square_instance.color = "#5b21e2"
     square_instance.save()
     j += 1
     
@@ -6834,7 +6869,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Tannu Tuva"))
     square_instance.name = "Tannu Tuva"
-    square_instance.color = "#c6a9f8"
+    square_instance.color = "#e94a4a"
     square_instance.save()
     j += 1
     
@@ -6888,7 +6923,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Dutch East Indies"))
     square_instance.name = "The Moluccas"
-    square_instance.color = "#ffb25f"
+    square_instance.color = "#5b21e2"
     square_instance.save()
     j += 1
     
@@ -7014,7 +7049,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Romania"))
     square_instance.name = "Transylvania"
-    square_instance.color = "#ffff77"
+    square_instance.color = "#9e9e00"
     square_instance.save()
     j += 1
     
@@ -7080,7 +7115,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Austria"))
     square_instance.name = "Tyrol"
-    square_instance.color = "#fffeff"
+    square_instance.color = "#a999f0"
     square_instance.save()
     j += 1
     
@@ -7134,7 +7169,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Austria"))
     square_instance.name = "Upper Austria"
-    square_instance.color = "#fffeff"
+    square_instance.color = "#a999f0"
     square_instance.save()
     j += 1
     
@@ -7344,7 +7379,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Austria"))
     square_instance.name = "Vorarlberg"
-    square_instance.color = "#fffeff"
+    square_instance.color = "#a999f0"
     square_instance.save()
     j += 1
     
@@ -7428,7 +7463,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Dutch East Indies"))
     square_instance.name = "West Papua"
-    square_instance.color = "#ffb25f"
+    square_instance.color = "#5b21e2"
     square_instance.save()
     j += 1
     
@@ -7650,7 +7685,7 @@ def makegame(request,game_id):
     
     square_instance = Square.objects.create(map = map_obj, number=j, owner = Nations.objects.get(game = game_id, name = "Venezuela"))
     square_instance.name = "Zulia"
-    square_instance.color = "#acbe99"
+    square_instance.color = "#70b626"
     square_instance.save()
     j += 1
     
@@ -12593,6 +12628,35 @@ def makegame(request,game_id):
             
             output_path = f"AWSDefcon1App/static/AWSDefcon1App/MapChart_Game_{game_id}.png"
     
-    final_image.save(output_path, optimize=True)
+    def upload_pil_image_to_imgbb(pil_image, api_key):
+        # Save image to a BytesIO buffer
+        buffer = io.BytesIO()
+        pil_image.save(buffer, format="PNG", optimize=True)
+        buffer.seek(0)
+
+        # Encode image in base64
+        encoded_image = base64.b64encode(buffer.read())
+
+        # Upload to ImgBB
+        response = requests.post(
+            "https://api.imgbb.com/1/upload",
+            data={
+                "key": api_key,
+                "image": encoded_image,
+            }
+        )
+
+        result = response.json()
+        if result["success"]:
+            return result["data"]["url"], result["data"]["delete_url"]
+        else:
+            raise Exception("Image upload failed: " + str(result))
+
+    image_url, delete_url = upload_pil_image_to_imgbb(final_image, api_key)
+    map_instance = Map.objects.get(game_id=game_id)
+    
+    map_instance.URL = image_url
+    map_instance.deleteURL = delete_url
+    map_instance.save()
     
     return HttpResponseRedirect(reverse("index"))
