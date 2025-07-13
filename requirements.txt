@@ -6,4 +6,9 @@ setuptools==72.1.0
 sqlparse==0.5.1
 tzdata==2024.1
 whitenoise==6.7.0
+<<<<<<< HEAD
 Pillow==10.0.0
+=======
+Pillow==10.0.0
+
+>>>>>>> fba19c6fc2ece9db5b0ec8199729c55d6ac784a7
