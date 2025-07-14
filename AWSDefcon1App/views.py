@@ -1613,9 +1613,11 @@ def battle(request, game_id):
 
                         if captured >= state_change:
                             break
-
+                    
                     iterations += 1
-
+                
+                owner.save()
+                defender.save()
 
             ## Defensive Wins
             elif state_changeD >= state_changeA:
@@ -1624,7 +1626,6 @@ def battle(request, game_id):
 
                 defender = Nations.objects.select_related("game").get(game=game_id, name=division_defender)
                 attacker = Nations.objects.get(game=game_id, user=request.user)
-
                 # Precompute state-change attempts
                 max_swaps = 10
                 stater = defender.states * 3
