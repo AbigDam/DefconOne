@@ -53,29 +53,47 @@
 
     <audio id="backgroundMusic" src="/static/AWSDefcon1App/Defcon1FullSoundtrack.wav"></audio>
 
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-          const musicButton = document.getElementById('musicButton');
-          const backgroundMusic = document.getElementById('backgroundMusic');
-          document.getElementById("backgroundMusic").loop = true;
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const musicButton = document.getElementById('musicButton');
+    const backgroundMusic = document.getElementById('backgroundMusic');
+    backgroundMusic.loop = true;
 
-          let isPlaying = false;
-  
-          musicButton.addEventListener('click', function() {
-              if (isPlaying) {
-                  backgroundMusic.pause();
-                  musicButton.src = '/static/AWSDefcon1App/AudioMutedIcon.png';
-              } else {
-                  backgroundMusic.play();
-                  musicButton.src = '/static/AWSDefcon1App/AudioIcon.png';
-              }
-              isPlaying = !isPlaying;
-          });
-  
-          // Add this to make the music play again when it finishes
-          backgroundMusic.addEventListener.loop = True;
-      });
-  </script>
+    let isPlaying = false;
+
+    // Load play state and time from sessionStorage
+    if (sessionStorage.getItem('musicPlaying') === 'true') {
+        backgroundMusic.currentTime = parseFloat(sessionStorage.getItem('musicTime')) || 0;
+        backgroundMusic.play();
+        musicButton.src = '/static/AWSDefcon1App/AudioIcon.png';
+        isPlaying = true;
+    }
+
+    musicButton.addEventListener('click', function () {
+        if (isPlaying) {
+            backgroundMusic.pause();
+            musicButton.src = '/static/AWSDefcon1App/AudioMutedIcon.png';
+        } else {
+            backgroundMusic.play();
+            musicButton.src = '/static/AWSDefcon1App/AudioIcon.png';
+        }
+        isPlaying = !isPlaying;
+        sessionStorage.setItem('musicPlaying', isPlaying);
+    });
+
+    // Save time periodically
+    setInterval(() => {
+        sessionStorage.setItem('musicTime', backgroundMusic.currentTime);
+    }, 1000);
+
+    // Also update play state on unload
+    window.addEventListener('beforeunload', () => {
+        sessionStorage.setItem('musicPlaying', isPlaying);
+        sessionStorage.setItem('musicTime', backgroundMusic.currentTime);
+    });
+});
+</script>
+
 
         <!-- Navigation bar -->
     </div>
