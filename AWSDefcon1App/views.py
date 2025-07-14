@@ -2120,7 +2120,7 @@ def war(request,game_id):
         selected_nation = request.POST.get('selected_nation')
         if selected_nation:
             
-            if Nations.objects.get(user=request.user, game=game_id).alliance_name == Nations.objects.get(name=selected_nation, game=game_id).alliance_name:
+            if Nations.objects.get(user=request.user, game=game_id).alliance_name == Nations.objects.get(name=selected_nation, game=game_id).alliance_name and  Nations.objects.get(name=selected_nation, game=game_id).alliance_name  != '':
                 return bad_request(request, title="User Error", message="To declare war on an ally, break the alliance using 2 points from the shop")
 
             selected_nation = War.objects.get_or_create(nation1 = Nations.objects.get(user=request.user, game=game_id), nation2 = Nations.objects.get(name=selected_nation, game=game_id))
