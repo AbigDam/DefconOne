@@ -13,8 +13,10 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.views.static import serve
+from django.conf import settings
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
 import sys
 from django.conf.urls import handler404, handler500, handler403
 sys.setrecursionlimit(100000) 
@@ -22,6 +24,13 @@ sys.setrecursionlimit(100000)
 urlpatterns = [
     path("admin/",admin.site.urls),
     path("", include("AWSDefcon1App.urls")),    
+]
+
+urlpatterns += [
+    re_path(r'^\.well-known/assetlinks\.json$', serve, {
+        'document_root': settings.STATIC_ROOT,
+        'path': '.well-known/assetlinks.json',
+    }),
 ]
 
 handler404 = 'AWSDefcon1App.views.error'
