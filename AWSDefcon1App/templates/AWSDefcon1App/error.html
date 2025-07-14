@@ -7,24 +7,5 @@
   <a href="{% url 'index' %}">Return to Home</a>
 </div>
 
-<script>
-  const refreshInterval = 1000; // .1 seconds
-  let isUserActivea = false;
-  let lastActivityTime = new Date().getTime();
-
-  document.addEventListener('keydown', () => {
-      isUserActivea = true;
-      lastActivityTime = new Date().getTime();
-  });
-
-  setInterval(() => {
-      const currentTime = new Date().getTime();
-      if (!isUserActivea && (currentTime - lastActivityTime) >= refreshInterval) {
-          window.location.href = window.location.href;
-      }
-      isUserActivea = false;
-  }, refreshInterval);
-</script>
-
 {% endblock %}
 

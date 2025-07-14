@@ -1709,71 +1709,91 @@ def battle(request, game_id):
             defender.save()
 
             player = Nations.objects.get(game=game_id, user=request.user)
-            game_instance = Games.objects.get(id=game_id)
-            loser_user = User.objects.get(username='loser')
 
-            # Store references to defenders
-            defenders = {
-                "div": request.POST.get("division_defender"),
-                "planes": request.POST.get("planes_defender"),
-                "boats": request.POST.get("boat_defender")
-            }
+            if division_defender:
+                div_defender = Nations.objects.get(game = game_id, name = division_defender)
+            if planes_defender:
+                planes_defender = Nations.objects.get(game = game_id, name = planes_defender)
+            if boat_defender:
+                boat_defender = Nations.objects.get(game = game_id, name = boat_defender)
 
-            # Get Nation instances for each
-            for key in defenders:
-                if defenders[key]:
-                    defenders[key] = Nations.objects.get(game=game_id, name=defenders[key])
-                else:
-                    defenders[key] = None
+            number = div_defender.player_number
+            player_number_value = f"player{number}"
+            if div_defender.states <= 1:
+                player.boats += div_defender.boats
+                player.planes += div_defender.planes
+                div_defender.boats = 0
+                div_defender.planes = 0
+                div_defender.user = User.objects.get(username='loser')
+                div_defender.divisions = 0
+                div_defender.alliance_name = ''
+                div_defender.save()
+                player.save()
+                game_instance = Games.objects.get(id=game_id)
+                game_instance.enemy_player_number = User.objects.get(username='loser')
+                game_instance.save()
+                War.objects.filter(Q(nation1=div_defender) | Q(nation2=div_defender)).delete()
 
-            def handle_defeat(defender):
-                if defender and defender.states <= 1:
-                    player.boats += defender.boats
-                    player.planes += defender.planes
 
-                    defender.boats = 0
-                    defender.planes = 0
-                    defender.divisions = 0
-                    defender.user = loser_user
-                    defender.alliance_name = ''
-                    defender.save()
+            if planes_defender.states <= 1:
+                player.boats += planes_defender.boats
+                player.planes += planes_defender.planes
+                div_defender.boats = 0
+                div_defender.planes = 0
+                planes_defender.user = User.objects.get(username='loser')
+                planes_defender.divisions = 0
+                planes_defender.alliance_name = ''
+                planes_defender.save()
+                player.save()
+                game_instance = Games.objects.get(id=game_id)
+                game_instance.enemy_player_number = User.objects.get(username='loser')
+                game_instance.save()
+                War.objects.filter(Q(nation1=planes_defender) | Q(nation2=planes_defender)).delete()
+                
+            if boat_defender.states <= 1:
+                player.boats += boat_defender.boats
+                player.planes += boat_defender.planes
+                div_defender.boats = 0
+                div_defender.planes = 0
+                boat_defender.user = User.objects.get(username='loser')
+                boat_defender.divisions = 0
+                boat_defender.alliance_name = ''
+                boat_defender.save()
+                player.save()
+                game_instance = Games.objects.get(id=game_id)
+                game_instance.enemy_player_number = User.objects.get(username='loser')
+                game_instance.save()
+                War.objects.filter(Q(nation1=boat_defender) | Q(nation2=boat_defender)).delete()
 
-                    War.objects.filter(Q(nation1=defender) | Q(nation2=defender)).delete()
-
-                    # If needed, update the correct enemy_player_number
-                    if hasattr(game_instance, 'enemy_player_number'):
-                        game_instance.enemy_player_number = loser_user
-
-            # Apply defeat handler to all
-            handle_defeat(defenders["div"])
-            handle_defeat(defenders["planes"])
-            handle_defeat(defenders["boats"])
-
-            # Handle player defeat
+            number = player.player_number
+            player_number_value = f"player{number}"
             if player.states <= 1:
-                # Determine who beat the player
-                winner = None
                 if division_attack_amount:
-                    winner = defenders["div"]
+                    div_defender.boats += player.boats
+                    div_defender.planes += player.planes
+                    player.user = User.objects.get(username='loser')
+                    player.divisions = 0
+                    player.alliance_name = ''
+                    War.objects.filter(Q(nation1=player) | Q(nation2=player)).delete()
                 elif boat_attack_amount:
-                    winner = defenders["boats"]
+                    boat_defender.boats += player.boats
+                    boat_defender.planes += player.planes
+                    player.user = User.objects.get(username='loser')
+                    player.divisions = 0
+                    player.alliance_name = ''
+                    War.objects.filter(Q(nation1=player) | Q(nation2=player)).delete()
+                game_instance = Games.objects.get(id=game_id)
+                game_instance.player_number_value = User.objects.get(username='loser')
+                game_instance.save()
+                                
+            if division_defender:
+                div_defender.save()
+            if planes_defender:
+                planes_defender.save() 
+            if boat_defender:
+                boat_defender.save()
 
-                if winner:
-                    winner.boats += player.boats
-                    winner.planes += player.planes
-                    winner.save()
-
-                player.user = loser_user
-                player.divisions = 0
-                player.alliance_name = ''
-                War.objects.filter(Q(nation1=player) | Q(nation2=player)).delete()
-
-                # Replace correct player_number slot
-                setattr(game_instance, f"player{player.player_number}", loser_user)
-
-            # Save updates
             player.save()
-            game_instance.save()
 
 
         # Preload 'special' users once
@@ -2078,6 +2098,10 @@ def war(request,game_id):
         '''
         selected_nation = request.POST.get('selected_nation')
         if selected_nation:
+            
+            if Nations.objects.get(user=request.user, game=game_id).alliance_name == Nations.objects.get(name=selected_nation, game=game_id).alliance_name:
+                return bad_request(request, title="User Error", message="To declare war on an ally, break the alliance using 2 points from the shop")
+
             selected_nation = War.objects.get_or_create(nation1 = Nations.objects.get(user=request.user, game=game_id), nation2 = Nations.objects.get(name=selected_nation, game=game_id))
         playernation = Nations.objects.get(user=request.user, game=game_id)
         wars = War.objects.filter(nation1__game=game_id) | War.objects.filter(nation2__game=game_id)
