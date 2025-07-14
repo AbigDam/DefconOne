@@ -4,6 +4,7 @@
 <html lang="en">
 <meta charset="UTF-8">
 <meta name="ezoic-site-verification" content="gdlvsSoJ5tzab9BJUp13HaQXwFqF2H" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <head class = "wrapper">
     <title>{% block title %}Defcon One{% endblock %}</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
@@ -51,7 +52,7 @@
         });
     </script>
 
-    <audio id="backgroundMusic" src="/static/AWSDefcon1App/DEFCON_1_Official_Theme.wav"></audio>
+    <audio id="backgroundMusic" src="AWSDefcon1App\static\AWSDefcon1App\DEFCON_1_Official_Theme.wav"></audio>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const musicButton = document.getElementById('musicButton');
@@ -535,14 +536,6 @@ document.addEventListener('DOMContentLoaded', function() {
 <script>
 sdk.showBanner();
 </script>
-<script src='https://storage.ko-fi.com/cdn/scripts/overlay-widget.js'></script>
-<script>
-  kofiWidgetOverlay.draw('defcon1game', {
-    'type': 'floating-chat',
-    'floating-chat.donateButton.text': 'Support me',
-    'floating-chat.donateButton.background-color': '#00b9fe',
-    'floating-chat.donateButton.text-color': '#fff'
-  });
-</script>
+
 
 </html>
