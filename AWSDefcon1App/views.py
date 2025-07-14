@@ -1506,6 +1506,7 @@ def battle(request, game_id):
                     number = enemy.player_number
                     enemy_player_number = f"player{number}"
                     enemy_squares = Square.objects.filter(map=maper, owner=enemy)
+                    changed_squares = enemy_squares
                     game_instance = Games.objects.get(id=game_id)
                     game_instance.enemy_player_number = User.objects.get(username='loser')
                     game_instance.save()
@@ -1865,7 +1866,7 @@ def battle(request, game_id):
                 nation.requests = 10
                 nation.save()
 
-        if division_attack_amount or boat_attack_type == "amphibious":
+        if division_attack_amount or nuke_defender or boat_attack_type == "amphibious":
             canvas_width, canvas_height = 1120, 480
 
 
