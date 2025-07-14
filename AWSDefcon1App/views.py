@@ -1564,8 +1564,17 @@ def battle(request, game_id):
                 game = Games.objects.only("id").get(id=game_id)
                 map_obj = Map.objects.only("id").get(game=game)
 
-                # Get owned squares only once
-                owned_squares = Square.objects.filter(owner=owner, map=map_obj).only("number")
+                owner_alliance = owner.alliance_name
+
+                # If the defender is in an alliance, get all nations in the same alliance (excluding empty/closed/loser if needed)
+                if owner_alliance:
+                    allies = Nations.objects.filter(game=game_id, alliance_name=owner_alliance)
+                else:
+                    # Defender is not in an alliance — only they count as their own ally
+                    allies = Nations.objects.filter(pk=owner.pk)
+
+                # Now fetch all squares owned by these allies
+                owned_squares = Square.objects.filter(owner__in=allies, map=map_obj).only("number") 
                 controlled_numbers = set(sq.number for sq in owned_squares)
 
                 # Pre-fetch all neighbor squares to reduce queries
@@ -1620,7 +1629,17 @@ def battle(request, game_id):
                 stater = defender.states * 3
 
                 # Squares owned by defender
-                owned_squares = Square.objects.filter(owner=defender, map=map_obj).only("number")
+                defender_alliance = defender.alliance_name
+
+                # If the defender is in an alliance, get all nations in the same alliance (excluding empty/closed/loser if needed)
+                if defender_alliance:
+                    allies = Nations.objects.filter(game=game_id, alliance_name=defender_alliance)
+                else:
+                    # Defender is not in an alliance — only they count as their own ally
+                    allies = Nations.objects.filter(pk=defender.pk)
+
+                # Now fetch all squares owned by these allies
+                owned_squares = Square.objects.filter(owner__in=allies, map=map_obj).only("number")                
                 controlled_numbers = set(sq.number for sq in owned_squares)
 
                 # Pre-fetch all relevant squares
