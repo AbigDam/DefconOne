@@ -15,9 +15,6 @@ import datetime
 from datetime import datetime
 from django.db.models import Max
 import math
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
-import json
 from PIL import Image, ImageOps
 import os
 from glob import glob
