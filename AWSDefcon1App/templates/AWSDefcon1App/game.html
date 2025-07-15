@@ -170,6 +170,207 @@
         });
     </script>
         
+<h2 style = "text-align: center;" >Attack Look-Up</h2>
+<h3 style = "text-align: center;">Battles Left: {{ attacks_left }}</h3>
+
+          {% if owner.nukes > 0 %}
+<form method="post" action="{% url 'battle' game_id=game_id %}" style="text-align: center;">
+    {% csrf_token %}
+    
+    <label for="selected_nation" style="font-weight: bold;">Select a Nation:</label><br>  <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">Declare War on a nation first before trying to battle them</span></div>
+    <select name="defender" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc; width: 200px; font-size: 16px;">
+        {% for nation in nations_at_war %}
+            <option value="{{ nation.name }}">{{ nation.name }}</option>
+        {% endfor %}                        
+    </select><br><br>
+    
+    <div style="display: inline-block;">
+        <button class = "attacker" type="submit" name="action" value="Ndivision">
+            <img src="/static/AWSDefcon1App/Army_man.gif" alt="Normal Ground Attack" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
+        </button>
+        <figcaption> Normal Ground Attack  </figcaption>
+    </div>
+    
+    <div style="display: inline-block;">
+        <button class = "attacker" type="submit" name="action" value="Nplanes">
+            <img src="/static/AWSDefcon1App/Plane.gif" alt="Attack Their Planes" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" > 
+        </button>
+        <figcaption> Planes  Attack  </figcaption>
+    </div>
+    
+    <div style="display: inline-block;">
+        <button class = "attacker"  type="submit" name="action" value="Nboat">
+            <img src="/static/AWSDefcon1App/Boat.gif" alt="Attack Their Boats" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
+        </button>
+        <figcaption> Boat  Attack  </figcaption>
+    </div>
+    
+    <div style="display: inline-block;">
+        <button class = "attacker" class = "attacker" type="submit" name="action" value="division">
+            <img src="/static/AWSDefcon1App/Encirclement_1.gif" alt="Attempt an Encirclement" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
+        </button>
+        <figcaption> Attempt an Encirclement  </figcaption>
+    </div>
+    
+    <div style="display: inline-block;">
+        <button class = "attacker" type="submit" name="action" value="planes">
+            <img src="/static/AWSDefcon1App/Bombing.gif" alt="Bomb Their Soldiers" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
+        </button>
+        <figcaption> Bomb Their Soldiers  </figcaption>
+    </div>
+    
+    <div style="display: inline-block;">
+        <button class = "attacker" type="submit" name="action" value="Bplanes">
+            <img src="/static/AWSDefcon1App/Plane_bombing_boat_gif.gif" alt="Bomb Their Boats" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
+        </button>
+        <figcaption> Bomb Their Boats  </figcaption>
+    </div>
+  
+    <div style="display: inline-block;">
+        <button class = "attacker"  type="submit" name="action" value="boat">
+            <img src="/static/AWSDefcon1App/Naval_invasion.gif" alt="Naval Invasion" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;">
+        </button>
+        <figcaption> Naval Invasion  </figcaption>
+    </div>
+    
+    <div style="display: inline-block;">
+        <button class = "attacker" type="submit" name="action" value="nuke">
+            <img src="/static/AWSDefcon1App/Nuke.gif" alt="Nuclear Attack" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" > 
+        </button>
+        <figcaption> Nuclear Bombing  </figcaption>
+    </div>
+
+</form>
+
+        {% else %}
+    <form  method="post" action="{% url 'battle' game_id=game_id %}" style="text-align: center;">
+        {% csrf_token %}
+        
+        <label for="selected_nation" style="font-weight: bold;">Select a Nation:</label><br>  <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">Declare War on a nation first before trying to battle them</span></div>
+        <select name="defender" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc; width: 200px; font-size: 16px;">
+            {% for nation in nations_at_war %}
+                <option value="{{ nation.name }}">{{ nation.name }}</option>
+            {% endfor %}                        
+        </select><br><br>
+        
+        <div style="display: inline-block;">
+            <button class = "attacker"  type="submit" name="action" value="Ndivision">
+                <img src="/static/AWSDefcon1App/Army_man.gif" alt="Normal Ground Attack" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
+            </button>
+            <figcaption> Normal Ground Attack  </figcaption>
+        </div>
+        <div style="display: inline-block;">
+            <button class = "attacker" type="submit" name="action" value="Nplanes">
+                <img src="/static/AWSDefcon1App/Plane.gif" alt="Attack Their Planes" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" > 
+            </button>
+            <figcaption>     Planes  Attack     </figcaption>
+        </div>
+        <div style="display: inline-block;">
+            <button class = "attacker" type="submit" name="action" value="Nboat">
+                <img src="/static/AWSDefcon1App/Boat.gif" alt="Attack Their Boats" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
+            </button>
+            <figcaption>      Boat  Attack      </figcaption>
+        </div>
+        <div style="display: inline-block;">
+            <button class = "attacker" type="submit" name="action" value="division">
+                <img src="/static/AWSDefcon1App/Encirclement_1.gif" alt="Attempt an Encirclement" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
+            </button>
+            <figcaption>Attempt an Encirclement </figcaption>
+        </div>
+        <div style="display: inline-block;">
+            <button class = "attacker" type="submit" name="action" value="planes">
+                <img src="/static/AWSDefcon1App/Bombing.gif" alt="Bomb Their Soldiers" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
+            </button>
+            <figcaption>  Bomb Their Soldiers   </figcaption>
+        </div>
+          
+        <div style="display: inline-block;">
+          <button class = "attacker" type="submit" name="action" value="Bplanes">
+              <img src="/static/AWSDefcon1App/Plane_bombing_boat_gif.gif" alt="Bomb Their Boats" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
+          </button>
+          <figcaption> Bomb Their Boats  </figcaption>
+        </div>
+      
+        <div style="display: inline-block;">
+            <button class = "attacker" type="submit" name="action" value="boat">
+                <img  src="/static/AWSDefcon1App/Naval_invasion.gif" alt="Naval Invasion" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;">
+            </button>
+            <figcaption>     Naval Invasion     </figcaption>
+      </div>
+    </form>
+        {% endif %}
+          <br> <br>  
+          <div style="display: flex; justify-content: center; align-items: center;">
+            <a class="linker" 
+               style="display: inline-block; width: 50px; height: 50px; background-color: #007bff; color: white; text-align: center; line-height: 50px; border-radius: 50%; text-decoration: none; font-size: 14px; transition: background-color 0.3s ease;" 
+               href="{% url 'passer' game_id=game_id %}">
+               Pass
+            </a>
+            <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">This will prevent you from fighting until all other players have passed or fought 5 battles</span> </div>
+
+        </div>
+        
+            
+
+        <br><br><br>
+               
+
+
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                console.log('Script loaded');
+        
+                const gifPath = '/static/AWSDefcon1App/Loading_Battle.gif';  // Replace with your gif file path
+                const gifContainer = document.createElement('div');
+                const gifImage = document.createElement('img');
+        
+                // Styling for the gif container
+                gifContainer.style.position = 'fixed';
+                gifContainer.style.top = '0';
+                gifContainer.style.left = '0';
+                gifContainer.style.width = '100%';
+                gifContainer.style.height = '100%';
+                gifContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';  // Semi-transparent black background
+                gifContainer.style.display = 'none';  // Hidden initially
+                gifContainer.style.justifyContent = 'center';
+                gifContainer.style.alignItems = 'center';
+                gifContainer.style.zIndex = '9999';  // Ensure it appears above all content
+        
+                // Setting up the gif image
+                gifImage.src = gifPath;
+                gifImage.style.maxWidth = '90%';
+                gifImage.style.maxHeight = '90%';
+        
+                gifContainer.appendChild(gifImage);
+                document.body.appendChild(gifContainer);
+        
+                // Event listener for clicks and form submissions
+                document.addEventListener('click', (event) => {
+                    const target = event.target;
+                    if (target.classList.contains('attacker') || target.closest('button.attacker')) {
+                        console.log('Attacker class element clicked');
+                        gifContainer.style.display = 'flex';
+                        
+                        // Automatically hide the gif after a certain duration
+                        setTimeout(() => {
+                            gifContainer.style.display = 'none';
+                        }, 20000);  // Gif is visible for 20 seconds
+                    }
+                });
+        
+                // Event listener specifically for form submissions
+                document.addEventListener('submit', (event) => {
+                    const target = event.target;
+                    if (target.classList.contains('attacker')) {
+                        console.log('Attacker class form submitted');
+                        gifContainer.style.display = 'flex';
+    
+                    }
+                });
+        
+
+            });
+        </script>
 {% endblock %}
 
 

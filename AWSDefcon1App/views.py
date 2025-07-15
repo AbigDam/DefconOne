@@ -30,7 +30,7 @@ colors = {
     'Soviet Union': '#a3101f',
     'Italy': '#56a552',
     'Second Brazilian Republic': '#62bd52',
-    'Sultanate of Aussa': '#4d0019',
+    'Sultanate of Aussa': '#08c237',
     'Turkey': '#c7e9b4',
     'Norway': '#623c3c',
     'Iraq': '#e79481',
@@ -1740,7 +1740,7 @@ def battle(request, game_id):
 
             number = div_defender.player_number
             player_number_value = f"player{number}"
-            if div_defender.states <= 1:
+            if div_defender.states < 1:
                 player.boats += div_defender.boats
                 player.planes += div_defender.planes
                 div_defender.boats = 0
@@ -1756,7 +1756,7 @@ def battle(request, game_id):
                 War.objects.filter(Q(nation1=div_defender) | Q(nation2=div_defender)).delete()
 
 
-            if planes_defender.states <= 1:
+            if planes_defender.states < 1:
                 player.boats += planes_defender.boats
                 player.planes += planes_defender.planes
                 div_defender.boats = 0
@@ -1771,7 +1771,7 @@ def battle(request, game_id):
                 game_instance.save()
                 War.objects.filter(Q(nation1=planes_defender) | Q(nation2=planes_defender)).delete()
                 
-            if boat_defender.states <= 1:
+            if boat_defender.states < 1:
                 player.boats += boat_defender.boats
                 player.planes += boat_defender.planes
                 div_defender.boats = 0
@@ -2466,7 +2466,7 @@ def makegame(request,game_id):
         {"name": "Abu Dhabi", "color": "#ff4879", "owner_name": "United Kingdom"},
         {"name": "Acre", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
         {"name": "Aden", "color": "#ff4879", "owner_name": "United Kingdom"},
-        {"name": "Afar", "color": "#4d0019", "owner_name": "Sultanate of Aussa"},
+        {"name": "Afar", "color": "#08c237", "owner_name": "Sultanate of Aussa"},
         {"name": "Afyon", "color": "#c7e9b4", "owner_name": "Turkey"},
         {"name": "Agder", "color": "#623c3c", "owner_name": "Norway"},
         {"name": "Akhtubinsk", "color": "#a3101f", "owner_name": "Soviet Union"},
