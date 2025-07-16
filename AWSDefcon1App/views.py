@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate, login, logout
+from django.conf import settings
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect,HttpResponseBadRequest
 from django.urls import reverse
@@ -1876,10 +1877,11 @@ def battle(request, game_id):
                 map_obj = Map.objects.get(number=game_id, game=game)
             except (Games.DoesNotExist, Map.DoesNotExist):
                 return bad_request(request, title="User Error", message= "You chose a game that doesn't exsist!")
-                return HttpResponseBadRequest("Invalid game or map.")
             
-            response = requests.get(map_obj.URL)
-            final_image = Image.open(io.BytesIO(response.content)).convert("RGBA")
+            
+            output_path = os.path.join(settings.MEDIA_ROOT, f"AWSDefcon1App/MapChart_Game_{game_id}.png")
+            final_image = Image.open(output_path).convert("RGBA")
+
             white_image_dir = "AWSDefcon1App/static/AWSDefcon1App/white_image"
             existing_images = set(os.listdir(white_image_dir))
 
@@ -1899,43 +1901,7 @@ def battle(request, game_id):
                 except Exception as e:
                     print(f"Error processing {filename}: {e}")
                     continue
-
-            def upload_pil_image_to_imgbb(pil_image, api_key):
-                try:
-                    buffer = io.BytesIO()
-                    pil_image.save(buffer, format="PNG", optimize=True)
-                    encoded_image = base64.b64encode(buffer.getvalue())
-
-                    response = requests.post(
-                        "https://api.imgbb.com/1/upload",
-                        data={"key": api_key, "image": encoded_image}
-                    )
-                    result = response.json()
-                    if result.get("success"):
-                        return result["data"]["url"], result["data"]["delete_url"]
-                    else:
-                        raise Exception(result)
-                except Exception as e:
-                    print(f"Image upload failed: {e}")
-                    raise
-
-            # Upload final image and update Map
-            try:
-                image_url, delete_url = upload_pil_image_to_imgbb(final_image, api_key)
-                map_instance = Map.objects.get(game_id=game_id)
-
-                if map_instance.deleteURL:
-                    try:
-                        requests.get(map_instance.deleteURL)
-                    except requests.RequestException as e:
-                        print(f"Failed to delete old image: {e}")
-
-                map_instance.URL = image_url
-                map_instance.deleteURL = delete_url
-                map_instance.save()
-            except Exception as e:
-                return HttpResponse(f"Image upload failed: {e}", status=500)
-        
+            final_image.save(output_path, optimize=True)
         return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
 
 @login_required(login_url='login')
@@ -1968,40 +1934,8 @@ def loader(request, game_id, reload):
                 print(f"Error processing {filename}: {e}")
                 continue
 
-        def upload_pil_image_to_imgbb(pil_image, api_key):
-            try:
-                buffer = io.BytesIO()
-                pil_image.save(buffer, format="PNG", optimize=True)
-                encoded_image = base64.b64encode(buffer.getvalue())
-
-                response = requests.post(
-                    "https://api.imgbb.com/1/upload",
-                    data={"key": api_key, "image": encoded_image}
-                )
-                result = response.json()
-                if result.get("success"):
-                    return result["data"]["url"], result["data"]["delete_url"]
-                else:
-                    raise Exception(result)
-            except Exception as e:
-                print(f"Image upload failed: {e}")
-                raise
-
-        try:
-            image_url, delete_url = upload_pil_image_to_imgbb(final_image, api_key)
-            map_instance = Map.objects.get(game_id=game_id)
-
-            if map_instance.deleteURL:
-                try:
-                    requests.get(map_instance.deleteURL)
-                except requests.RequestException as e:
-                    print(f"Failed to delete old image: {e}")
-
-            map_instance.URL = image_url
-            map_instance.deleteURL = delete_url
-            map_instance.save()
-        except Exception as e:
-            return HttpResponse(f"Image upload failed: {e}", status=500)
+        output_path = os.path.join(settings.MEDIA_ROOT, f"AWSDefcon1App/MapChart_Game_{game_id}.png")
+        final_image.save(output_path, optimize=True)
         
         if reload == 1:
             return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
@@ -2150,7 +2084,10 @@ def send(request,game_id):
         if amount < 0:
           amount = amount * -1
         playernation = Nations.objects.get(user=request.user, game=game_id)
-        reciver_nation = Nations.objects.get(game=game_id,name=selected_nation)
+        try:
+            reciver_nation = Nations.objects.get(game=game_id,name=selected_nation)
+        except:
+            bad_request("Too Fast!","Sorry, you clicked that a little too fast for our servers, wait a few seconds and try again!")
         if int(send_type) == 1:
             if amount > playernation.divisions:
                 amount = playernation.divisions
@@ -2295,8 +2232,8 @@ def map(request, game_id):
         if nation.friendlyness == 0 or nation.friendlyness < 1:
             nation.friendlyness = 1
 
-    image_filename = Map.objects.get(game = game).URL
-    return render(request, "AWSDefcon1App/JSMap.html",{"game_id":game_id ,'image_filename':image_filename,'PlayerAAA':PlayerAAA,'alliances':alliances, 'nation_name_at_war':nation_name_at_war, 'nations_at_war':nations_at_war,'attacks_left':attacks_left, 'owner':owner, "requesters":requesters, "knownnations":knownnations, 'announce':announce, 'nations':nations})
+    nation_list = list(Nations.objects.filter(game=game_id).exclude(user = User.objects.get(username = "loser")).values_list('name', flat=True))
+    return render(request, "AWSDefcon1App/JSMap.html",{"game_id":game_id, 'nation_list':nation_list, 'PlayerAAA':PlayerAAA,'alliances':alliances, 'nation_name_at_war':nation_name_at_war, 'nations_at_war':nations_at_war,'attacks_left':attacks_left, 'owner':owner, "requesters":requesters, "knownnations":knownnations, 'announce':announce, 'nations':nations})
 
     
 def makegame(request,game_id):
@@ -2373,13 +2310,13 @@ def makegame(request,game_id):
     game_obj = Games.objects.get_or_create(    id=game_id, player1 = User.objects.get(username='empty') , player2 = User.objects.get(username='empty') , player3 = User.objects.get(username='empty') , player4 = User.objects.get(username='empty') , player5 = User.objects.get(username='empty') , player6 = User.objects.get(username='empty') ,player7 =User.objects.get(username='empty'),player0 =User.objects.get(username='empty'))
     game_obj = Games.objects.get(id = game_id)
     Nations.objects.create(    game=game_obj,    name='Cuba',  user = user_cuba,  player_number=0,    states=1,    divisions=80/hard,    boats=200/hard,    planes=4000/hard,    alliance_name='Cuban Pact',    points=1,    nuke_time=8,    nukes=0, attacks = 10, requests = 10) #Player 1
-    Nations.objects.create(    game=game_obj,    name='United Kingdom',  user = user_uk,  player_number=1,    states=64,    divisions=170/hard,    boats=300/hard,    planes=2000/hard,    alliance_name='Allies',    points=1,    nuke_time=8,    nukes=0, attacks = 5, requests = 10)#Player 2
-    Nations.objects.create(    game=game_obj,    name='United States',  user = user_usa,  player_number=2,    states=36,    divisions=70/hard,    boats=250/hard,    planes=3000/hard,    alliance_name='Neutrality Pact',    points=1,    nuke_time=8,    nukes=0, attacks = 5, requests = 10)#Player 3
+    Nations.objects.create(    game=game_obj,    name='United Kingdom',  user = user_uk,  player_number=1,    states=67,    divisions=170/hard,    boats=300/hard,    planes=2000/hard,    alliance_name='Allies',    points=1,    nuke_time=8,    nukes=0, attacks = 5, requests = 10)#Player 2
+    Nations.objects.create(    game=game_obj,    name='United States',  user = user_usa,  player_number=2,    states=45,    divisions=70/hard,    boats=250/hard,    planes=3000/hard,    alliance_name='Neutrality Pact',    points=1,    nuke_time=8,    nukes=0, attacks = 5, requests = 10)#Player 3
     Nations.objects.create(    game=game_obj,    name='France', user = user_france,   player_number=3,    states=68,    divisions=70/hard,    boats=100/hard,    planes=5000/hard,    alliance_name='Allies',    points=1,    nuke_time=8,    nukes=0, attacks = 5, requests = 10)#Player 4
     Nations.objects.create(    game=game_obj,    name='Soviet Union',  user = user_ussr,  player_number=4,    states=152,    divisions=30/hard,    boats=100/hard,    planes=7000/hard,    alliance_name='Comintern',    points=1,    nuke_time=8,    nukes=0, attacks = 5, requests = 10)#Player 5
     Nations.objects.create(    game=game_obj,    name='German Reich', user = user_germany,   player_number=5,    states=23,    divisions=570/hard,    boats=200/hard,    planes=5000/hard,    alliance_name='Axis',    points=1,    nuke_time=8,    nukes=0, attacks = 5, requests = 10)#Player 6
-    Nations.objects.create(    game=game_obj,    name='Italy',   user = user_italy, player_number=6,    states=29,    divisions=320/hard,    boats=150/hard,    planes=4500/hard,    alliance_name='Axis',    points=1,    nuke_time=8,    nukes=0, attacks = 5, requests = 10)#Player 7
-    Nations.objects.create(    game=game_obj,    name='Japan',  user = user_japan,  player_number=7,    states=24,    divisions=340/hard,    boats=300/hard,    planes=6500/hard,    alliance_name='GEACPS',    points=1,    nuke_time=8,    nukes=0, attacks = 5, requests = 10)#Player 8
+    Nations.objects.create(    game=game_obj,    name='Italy',   user = user_italy, player_number=6,    states=28,    divisions=320/hard,    boats=150/hard,    planes=4500/hard,    alliance_name='Axis',    points=1,    nuke_time=8,    nukes=0, attacks = 5, requests = 10)#Player 7
+    Nations.objects.create(    game=game_obj,    name='Japan',  user = user_japan,  player_number=7,    states=18,    divisions=340/hard,    boats=300/hard,    planes=6500/hard,    alliance_name='GEACPS',    points=1,    nuke_time=8,    nukes=0, attacks = 5, requests = 10)#Player 8
     Nations.objects.create( game=game_obj, name = 'Turkey', player_number = 13, states = 21, divisions = 19, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
     Nations.objects.create( game=game_obj, name = 'Mexico', player_number = 15, states = 13, divisions = 27, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
     Nations.objects.create( game=game_obj, name = 'Spain', player_number = 16, states = 24, divisions = 14, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
@@ -2392,7 +2329,7 @@ def makegame(request,game_id):
     Nations.objects.create( game=game_obj, name = 'Dominion of Canada', player_number = 23, states = 23, divisions = 17, boats = 50, planes = 5000, alliance_name='Allies', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
     Nations.objects.create( game=game_obj, name = 'Austria', player_number = 24, states = 4, divisions = 36, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
     Nations.objects.create( game=game_obj, name = 'Sweden', player_number = 25, states = 13, divisions = 27, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'British Raj', player_number = 26, states = 23, divisions = 14, boats = 50, planes = 5000, alliance_name='Allies', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'British Raj', player_number = 26, states = 26, divisions = 14, boats = 50, planes = 5000, alliance_name='Allies', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
     Nations.objects.create( game=game_obj, name = 'Yugoslavia', player_number = 27, states = 14, divisions = 26, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
     Nations.objects.create( game=game_obj, name = 'Finland', player_number = 28, states = 12, divisions = 27, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
     Nations.objects.create( game=game_obj, name = 'Portugal', player_number = 23, states = 20, divisions = 20, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
@@ -4324,41 +4261,10 @@ def makegame(request,game_id):
 
     announcements = Announcements.objects.create(text =f"The game starts", start_time = datetime.now(), game = Games.objects.get(id = game_id))
     
-    def upload_pil_image_to_imgbb(pil_image, api_key):
-        try:
-            buffer = io.BytesIO()
-            pil_image.save(buffer, format="PNG", optimize=True)
-            encoded_image = base64.b64encode(buffer.getvalue())
-
-            response = requests.post(
-                "https://api.imgbb.com/1/upload",
-                data={"key": api_key, "image": encoded_image}
-            )
-            result = response.json()
-            if result.get("success"):
-                return result["data"]["url"], result["data"]["delete_url"]
-            else:
-                raise Exception(result)
-        except Exception as e:
-            print(f"Image upload failed: {e}")
-            raise
 
     final_image = Image.open("AWSDefcon1App/static/AWSDefcon1App/starting_image.png")
-    try:
-        image_url, delete_url = upload_pil_image_to_imgbb(final_image, api_key)
-        map_instance = Map.objects.get(game_id=game_id)
-
-        if map_instance.deleteURL:
-            try:
-                requests.get(map_instance.deleteURL)
-            except requests.RequestException as e:
-                print(f"Failed to delete old image: {e}")
-
-        map_instance.URL = image_url
-        map_instance.deleteURL = delete_url
-        map_instance.save()
-    except Exception as e:
-        return HttpResponse(f"Image upload failed: {e}", status=500)
-    
+    output_path = os.path.join(settings.MEDIA_ROOT, f"AWSDefcon1App/MapChart_Game_{game_id}.png")
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    final_image.save(output_path, optimize=True)
 
     return HttpResponseRedirect(reverse('full_index'))

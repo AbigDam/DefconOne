@@ -6,6 +6,15 @@
   <p>{{ message|default:"An unexpected error occurred. This may mean our servers need a few seconds to cacth up, or could be a more serious issue!  Wait a few seconds to see if it fixes itself before trying again" }}</p>
   <a href="{% url 'index' %}">Return to Home</a>
 </div>
-
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    title = "{{title}}"
+    if (title === "User Error") {
+      setTimeout(function () {
+        window.history.back();
+      }, 2000); 
+    }
+  });
+</script>
 {% endblock %}
 

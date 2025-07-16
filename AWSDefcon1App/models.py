@@ -57,8 +57,6 @@ class FreindRequest(models.Model):
 class Map(models.Model):
     number = models.IntegerField()
     game = models.ForeignKey(Games, on_delete=models.CASCADE)
-    URL = models.CharField(max_length=255, null=True, blank=True)
-    deleteURL = models.CharField(max_length=255, null=True, blank=True)
 
     
 class Square(models.Model):

@@ -103,14 +103,26 @@
                 </div>
                 
                 <div style="display: none;" id="canvasContainer">
-                    <canvas id="canvas" style="background-color:skyblue;"></canvas> 
-                    <h3>
-                        <div style="text-align: center;" id="colorDisplay">
+                    <canvas id="canvas" style="background-color:#87ceeb;"></canvas> 
+                        
+                        <div style="text-align: center;">
                             Click on the map to interact with a nation
+                                <div style="display: inline-block; position: relative;">
+                                <form  style="display: inline-block; position: relative;" id="nationForm">
+                                <label style="display: inline-block; position: relative;" for="nationSelect">or select a nation from the dropdown</label>
+                                <select style="display: inline-block; position: relative;" id="nationSelect" name="nation">
+                                    {% for nation in nation_list %}
+                                    <option value="{{ nation }}">{{ nation }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit">Submit</button>
+                                </form>
+                                </div>
                             <br>
-                            <a href="{% url 'loader' game_id=game_id reload=1%}" class="reload-map-button">↻ Reload Map</a>
                         </div>
-                    </h3>
+                        <h3> 
+                        <div style="text-align: center;" id="colorDisplay"> <a href="{% url 'loader' game_id=game_id reload=1%}" class="reload-map-button">↻ Reload Map</a> </div>
+                        </h3>
                         </div>
                         <style>
                         .reload-map-button {
@@ -434,7 +446,45 @@
             </div>
         
         </div>
-                        
+            <style>
+            #nationForm {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 0.5rem;
+                margin: 1rem auto;
+                font-family: sans-serif;
+            }
+
+            #nationSelect {
+                padding: 0.4rem 0.6rem;
+                font-size: 1rem;
+                border: 1px solid #ccc;
+                border-radius: 8px;
+                background-color: #f9f9f9;
+                cursor: pointer;
+                min-width: 200px;
+            }
+
+            #nationSelect:hover {
+                border-color: #888;
+            }
+
+            #nationForm button {
+                padding: 0.4rem 0.8rem;
+                font-size: 1rem;
+                background-color: #007BFF;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: background-color 0.2s ease-in-out;
+            }
+
+            #nationForm button:hover {
+                background-color: #0056b3;
+            }
+            </style>            
         <script> 
             const canvas = document.getElementById('canvas');
             const ctx = canvas.getContext('2d');
@@ -452,13 +502,15 @@
                 document.getElementById('canvasContainer').style.display = 'block';
             }};
             img.crossOrigin = "anonymous"; 
-            img.src = '{{image_filename}}';
+            const gameId = '{{ game_id }}';
+            img.src = `/media/AWSDefcon1App/MapChart_Game_${gameId}.png`;
         </script>    
      <script>
 
 
 
             const colors = {
+                'Ocean': '#000000',
                 'United Kingdom': '#ff4879',
                 'Soviet Union': '#a3101f',
                 'Italy': '#56a552',
@@ -556,7 +608,51 @@
             const rgbColor = hexToRgb(colors[country]);
             rgbToCountry[rgbColor] = country;
         }
-       
+    document.getElementById('nationForm').addEventListener('submit', function(event) {
+            event.preventDefault();  // Prevent form from reloading the page
+            const country = document.getElementById('nationSelect').value;
+            console.log(`Closest color name: ${country}`);
+            colorDisplay.textContent = `${country}`;
+            offerDisplay.textContent = `Offer Alliance to ${country}`;
+            statisticsText.textContent = `Statistics of ${country}`;
+            sendText.textContent = `Send Supplies to ${country}`; 
+
+        var some_var = "{{ nation_name_at_war }}";
+        nationsAtWar = some_var.replaceAll("&#x27;", "");
+        var playerA = "{{PlayerAAA.name}}"
+        console.log(playerA);
+        if (!nationsAtWar.includes(country)) {
+            document.getElementById("battle-form").style.display = "none";
+            document.getElementById('div1').style.display = "none";
+            document.getElementById('div2').style.display = "none";
+            document.getElementById('showDiv1').style.display = "none";
+            document.getElementById('showDiv2').style.display = "none";
+            if(playerA != countryy){
+                document.getElementById('peace-form').style.display = "block";
+                const warInput = document.getElementById('war-input');
+                const allianceInput = document.getElementById('alliance-input');
+                const sendInput = document.getElementById('send-input');
+                warInput.value = country;
+                sendInput.value = country;
+                allianceInput.value = country;
+            }
+            if(playerA == country){
+                document.getElementById('peace-form').style.display = "none";
+            }
+
+            
+        } else {
+            document.getElementById("battle-form").style.display = "block";
+            document.getElementById('showDiv1').style.display = "inline-block";
+            document.getElementById('showDiv2').style.display = "inline-block";
+            document.getElementById('atWar').style.display = "inline-block";
+            document.getElementById('peace-form').style.display = "none";
+            const victimInput = document.getElementById('victim-input');
+            const defenderInput = document.getElementById('defender-input');
+            defenderInput.value = country;
+            victimInput.value = country;
+        }
+            });
         canvas.addEventListener('click', (event) => {
             const { offsetX, offsetY } = event;
             const imageData = ctx.getImageData(offsetX, offsetY, 1, 1).data;
@@ -604,7 +700,7 @@
             document.getElementById('div2').style.display = "none";
             document.getElementById('showDiv1').style.display = "none";
             document.getElementById('showDiv2').style.display = "none";
-            if(playerA != country && "The Ocean" != country){
+            if(playerA != country && "Ocean" != country){
                 document.getElementById('peace-form').style.display = "block";
                 const warInput = document.getElementById('war-input');
                 const allianceInput = document.getElementById('alliance-input');
@@ -613,10 +709,9 @@
                 sendInput.value = country;
                 allianceInput.value = country;
             }
-            if(playerA == country || "The Ocean" == country){
+            if(playerA == country || "Ocean" == country){
                 document.getElementById('peace-form').style.display = "none";
             }
-
             
         } else {
             document.getElementById("battle-form").style.display = "block";

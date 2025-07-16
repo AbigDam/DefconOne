@@ -1,6 +1,8 @@
-from django.urls import path
+from django.urls import path,re_path
 from django.conf.urls import handler404, handler500, handler403
 from . import views
+from django.conf.urls.static import static,serve
+from django.conf import settings
 
 urlpatterns = [
     path("", views.index, name="index"),
@@ -34,8 +36,17 @@ urlpatterns = [
     path('credits', views.credits, name='credits'),
     path('game_maker_redirrect', views.game_maker_redirrect, name='game_maker_redirrect'),
     path('ads.txt', views.gameMonetize, name='gameMonetize'),
-
 ]
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+else:
+    urlpatterns += [
+        re_path(r'^media/(?P<path>.*)$', serve, {
+            'document_root': settings.MEDIA_ROOT,
+        }),
+    ]
+
+
 handler404 = 'AWSDefcon1App.views.error404'
 handler500 = 'AWSDefcon1App.views.error500'
 handler403 = 'AWSDefcon1App.views.error'
