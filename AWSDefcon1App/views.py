@@ -2184,7 +2184,7 @@ def map(request, game_id):
     nation_list = list(Nations.objects.filter(game=game_id).exclude(user = User.objects.get(username = "loser")).values_list('name', flat=True))
 
     kill_list = list(
-    Nations.objects.filter(
+    Nations.objects.filter(game=game,
         player_number__lt=8
     ).exclude(
         user__username__in=['loser', request.user.username]
