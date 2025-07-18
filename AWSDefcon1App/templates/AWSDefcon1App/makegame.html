@@ -6,65 +6,154 @@ Select Countries
 
 {% block body %}
 <style>
-    .centered {
+    body {
+        background-color: #121212;
+        color: #e0e0e0;
+        font-family: 'Segoe UI', 'Roboto', sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+
+    .form-container {
+        max-width: 700px;
+        margin: 50px auto;
+        padding: 30px;
+        background-color: #1e1e1e;
+        border-radius: 12px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+
+    h2 {
         text-align: center;
+        font-size: 1.8em;
+        margin-bottom: 30px;
+        color: #90caf9;
+    }
+
+    .section-title {
+        margin-top: 30px;
+        font-size: 1.3em;
+        color: #ffffff;
+        border-bottom: 1px solid #444;
+        padding-bottom: 5px;
+    }
+
+    .checkbox-group {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-around;
+        margin-top: 20px;
+    }
+
+    .checkbox-item {
+        flex: 0 0 48%;
+        margin-bottom: 20px;
+        font-size: 1.2em;
+        display: flex;
+        align-items: center;
+        color: #dddddd;
+    }
+
+    .checkbox-item input[type="checkbox"] {
+        transform: scale(1.5);
+        margin-right: 10px;
+        cursor: pointer;
+    }
+
+    .submit-section {
+        text-align: center;
+        margin-top: 30px;
+    }
+
+    button.attacker {
+        background-color: #2196f3;
+        color: white;
+        padding: 12px 30px;
+        font-size: 1.2em;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    button.attacker:hover {
+        background-color: #1976d2;
+        transform: scale(1.05);
+    }
+
+    .info-bubble {
+        margin-top: 15px;
+        font-size: 0.95em;
+        color: #aaaaaa;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .info-icon {
+        margin-right: 8px;
         font-size: 1.2em;
     }
-    .unboxed-list-instance {
-        color: #A9A9A9;
-        font-family: "Hoefler Text", serif;
-        font-style: italic;
-        font-size: 30px;
+
+    p {
+        text-align: center;
+        color: #bbb;
+        margin-bottom: 10px;
     }
-    .boxed-list-instance input[type="checkbox"] {
-        transform: scale(2);
-        margin-right: 10px;
-    }
+
 </style>
 
-<p>{{Message}}</p>
+<div class="form-container">
+    <h2>Select Your Countries</h2>
+    <p>{{ Message }}</p>
 
-<form method="POST" action="{% url 'makegame' game_id=game_id %}" class="centered"> <div class="info-bubble"> 
-    {% csrf_token %}
-    <fieldset>
-        <legend>Select Countries: </legend> 
-        
-        <br>
-        <label class="unboxed-list-instance"><input type="checkbox" name="countries" value="UK"> 🇬🇧 🇬🇧 UK 🇬🇧 🇬🇧</label><br>
-        <label class="unboxed-list-instance"><input type="checkbox" name="countries" value="USA"> 🇺🇸 🇺🇸 USA 🇺s 🇺s</label><br>
-        <label class="unboxed-list-instance"><input type="checkbox" name="countries" value="France"> 🇫🇷 🇫🇷 France 🇫🇷 🇫🇷</label><br>
-        <label class="unboxed-list-instance"><input type="checkbox" name="countries" value="USSR"> ☭ ☭ USSR ☭ ☭</label><br>
-        <label class="unboxed-list-instance"><input type="checkbox" name="countries" value="Germany"> 🇩🇪 🇩🇪 Germany 🇩🇪 🇩🇪</label><br>
-        <label class="unboxed-list-instance"><input type="checkbox" name="countries" value="Italy"> 🇮🇹 🇮🇹 Italy 🇮🇹 🇮🇹</label><br>
-        <label class="unboxed-list-instance"><input type="checkbox" name="countries" value="Japan"> 🇯🇵 🇯🇵 Japan 🇯🇵 🇯🇵</label><br>
-        <label class="unboxed-list-instance"><input type="checkbox" name="countries" value="Cuba"> 🇨🇺 🇨🇺 Cuba 🇨🇺 🇨🇺</label><br>
-        <br>
-        <label class="unboxed-list-instance"><input type="checkbox" name="countries" value="Hard"> Hard Mode </label><br>
-    </fieldset>
-    <button class = "attacker" type="submit">Submit</button>  <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">The Un-Selected countries will appear on the map but will be unplayable</span> </div> 
-</form>
+    <form method="POST" action="{% url 'makegame' game_id=game_id %}">
+        {% csrf_token %}
+
+        <div class="section-title">Playable Nations (Unselected nations will be bots)</div>
+        <div class="checkbox-group">
+            <label class="checkbox-item"><input type="checkbox" name="countries" value="UK"> 🇬🇧 UK</label>
+            <label class="checkbox-item"><input type="checkbox" name="countries" value="USA"> 🇺🇸 USA</label>
+            <label class="checkbox-item"><input type="checkbox" name="countries" value="France"> 🇫🇷 France</label>
+            <label class="checkbox-item"><input type="checkbox" name="countries" value="USSR"> ☭ USSR</label>
+            <label class="checkbox-item"><input type="checkbox" name="countries" value="Germany"> 🇩🇪 Germany</label>
+            <label class="checkbox-item"><input type="checkbox" name="countries" value="Italy"> 🇮🇹 Italy</label>
+            <label class="checkbox-item"><input type="checkbox" name="countries" value="Japan"> 🇯🇵 Japan</label>
+            <label class="checkbox-item"><input type="checkbox" name="countries" value="Cuba"> 🇨🇺 Cuba</label>
+        </div>
+
+        <div class="section-title">Game Options</div>
+        <div class="checkbox-group">
+            <label class="checkbox-item"><input type="checkbox" name="countries" value="Hard"> 🛡️ Hard Mode <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">This will make you spawn with much less reasources!</span> </div> </label>
+        </div>
+
+        <div class="submit-section">
+            <button class="attacker" type="submit">Submit</button>
+            <div class="info-bubble">
+                <span class="info-icon">🛈</span>
+                <span class="tooltip-text">Unselected countries will appear on the map but be unplayable</span>
+            </div>
+        </div>
+    </form>
+</div>
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        console.log('Script loaded');
-
-        const gifPath = '/static/AWSDefcon1App/justWait.gif';  // Replace with your gif file path
+        const gifPath = '/static/AWSDefcon1App/justWait.gif';
         const gifContainer = document.createElement('div');
         const gifImage = document.createElement('img');
 
-        // Styling for the gif container
         gifContainer.style.position = 'fixed';
         gifContainer.style.top = '0';
         gifContainer.style.left = '0';
         gifContainer.style.width = '100%';
         gifContainer.style.height = '100%';
-        gifContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';  // Semi-transparent black background
-        gifContainer.style.display = 'none';  // Hidden initially
+        gifContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        gifContainer.style.display = 'none';
         gifContainer.style.justifyContent = 'center';
         gifContainer.style.alignItems = 'center';
-        gifContainer.style.zIndex = '9999';  // Ensure it appears above all content
+        gifContainer.style.zIndex = '9999';
 
-        // Setting up the gif image
         gifImage.src = gifPath;
         gifImage.style.maxWidth = '90%';
         gifImage.style.maxHeight = '90%';
@@ -72,33 +161,22 @@ Select Countries
         gifContainer.appendChild(gifImage);
         document.body.appendChild(gifContainer);
 
-        // Event listener for clicks and form submissions
         document.addEventListener('click', (event) => {
             const target = event.target;
             if (target.classList.contains('attacker') || target.closest('button.attacker')) {
-                console.log('Attacker class element clicked');
                 gifContainer.style.display = 'flex';
-                
-                // Automatically hide the gif after a certain duration
                 setTimeout(() => {
                     gifContainer.style.display = 'none';
-                }, 20000);  // Gif is visible for 20 seconds
+                }, 20000);
             }
         });
 
-        // Event listener specifically for form submissions
         document.addEventListener('submit', (event) => {
             const target = event.target;
             if (target.classList.contains('attacker')) {
-                console.log('Attacker class form submitted');
                 gifContainer.style.display = 'flex';
-
             }
         });
-
-
     });
 </script>
 {% endblock %}
-
-=

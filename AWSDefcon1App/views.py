@@ -24,8 +24,6 @@ import base64
 import io
 import re
 
-api_key = "ba9263b16b26bece76964b0b4cad6b6d"
-
 colors = {
     'United Kingdom': '#ff4879',
     'Soviet Union': '#a3101f',
@@ -112,6 +110,14 @@ colors = {
     'Tannu Tuva': '#e94a4a', #Nepal
     'Yemen': '#905d5d',
 }
+
+def robots_txt(request):
+    lines = [
+        "User-agent: *",
+        "Disallow:",
+        "Sitemap: https://defconone-production.up.railway.app/sitemap.xml"
+    ]
+    return HttpResponse("\n".join(lines), content_type="text/plain")
 
 def bad_request(request, title="Invalid Request", message="Please try again."):
     return render(request, "AWSDefcon1App/error.html", {
@@ -478,68 +484,6 @@ def index(request):
     
     games = Games.objects.all()
     nationscount = 0
-    for game in games:
-        # Obtain the game_id for the current game
-        game_id = game.id
-        nations = Nations.objects.filter(game_id=game_id, player_number__lt=8)
-        nationscount = 0
-        for nation in nations:
-            if nation.user.username == 'loser':
-                nationscount += 1
-                if nationscount == 6:
-                    non_loser_nations = nations.exclude(user__username='loser')
-                    for non_loser_nation in non_loser_nations:
-                        if non_loser_nation.name == "Cuba":
-                            if non_loser_nation.user.id not in Achievements.objects.get(name = "Cuba Wins").users:
-                                achievement = Achievements.objects.get(name="Cuba Wins")
-                                users_list = achievement.users  
-                                users_list.append(non_loser_nation.user.id)  
-                                achievement.users = users_list
-                                achievement.save()
-
-                                non_loser_nation.user.achievements += 1
-                                non_loser_nation.user.save()
-                        if non_loser_nation.states == 903 or non_loser_nation.states > 903:
-                                if non_loser_nation.user.id not in Achievements.objects.get(name = "Rule the World").users:
-                                    achievement = Achievements.objects.get(name="Rule the World")
-                                    users_list = achievement.users  
-                                    users_list.append(non_loser_nation.user.id)  
-                                    achievement.users = users_list
-                                    achievement.save()
-
-                                    non_loser_nation.user.achievements += 1
-                                    non_loser_nation.user.save()
-                        if non_loser_nation.states == 903 or non_loser_nation.states > 903 and non_loser_nation.name == "Cuba" and non_loser_nation.user.id not in Achievements.objects.get(name = "Cuba Rules").users:
-                            achievement = Achievements.objects.get(name="Cuba Rules")
-                            users_list = achievement.users  
-                            users_list.append(non_loser_nation.user.id)  
-                            achievement.users = users_list
-                            achievement.save()
-
-                            non_loser_nation.user.achievements += 1
-                            non_loser_nation.user.save()
-
-                        non_loser_nation.user.wins += 1
-                        if non_loser_nation.user.wins == 100 and non_loser_nation.user.id not in Achievements.objects.get(name = "100 Wins").users:
-                            achievement = Achievements.objects.get(name="100 Wins")
-                            users_list = achievement.users  
-                            users_list.append(non_loser_nation.user.id)  
-                            achievement.users = users_list
-                            achievement.save()
-                            
-                            non_loser_nation.user.achievements += 1
-                            non_loser_nation.user.save()
-
-                        non_loser_nation.user.save()
-                    game.delete()
-                    name = non_loser_nation.user.username
-                    current_date = datetime.now()
-                    # Check if the date is December 25th
-                    if current_date.month == 12 and current_date.day == 25:
-                        # Render the Christmas win screen
-                        return render(request, "AWSDefcon1App/christmaswinner.html", {"game_id": game_id, "name": name})
-                    return render(request, "AWSDefcon1App/winner.html", {"game_id": game_id, "name":name})
-
                     
     next_id = 1
     all_games = Games.objects.all()
@@ -655,71 +599,6 @@ def full_index(request):
         user.save()
         
     max_game_id = Games.objects.count()
-    
-    games = Games.objects.all()
-    nationscount = 0
-    for game in games:
-        # Obtain the game_id for the current game
-        game_id = game.id
-        nations = Nations.objects.filter(game_id=game_id, player_number__lt=8)
-        nationscount = 0
-        for nation in nations:
-            if nation.user.username == 'loser':
-                nationscount += 1
-                if nationscount == 6:
-                    non_loser_nations = nations.exclude(user__username='loser')
-                    for non_loser_nation in non_loser_nations:
-                        if non_loser_nation.name == "Cuba":
-                            if non_loser_nation.user.id not in Achievements.objects.get(name = "Cuba Wins").users:
-                                achievement = Achievements.objects.get(name="Cuba Wins")
-                                users_list = achievement.users  
-                                users_list.append(non_loser_nation.user.id)  
-                                achievement.users = users_list
-                                achievement.save()
-
-                                non_loser_nation.user.achievements += 1
-                                non_loser_nation.user.save()
-                        if non_loser_nation.states == 903 or non_loser_nation.states > 903:
-                                if non_loser_nation.user.id not in Achievements.objects.get(name = "Rule the World").users:
-                                    achievement = Achievements.objects.get(name="Rule the World")
-                                    users_list = achievement.users  
-                                    users_list.append(non_loser_nation.user.id)  
-                                    achievement.users = users_list
-                                    achievement.save()
-
-                                    non_loser_nation.user.achievements += 1
-                                    non_loser_nation.user.save()
-                        if non_loser_nation.states == 903 or non_loser_nation.states > 903 and non_loser_nation.name == "Cuba" and non_loser_nation.user.id not in Achievements.objects.get(name = "Cuba Rules").users:
-                            achievement = Achievements.objects.get(name="Cuba Rules")
-                            users_list = achievement.users  
-                            users_list.append(non_loser_nation.user.id)  
-                            achievement.users = users_list
-                            achievement.save()
-
-                            non_loser_nation.user.achievements += 1
-                            non_loser_nation.user.save()
-
-                        non_loser_nation.user.wins += 1
-                        if non_loser_nation.user.wins == 100 and non_loser_nation.user.id not in Achievements.objects.get(name = "100 Wins").users:
-                            achievement = Achievements.objects.get(name="100 Wins")
-                            users_list = achievement.users  
-                            users_list.append(non_loser_nation.user.id)  
-                            achievement.users = users_list
-                            achievement.save()
-                            
-                            non_loser_nation.user.achievements += 1
-                            non_loser_nation.user.save()
-
-                        non_loser_nation.user.save()
-                    game.delete()
-                    name = non_loser_nation.user.username
-                    current_date = datetime.now()
-                    # Check if the date is December 25th
-                    if current_date.month == 12 and current_date.day == 25:
-                        # Render the Christmas win screen
-                        return render(request, "AWSDefcon1App/christmaswinner.html", {"game_id": game_id, "name": name})
-                    return render(request, "AWSDefcon1App/winner.html", {"game_id": game_id, "name":name})
-
                     
     next_id = 1
     all_games = Games.objects.all()
@@ -1355,7 +1234,6 @@ def battle(request, game_id):
                             owners.attacks += 1
                             owners.save()
                             return bad_request(request, title="User Error", message= "Boats can't reach! There doesn't seem to be a way for your boats to reach you're enemy.  A battle wasn't used as you didn't know! Please click the back button to return to the game")
-                            return HttpResponseBadRequest("No Water to Invade! (This could be a mistake so try again, don't wory your battle wasn't used)  Please click the back button to return to the game")
 
                             
                     fallen_state.owner = Nations.objects.get(game=game_id, user=request.user)
@@ -1370,6 +1248,20 @@ def battle(request, game_id):
                     defender.states -= 1
                     player.save()
                     defender.save()
+                    if defender.states < 1:
+                        player.boats += defender.boats
+                        player.planes += defender.planes
+                        defender.boats = 0
+                        defender.planes = 0
+                        defender.user = User.objects.get(username='loser')
+                        defender.divisions = 0
+                        defender.alliance_name = ''
+                        defender.save()
+                        player.save()
+                        game_instance = Games.objects.get(id=game_id)
+                        game_instance.enemy_player_number = User.objects.get(username='loser')
+                        game_instance.save()
+                        War.objects.filter(Q(nation1=boat_defender) | Q(nation2=boat_defender)).delete()
 
                 else:
                     announcements = Announcements.objects.create(text =f"{owner} has failed to land on the beaches of {boat_defender}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
@@ -2182,6 +2074,63 @@ def current_wars(request,game_id):
 
 @login_required(login_url='login')
 def map(request, game_id):
+    nations = Nations.objects.filter(game_id=game_id, player_number__lt=8)
+    nationscount = 0
+    for nation in nations:
+        if nation.user.username == 'loser':
+            nationscount += 1
+            if nationscount == 6:
+                non_loser_nations = nations.exclude(user__username='loser')
+                for non_loser_nation in non_loser_nations:
+                    if non_loser_nation.name == "Cuba":
+                        if non_loser_nation.user.id not in Achievements.objects.get(name = "Cuba Wins").users:
+                            achievement = Achievements.objects.get(name="Cuba Wins")
+                            users_list = achievement.users  
+                            users_list.append(non_loser_nation.user.id)  
+                            achievement.users = users_list
+                            achievement.save()
+
+                            non_loser_nation.user.achievements += 1
+                            non_loser_nation.user.save()
+                    if non_loser_nation.states == 903 or non_loser_nation.states > 903:
+                            if non_loser_nation.user.id not in Achievements.objects.get(name = "Rule the World").users:
+                                achievement = Achievements.objects.get(name="Rule the World")
+                                users_list = achievement.users  
+                                users_list.append(non_loser_nation.user.id)  
+                                achievement.users = users_list
+                                achievement.save()
+
+                                non_loser_nation.user.achievements += 1
+                                non_loser_nation.user.save()
+                    if non_loser_nation.states == 903 or non_loser_nation.states > 903 and non_loser_nation.name == "Cuba" and non_loser_nation.user.id not in Achievements.objects.get(name = "Cuba Rules").users:
+                        achievement = Achievements.objects.get(name="Cuba Rules")
+                        users_list = achievement.users  
+                        users_list.append(non_loser_nation.user.id)  
+                        achievement.users = users_list
+                        achievement.save()
+
+                        non_loser_nation.user.achievements += 1
+                        non_loser_nation.user.save()
+
+                    non_loser_nation.user.wins += 1
+                    if non_loser_nation.user.wins == 100 and non_loser_nation.user.id not in Achievements.objects.get(name = "100 Wins").users:
+                        achievement = Achievements.objects.get(name="100 Wins")
+                        users_list = achievement.users  
+                        users_list.append(non_loser_nation.user.id)  
+                        achievement.users = users_list
+                        achievement.save()
+                        
+                        non_loser_nation.user.achievements += 1
+                        non_loser_nation.user.save()
+
+                    non_loser_nation.user.save()
+                game = Games.objects.get(id=game_id)
+                game.delete()
+                name = non_loser_nation.user.username
+                current_date = datetime.now()
+                if current_date.month == 12 and current_date.day == 25:
+                    return render(request, "AWSDefcon1App/christmaswinner.html", {"game_id": game_id, "name": name})
+                return render(request, "AWSDefcon1App/winner.html", {"game_id": game_id, "name":name})
 
     try:
         PlayerAAA = Nations.objects.get(game=game_id, user=request.user)
@@ -2233,7 +2182,16 @@ def map(request, game_id):
             nation.friendlyness = 1
 
     nation_list = list(Nations.objects.filter(game=game_id).exclude(user = User.objects.get(username = "loser")).values_list('name', flat=True))
-    return render(request, "AWSDefcon1App/JSMap.html",{"game_id":game_id, 'nation_list':nation_list, 'PlayerAAA':PlayerAAA,'alliances':alliances, 'nation_name_at_war':nation_name_at_war, 'nations_at_war':nations_at_war,'attacks_left':attacks_left, 'owner':owner, "requesters":requesters, "knownnations":knownnations, 'announce':announce, 'nations':nations})
+
+    kill_list = list(
+    Nations.objects.filter(
+        player_number__lt=8
+    ).exclude(
+        user__username__in=['loser', request.user.username]
+    ).values_list('name', flat=True)
+    )
+
+    return render(request, "AWSDefcon1App/JSMap.html",{"game_id":game_id, 'kill_list':kill_list, 'nation_list':nation_list, 'PlayerAAA':PlayerAAA,'alliances':alliances, 'nation_name_at_war':nation_name_at_war, 'nations_at_war':nations_at_war,'attacks_left':attacks_left, 'owner':owner, "requesters":requesters, "knownnations":knownnations, 'announce':announce, 'nations':nations})
 
     
 def makegame(request,game_id):

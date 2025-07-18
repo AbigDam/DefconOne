@@ -347,6 +347,7 @@
             
             </div>
             </div>
+
             <!-- Boxed list on the right -->
             <div style="width: 20%; margin-left: 20px;">
                 <div class="game">
@@ -361,6 +362,7 @@
                     </div>
                     <hr>
                 </div>
+
                 <form method="post" action="{% url 'focus' game_id=game_id %}" 
                 style="border: 1px solid #ccc; padding: 15px; border-radius: 5px; box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2); margin-top: 20px;">
               {% csrf_token %}
@@ -443,8 +445,15 @@
 
               </div>
           </form>
+                                  <div class="game">
+                    <hr>
+                    <div class="boxed-list" style="border: 1px solid #ccc; padding: 10px; border-radius: 5px; box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2);">
+                        <p class="boxed-list-instance"> Defeat these nations to win the game:</p>
+                        <p class="boxed-list-instance">{{kill_list}}</p>
+                    </div>
+                    <hr>
+                </div>
             </div>
-        
         </div>
             <style>
             #nationForm {
