@@ -618,50 +618,78 @@
             rgbToCountry[rgbColor] = country;
         }
     document.getElementById('nationForm').addEventListener('submit', function(event) {
-            event.preventDefault();  // Prevent form from reloading the page
+            event.preventDefault();  
             const country = document.getElementById('nationSelect').value;
             console.log(`Closest color name: ${country}`);
+            
             colorDisplay.textContent = `${country}`;
             offerDisplay.textContent = `Offer Alliance to ${country}`;
             statisticsText.textContent = `Statistics of ${country}`;
             sendText.textContent = `Send Supplies to ${country}`; 
 
-        var some_var = "{{ nation_name_at_war }}";
-        nationsAtWar = some_var.replaceAll("&#x27;", "");
-        var playerA = "{{PlayerAAA.name}}"
-        console.log(playerA);
-        if (!nationsAtWar.includes(country)) {
-            document.getElementById("battle-form").style.display = "none";
-            document.getElementById('div1').style.display = "none";
-            document.getElementById('div2').style.display = "none";
-            document.getElementById('showDiv1').style.display = "none";
-            document.getElementById('showDiv2').style.display = "none";
-            if(playerA != countryy){
-                document.getElementById('peace-form').style.display = "block";
-                const warInput = document.getElementById('war-input');
-                const allianceInput = document.getElementById('alliance-input');
-                const sendInput = document.getElementById('send-input');
-                warInput.value = country;
-                sendInput.value = country;
-                allianceInput.value = country;
-            }
-            if(playerA == country){
+            var some_var = "{{ nation_name_at_war }}";
+            nationsAtWar = some_var.replaceAll("&#x27;", "");
+            var playerA = "{{PlayerAAA.name}}"
+            console.log(playerA);
+            if (!nationsAtWar.includes(country)) {
+                document.getElementById("battle-form").style.display = "none";
+                document.getElementById('div1').style.display = "none";
+                document.getElementById('div2').style.display = "none";
+                document.getElementById('showDiv1').style.display = "none";
+                document.getElementById('showDiv2').style.display = "none";
+                if(playerA != country && "Ocean" != country){
+                    document.getElementById('peace-form').style.display = "block";
+                    const warInput = document.getElementById('war-input');
+                    const allianceInput = document.getElementById('alliance-input');
+                    const sendInput = document.getElementById('send-input');
+                    warInput.value = country;
+                    sendInput.value = country;
+                    allianceInput.value = country;
+                }
+                if(playerA == country || "Ocean" == country){
+                    document.getElementById('peace-form').style.display = "none";
+                }
+                
+            } else {
+                document.getElementById("battle-form").style.display = "block";
+                document.getElementById('showDiv1').style.display = "inline-block";
+                document.getElementById('showDiv2').style.display = "inline-block";
+                document.getElementById('atWar').style.display = "inline-block";
                 document.getElementById('peace-form').style.display = "none";
+                const victimInput = document.getElementById('victim-input');
+                const defenderInput = document.getElementById('defender-input');
+                defenderInput.value = country;
+                victimInput.value = country;
             }
 
+            console.log("Starting Next Part");
+            // Get the table element
+            // JavaScript variable 'country' (set this value dynamically)
+
+            // Get the table element and its rows
             
-        } else {
-            document.getElementById("battle-form").style.display = "block";
-            document.getElementById('showDiv1').style.display = "inline-block";
-            document.getElementById('showDiv2').style.display = "inline-block";
-            document.getElementById('atWar').style.display = "inline-block";
-            document.getElementById('peace-form').style.display = "none";
-            const victimInput = document.getElementById('victim-input');
-            const defenderInput = document.getElementById('defender-input');
-            defenderInput.value = country;
-            victimInput.value = country;
-        }
-            });
+            const filter = country.toLowerCase(); // Convert country to lowercase for case-insensitive comparison
+            const nationsTable = document.getElementById('nationsTable'); // Reference the table element
+            const rows = nationsTable.getElementsByTagName('tbody')[0].getElementsByTagName('tr'); // Get all rows from the table body
+
+            // Loop through each row in the table
+            for (const row of rows) {
+                const name = row.cells[1].textContent.toLowerCase(); // Get text content from the 2nd column (index 1) and convert to lowercase
+                console.log(filter); // Debugging: Log the filter value
+                console.log(name); // Debugging: Log the nation name from the table
+
+                if (name === filter) {
+                    row.style.display = "table-row"; // Show matching row
+                } else {
+                    row.style.display = "none"; // Hide non-matching rows
+                }
+            }
+
+            // Make the table visible if at least one row matches
+            nationsTable.style.display = "table";
+
+        });
+
         canvas.addEventListener('click', (event) => {
             const { offsetX, offsetY } = event;
             const imageData = ctx.getImageData(offsetX, offsetY, 1, 1).data;

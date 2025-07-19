@@ -1716,18 +1716,13 @@ def battle(request, game_id):
         closed_user = User.objects.get(username="closed")
 
         # Get active nations
-        active_nations = Nations.objects.filter(
-            game=game_id,
-            player_number__lt=8
-        ).exclude(
-            user__in=[loser_user, empty_user, closed_user]
-        )
+        active_nations = Nations.objects.filter(game=game_id,player_number__lt=8).exclude(user__in=[loser_user, empty_user, closed_user])
 
         # Check how many players have completed their turn
         players_ready = sum(1 for nation in active_nations if nation.attacks == 0)
 
         # Allow two extra players not required to play
-        if len(active_nations) < players_ready + 2:
+        if len(active_nations) == players_ready:
             all_nations = Nations.objects.filter(game=game_id)
             for nation in all_nations:
                 states = nation.states

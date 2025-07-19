@@ -2,25 +2,75 @@
 {% load static %}
 
 {% block body %}
-<h2 style = "text-align: center;">Messages with {{ recipient.username }}</h2>
-<div id="messageContainer">
+<h2 style="text-align: center; margin-bottom: 20px; font-size: 28px;">Messages with {{ recipient.username }}</h2>
+
+<div id="messageContainer" style="
+    width: 60%;
+    margin: 0 auto 30px auto;
+    background-color: #1e1e1e;
+    border-radius: 10px;
+    padding: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+">
     {% for message in messages %}
-        <div style = "text-align: center;" class="message">
+    {% if message.sender == request.user %}
+        <div class="message" style="
+            text-align: left;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            background-color:  #2a2aff;
+            color: white;" >
             <strong>{{ message.sender.username }}:</strong> {{ message.text }}
         </div>
+        {% else %} 
+            <div class="message" style="
+            text-align: left;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            background-color:  #2e2e2e;
+            color: white;" >
+            <strong>{{ message.sender.username }}:</strong> {{ message.text }}
+        </div>
+        {% endif %}
     {% endfor %}
 </div>
 
-<form style = "text-align: center;" method="post">
+<form method="post" style="
+    text-align: center;
+    width: 60%;
+    margin: 0 auto;
+">
     {% csrf_token %}
-    <textarea  style = "text-align: center;" name="content" placeholder="Type your message here"></textarea>
-    <br>
-    <button style = "text-align: center;" type="submit">Send</button>
+    <textarea name="content" placeholder="Type your message here..." style="
+        width: 100%;
+        height: 100px;
+        padding: 10px;
+        border-radius: 10px;
+        border: none;
+        font-size: 16px;
+        resize: vertical;
+        background-color: #121212;
+        color: white;
+    "></textarea>
+    <br><br>
+    <button type="submit" style="
+        padding: 10px 20px;
+        font-size: 16px;
+        border: none;
+        border-radius: 8px;
+        background-color: #2a2aff;
+        color: white;
+        cursor: pointer;
+    ">Send</button>
 </form>
 
 
 <script>
-    const refreshInterval = 5000; // 5 seconds
+    const refreshInterval = 20000; //20 seconds
     let isUserActivea = false;
     let lastActivityTime = new Date().getTime();
 
