@@ -114,25 +114,6 @@ colors = {
     'Yemen': '#905d5d',
 }
 
-def serve_media_image(request, filename):
-    # Full path to the file
-    filepath = filename
-
-    # Check if file exists
-    if not os.path.isfile(filepath):
-        raise Http404("Image not found")
-
-    # Guess MIME type
-    mime_type, _ = mimetypes.guess_type(filepath)
-    if mime_type is None:
-        mime_type = 'application/octet-stream'
-
-    # Serve file with no-cache headers
-    response = FileResponse(open(filepath, 'rb'), content_type=mime_type)
-    response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-    response['Pragma'] = 'no-cache'
-    response['Expires'] = '0'
-    return response
 
 def robots_txt(request):
     lines = [
@@ -2207,7 +2188,12 @@ def map(request, game_id):
     ).values_list('name', flat=True)
     )
 
-    return render(request, "AWSDefcon1App/JSMap.html",{"game_id":game_id, 'kill_list':kill_list, 'nation_list':nation_list, 'PlayerAAA':PlayerAAA,'alliances':alliances, 'nation_name_at_war':nation_name_at_war, 'nations_at_war':nations_at_war,'attacks_left':attacks_left, 'owner':owner, "requesters":requesters, "knownnations":knownnations, 'announce':announce, 'nations':nations})
+    
+    version = int(os.path.getmtime(os.path.join(settings.MEDIA_ROOT, f"AWSDefcon1App/MapChart_Game_{game_id}.png")))
+
+    path = f"/media/AWSDefcon1App/MapChart_Game_{game_id}.png?v={version}"
+
+    return render(request, "AWSDefcon1App/JSMap.html",{"game_id":game_id,'path':path, 'kill_list':kill_list, 'nation_list':nation_list, 'PlayerAAA':PlayerAAA,'alliances':alliances, 'nation_name_at_war':nation_name_at_war, 'nations_at_war':nations_at_war,'attacks_left':attacks_left, 'owner':owner, "requesters":requesters, "knownnations":knownnations, 'announce':announce, 'nations':nations})
 
     
 def makegame(request,game_id):
