@@ -37,7 +37,7 @@ urlpatterns = [
     path('game_maker_redirrect', views.game_maker_redirrect, name='game_maker_redirrect'),
     path('ads.txt', views.gameMonetize, name='gameMonetize'),
     path("robots.txt", views.robots_txt, name='robots_txt'),
-
+    path('media/<str:filename>', views.serve_media_image, name = 'media'),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

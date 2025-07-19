@@ -1,7 +1,7 @@
 from django.contrib.auth import authenticate, login, logout
 from django.conf import settings
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect,HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseRedirect,HttpResponseBadRequest,FileResponse, Http404
 from django.urls import reverse
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
@@ -23,6 +23,9 @@ import requests
 import base64
 import io
 import re
+import mimetypes
+
+
 
 colors = {
     'United Kingdom': '#ff4879',
@@ -110,6 +113,26 @@ colors = {
     'Tannu Tuva': '#e94a4a', #Nepal
     'Yemen': '#905d5d',
 }
+
+def serve_media_image(request, filename):
+    # Full path to the file
+    filepath = filename
+
+    # Check if file exists
+    if not os.path.isfile(filepath):
+        raise Http404("Image not found")
+
+    # Guess MIME type
+    mime_type, _ = mimetypes.guess_type(filepath)
+    if mime_type is None:
+        mime_type = 'application/octet-stream'
+
+    # Serve file with no-cache headers
+    response = FileResponse(open(filepath, 'rb'), content_type=mime_type)
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    return response
 
 def robots_txt(request):
     lines = [
@@ -1124,7 +1147,6 @@ def battle(request, game_id):
     elif request.method == 'POST':
         if attacks_left <= 0:
             return bad_request(request, title="User Error", message= "You have already fought all your battles for the day. Please click the back button to return to the game")
-            return HttpResponseBadRequest("You have already fought all your battles for the day. Please click the back button to return to the game")
             
         changed_squares = []
         owner.attacks -= 1
@@ -1364,7 +1386,6 @@ def battle(request, game_id):
                 ogdp = int(planes_defend_amount)
             except:
                 return bad_request(request, title="User Error", message= "You need to send planes in either a dog fight or bombing raid. Please click the back button to return to the game")
-                return HttpResponseBadRequest("You need to send planes in either a dog fight or bombing raid. Please click the back button to return to the game")
             planes_defender = request.POST.get('defender')
             
             if ogap > ogdp:
