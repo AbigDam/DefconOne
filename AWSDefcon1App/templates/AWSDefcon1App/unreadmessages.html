@@ -12,16 +12,19 @@
             <li>
                     {{ sender.username }} 
                 {% if message.game_id %}
-                    (Game ID: {{ message.game_id }})
                 {% endif %}
                 - Unread: {{ message.unread_count }}
                 <a href="{% url 'message' game_id=message.game_id sender_id=message.sender %}">View Messages</a>
+                <script>
+                    window.location.href = "{% url 'message' game_id=message.game_id sender_id=message.sender %}";
+                </script>
             </li>
         {% empty %}
             <li>No unread game messages.</li>
         {% endfor %}
     </ul>
     
+
     <!-- Direct Messages -->
     <h3>Direct Messages</h3>
     <ul>
@@ -30,6 +33,9 @@
                 {{ sender.username }}- Unread: {{ dm.unread_count }}
                 <a href="{% url 'DM' recipient_id=dm.sender %}">View Messages</a>
             </li>
+            <script>
+                window.location.href = "{% url 'DM' recipient_id=dm.sender %}";
+            </script>
         {% empty %}
             <li>No unread direct messages.</li>
         {% endfor %}

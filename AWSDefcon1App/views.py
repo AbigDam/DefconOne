@@ -31,7 +31,7 @@ colors = {
     'United Kingdom': '#ff4879',
     'Soviet Union': '#a3101f',
     'Italy': '#56a552',
-    'Second Brazilian Republic': '#62bd52',
+    'Brazil': '#62bd52',
     'Sultanate of Aussa': '#08c237',
     'Turkey': '#c7e9b4',
     'Norway': '#623c3c',
@@ -39,7 +39,7 @@ colors = {
     'Saudi Arabia': '#def7c6',
     'United States': '#57a1ff',
     'Albania': '#c23b85',
-    'Dominion of Canada': '#9b3e33',
+    'Canada': '#9b3e33',
     'France': '#4892FF',
     'Kingdom of Hungary': '#ffa47f',
     'China': '#dfe5a0',
@@ -517,14 +517,22 @@ def index(request):
     games  = Games.objects.all()
     played_games = []     
     for game in games:
-        if is_user_in_game(game, request.user):
-            played_games.append(game)
+        for nation in Nations.objects.filter(game = game):
+            if nation.user == request.user:
+                played_games.append(game)
 
 
-    games = played_games
+    game_list = played_games
     
+
+    games = []
+    for game in game_list:
+        nations = list(Nations.objects.filter(game=game))
+        games.append([game.id] + nations)  
+
     
-    return render(request, "AWSDefcon1App/index.html", {"games": games, "user": user, "max_game_id":max_game_id,'next_id':next_id,'leaderboard': leaderboard})
+
+    return render(request, "AWSDefcon1App/index.html", {"games": games, "game_list":game_list, "user": user, "max_game_id":max_game_id,'next_id':next_id,'leaderboard': leaderboard})
 
 def full_index(request):
     games = Games.objects.all()
@@ -632,28 +640,22 @@ def full_index(request):
     games  = Games.objects.all()
     played_games = []     
     for game in games:
-        if not is_user_in_game(game, request.user):
-            played_games.append(game)
+        for nation in Nations.objects.filter(game = game):
+            if nation.user == request.user:
+                played_games.append(game)
 
 
-    games = played_games
+    un_played_games = [game for game in games if game not in played_games]
+    games_list =  un_played_games
     
-    
-    return render(request, "AWSDefcon1App/full_index.html", {"games": games, "user": user, "max_game_id":max_game_id,'next_id':next_id,'leaderboard': leaderboard})
 
+    games = []
+    for game in games_list:
+        nations = list(Nations.objects.filter(game=game))
+        games.append([game.id] + nations)  
 
-def is_user_in_game(game, user):
-    # Check if request.user matches any of the player fields
-    return any([
-        game.player0 == user,
-        game.player1 == user,
-        game.player2 == user,
-        game.player3 == user,
-        game.player4 == user,
-        game.player5 == user,
-        game.player6 == user,
-        game.player7 == user,
-    ])
+    return render(request, "AWSDefcon1App/full_index.html", {"games": games, "game_list":games_list, "user": user, "max_game_id":max_game_id,'next_id':next_id,'leaderboard': leaderboard})
+
 
 @login_required(login_url='login')
 def unread_senders(request):
@@ -1049,28 +1051,7 @@ def join(request, game_id, player_number):
     game = get_object_or_404(Games, id=game_id)
 
     if request.method == 'POST' or request.method == 'GET':
-        player_field = f"player{player_number}"
 
-        # Check if the player already has a spot in any player field
-        existing_player_field = None
-        for i in range(0, 8):
-            field_name = f"player{i}"
-            player = getattr(game, field_name)
-            if player == request.user:
-                existing_player_field = field_name
-                break
-
-        # Remove the player from the existing spot if any
-        try:
-            setattr(game, existing_player_field,User.objects.get(username='empty'))
-            nation = Nations.objects.get(game=game, user=request.user)
-            nation.user = User.objects.get(username='empty')  # Replace 'name' with the field you want to update
-            nation.save()
-        except:
-            pass
-
-        setattr(game, player_field, request.user)
-        game.save()
         # Update the Nations model
         nation, created = Nations.objects.get_or_create(game=game, player_number=player_number)
         nation.user = request.user
@@ -1264,7 +1245,7 @@ def battle(request, game_id):
                         game_instance = Games.objects.get(id=game_id)
                         game_instance.enemy_player_number = User.objects.get(username='loser')
                         game_instance.save()
-                        War.objects.filter(Q(nation1=boat_defender) | Q(nation2=boat_defender)).delete()
+                        War.objects.filter(Q(nation1=defender) | Q(nation2=defender)).delete()
 
                 else:
                     announcements = Announcements.objects.create(text =f"{owner} has failed to land on the beaches of {boat_defender}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
@@ -1716,9 +1697,10 @@ def battle(request, game_id):
         loser_user = User.objects.get(username="loser")
         empty_user = User.objects.get(username="empty")
         closed_user = User.objects.get(username="closed")
+        no_user = ""
 
         # Get active nations
-        active_nations = Nations.objects.filter(game=game_id,player_number__lt=8).exclude(user__in=[loser_user, empty_user, closed_user])
+        active_nations = Nations.objects.filter(game=game_id).exclude(user__in=[loser_user, empty_user, closed_user]).exclude(user = None)
 
         # Check how many players have completed their turn
         players_ready = sum(1 for nation in active_nations if nation.attacks == 0)
@@ -2071,17 +2053,41 @@ def current_wars(request,game_id):
 
 @login_required(login_url='login')
 def map(request, game_id):
-    nations = Nations.objects.filter(game_id=game_id, player_number__lt=8)
+
+    loser_user = User.objects.get(username="loser")
+    empty_user = User.objects.get(username="empty")
+    closed_user = User.objects.get(username="closed")
+    no_user = " "
+
+    # Get active nations
+
+    kill_list = list(
+        Nations.objects.filter(
+            game=game_id
+        ).exclude(
+            user__username__in=['loser', request.user.username]
+        ).filter(
+            Q(player_number__lt=8) | ~Q(user = empty_user)
+        ).values_list('name', flat=True)
+    )
+    nations = kill_list
     nationscount = 0
-    for nation in nations:
-        if nation.user.username == 'loser':
-            nationscount += 1
-            if nationscount == 6:
-                non_loser_nations = nations.exclude(user__username='loser')
-                for non_loser_nation in non_loser_nations:
-                    if non_loser_nation.name == "Cuba":
-                        if non_loser_nation.user.id not in Achievements.objects.get(name = "Cuba Wins").users:
-                            achievement = Achievements.objects.get(name="Cuba Wins")
+
+    if len(kill_list) == 0:
+                non_loser_nation = Nations.objects.get(game=game_id,user = request.user)
+                if non_loser_nation.name == "Cuba":
+                    if non_loser_nation.user.id not in Achievements.objects.get(name = "Cuba Wins").users:
+                        achievement = Achievements.objects.get(name="Cuba Wins")
+                        users_list = achievement.users  
+                        users_list.append(non_loser_nation.user.id)  
+                        achievement.users = users_list
+                        achievement.save()
+
+                        non_loser_nation.user.achievements += 1
+                        non_loser_nation.user.save()
+                if non_loser_nation.states == 903 or non_loser_nation.states > 903:
+                        if non_loser_nation.user.id not in Achievements.objects.get(name = "Rule the World").users:
+                            achievement = Achievements.objects.get(name="Rule the World")
                             users_list = achievement.users  
                             users_list.append(non_loser_nation.user.id)  
                             achievement.users = users_list
@@ -2089,38 +2095,28 @@ def map(request, game_id):
 
                             non_loser_nation.user.achievements += 1
                             non_loser_nation.user.save()
-                    if non_loser_nation.states == 903 or non_loser_nation.states > 903:
-                            if non_loser_nation.user.id not in Achievements.objects.get(name = "Rule the World").users:
-                                achievement = Achievements.objects.get(name="Rule the World")
-                                users_list = achievement.users  
-                                users_list.append(non_loser_nation.user.id)  
-                                achievement.users = users_list
-                                achievement.save()
+                if non_loser_nation.states == 903 or non_loser_nation.states > 903 and non_loser_nation.name == "Cuba" and non_loser_nation.user.id not in Achievements.objects.get(name = "Cuba Rules").users:
+                    achievement = Achievements.objects.get(name="Cuba Rules")
+                    users_list = achievement.users  
+                    users_list.append(non_loser_nation.user.id)  
+                    achievement.users = users_list
+                    achievement.save()
 
-                                non_loser_nation.user.achievements += 1
-                                non_loser_nation.user.save()
-                    if non_loser_nation.states == 903 or non_loser_nation.states > 903 and non_loser_nation.name == "Cuba" and non_loser_nation.user.id not in Achievements.objects.get(name = "Cuba Rules").users:
-                        achievement = Achievements.objects.get(name="Cuba Rules")
-                        users_list = achievement.users  
-                        users_list.append(non_loser_nation.user.id)  
-                        achievement.users = users_list
-                        achievement.save()
-
-                        non_loser_nation.user.achievements += 1
-                        non_loser_nation.user.save()
-
-                    non_loser_nation.user.wins += 1
-                    if non_loser_nation.user.wins == 100 and non_loser_nation.user.id not in Achievements.objects.get(name = "100 Wins").users:
-                        achievement = Achievements.objects.get(name="100 Wins")
-                        users_list = achievement.users  
-                        users_list.append(non_loser_nation.user.id)  
-                        achievement.users = users_list
-                        achievement.save()
-                        
-                        non_loser_nation.user.achievements += 1
-                        non_loser_nation.user.save()
-
+                    non_loser_nation.user.achievements += 1
                     non_loser_nation.user.save()
+
+                non_loser_nation.user.wins += 1
+                if non_loser_nation.user.wins == 100 and non_loser_nation.user.id not in Achievements.objects.get(name = "100 Wins").users:
+                    achievement = Achievements.objects.get(name="100 Wins")
+                    users_list = achievement.users  
+                    users_list.append(non_loser_nation.user.id)  
+                    achievement.users = users_list
+                    achievement.save()
+                    
+                    non_loser_nation.user.achievements += 1
+                    non_loser_nation.user.save()
+
+                non_loser_nation.user.save()
                 game = Games.objects.get(id=game_id)
                 game.delete()
                 name = non_loser_nation.user.username
@@ -2180,12 +2176,15 @@ def map(request, game_id):
 
     nation_list = list(Nations.objects.filter(game=game_id).exclude(user = User.objects.get(username = "loser")).values_list('name', flat=True))
 
+    empty = User.objects.get(username = "empty")
     kill_list = list(
-    Nations.objects.filter(game=game,
-        player_number__lt=8
-    ).exclude(
-        user__username__in=['loser', request.user.username]
-    ).values_list('name', flat=True)
+        Nations.objects.filter(
+            game=game
+        ).exclude(
+            user__username__in=['loser', request.user.username]
+        ).filter(
+            Q(player_number__lt=8) | ~Q(user = empty)
+        ).values_list('name', flat=True)
     )
 
     
@@ -2211,8 +2210,8 @@ def makegame(request,game_id):
             next_id = 5
         elif(not Games.objects.get(id = 6).exsits()):
             next_id = 6
-        make_game = True
-        return render(request, "AWSDefcon1App/makegame.html", {"game_id":next_id, "make_game":make_game, "message":message})
+        return render(request, "AWSDefcon1App/makegame.html", {"game_id":next_id})
+        
     if not User.objects.filter(username='empty').exists():
         user = User.objects.create_user("empty", "emtpyman289666880990@gmail.com", "jkoor8ut09rugho9u069ft-gyyh0j9")
         user = User.objects.create_user("loser", "loserman289666880990@gmail.com", "jkoor8ut09ghy5ho9u069ft-gyyh0j9")
@@ -2224,135 +2223,159 @@ def makegame(request,game_id):
     
     hard = 1
 
+    empty =  User.objects.get(username='empty')
+    closed =  User.objects.get(username='closed')
     if 'UK' in selected_countries:
-      user_uk = User.objects.get(username='empty')
+      user_uk = empty
     else:
-      user_uk = User.objects.get(username='closed')
+      user_uk = closed
     
     if 'USA' in selected_countries:
-      user_usa = User.objects.get(username='empty')
+      user_usa = empty
     else:
-      user_usa = User.objects.get(username='closed')
+      user_usa = closed
       
     if 'France' in selected_countries:
-      user_france = User.objects.get(username='empty')
+      user_france = empty
     else:
-      user_france = User.objects.get(username='closed')
+      user_france = closed
     
     if 'USSR' in selected_countries:
-      user_ussr = User.objects.get(username='empty')
+      user_ussr = empty
     else:
-      user_ussr = User.objects.get(username='closed')
+      user_ussr = closed
    
     if 'Germany' in selected_countries:
-        user_germany = User.objects.get(username='empty')
+        user_germany = empty
     else:
-      user_germany = User.objects.get(username='closed')
+      user_germany = closed
 
     if 'Italy' in selected_countries:
-        user_italy = User.objects.get(username='empty')
+        user_italy = empty
     else:
-        user_italy = User.objects.get(username='closed')
+        user_italy = closed
 
     if 'Japan' in selected_countries:
-      user_japan = User.objects.get(username='empty')
+      user_japan = empty
     else:
-      user_japan = User.objects.get(username='closed')
+      user_japan = closed
 
     if 'Cuba' in selected_countries:
-      user_cuba = User.objects.get(username='empty')
+      minor_user = empty
     else:
-      user_cuba = User.objects.get(username='closed')
+      minor_user = closed
 
-    if 'Hard' in selected_countries:
-      hard = 10
-
-    game_obj = Games.objects.get_or_create(    id=game_id, player1 = User.objects.get(username='empty') , player2 = User.objects.get(username='empty') , player3 = User.objects.get(username='empty') , player4 = User.objects.get(username='empty') , player5 = User.objects.get(username='empty') , player6 = User.objects.get(username='empty') ,player7 =User.objects.get(username='empty'),player0 =User.objects.get(username='empty'))
+    game_obj = Games.objects.get_or_create(id=game_id)
     game_obj = Games.objects.get(id = game_id)
-    Nations.objects.create(    game=game_obj,    name='Cuba',  user = user_cuba,  player_number=0,    states=1,    divisions=80/hard,    boats=200/hard,    planes=4000/hard,    alliance_name='Cuban Pact',    points=1,    nuke_time=8,    nukes=0, attacks = 10, requests = 10) #Player 1
-    Nations.objects.create(    game=game_obj,    name='United Kingdom',  user = user_uk,  player_number=1,    states=67,    divisions=170/hard,    boats=300/hard,    planes=2000/hard,    alliance_name='Allies',    points=1,    nuke_time=8,    nukes=0, attacks = 5, requests = 10)#Player 2
-    Nations.objects.create(    game=game_obj,    name='United States',  user = user_usa,  player_number=2,    states=45,    divisions=70/hard,    boats=250/hard,    planes=3000/hard,    alliance_name='Neutrality Pact',    points=1,    nuke_time=8,    nukes=0, attacks = 5, requests = 10)#Player 3
-    Nations.objects.create(    game=game_obj,    name='France', user = user_france,   player_number=3,    states=68,    divisions=70/hard,    boats=100/hard,    planes=5000/hard,    alliance_name='Allies',    points=1,    nuke_time=8,    nukes=0, attacks = 5, requests = 10)#Player 4
-    Nations.objects.create(    game=game_obj,    name='Soviet Union',  user = user_ussr,  player_number=4,    states=152,    divisions=30/hard,    boats=100/hard,    planes=7000/hard,    alliance_name='Comintern',    points=1,    nuke_time=8,    nukes=0, attacks = 5, requests = 10)#Player 5
-    Nations.objects.create(    game=game_obj,    name='German Reich', user = user_germany,   player_number=5,    states=23,    divisions=570/hard,    boats=200/hard,    planes=5000/hard,    alliance_name='Axis',    points=1,    nuke_time=8,    nukes=0, attacks = 5, requests = 10)#Player 6
-    Nations.objects.create(    game=game_obj,    name='Italy',   user = user_italy, player_number=6,    states=28,    divisions=320/hard,    boats=150/hard,    planes=4500/hard,    alliance_name='Axis',    points=1,    nuke_time=8,    nukes=0, attacks = 5, requests = 10)#Player 7
-    Nations.objects.create(    game=game_obj,    name='Japan',  user = user_japan,  player_number=7,    states=18,    divisions=340/hard,    boats=300/hard,    planes=6500/hard,    alliance_name='GEACPS',    points=1,    nuke_time=8,    nukes=0, attacks = 5, requests = 10)#Player 8
-    Nations.objects.create( game=game_obj, name = 'Turkey', player_number = 13, states = 21, divisions = 19, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Mexico', player_number = 15, states = 13, divisions = 27, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Spain', player_number = 16, states = 24, divisions = 14, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Poland', player_number = 17, states = 18, divisions = 22, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Australia', player_number = 18, states = 15, divisions = 25, boats = 50, planes = 5000, alliance_name='Allies', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'China', player_number = 19, states = 22, divisions = 18, boats = 50, planes = 5000, alliance_name='Second United Front', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Czechoslovakia', player_number = 20, states = 9, divisions = 31, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Belgium', player_number = 21, states = 10, divisions = 30, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Netherlands', player_number = 22, states = 4, divisions = 35, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Dominion of Canada', player_number = 23, states = 23, divisions = 17, boats = 50, planes = 5000, alliance_name='Allies', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Austria', player_number = 24, states = 4, divisions = 36, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Sweden', player_number = 25, states = 13, divisions = 27, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'British Raj', player_number = 26, states = 26, divisions = 14, boats = 50, planes = 5000, alliance_name='Allies', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Yugoslavia', player_number = 27, states = 14, divisions = 26, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Finland', player_number = 28, states = 12, divisions = 27, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Portugal', player_number = 23, states = 20, divisions = 20, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Kingdom of Greece', player_number = 30, states = 5, divisions = 33, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Iran', player_number = 31, states = 12, divisions = 28, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Bulgaria', player_number = 32, states = 4, divisions = 36, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Second Brazilian Republic', player_number = 33, states = 31, divisions = 28, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Romania', player_number = 34, states = 11, divisions = 29, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Norway', player_number = 35, states = 11, divisions = 29, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Denmark', player_number = 36, states = 7, divisions = 33, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Switzerland', player_number = 37, states = 5, divisions = 35, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Ethiopia', player_number = 38, states = 10, divisions = 30, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Iraq', player_number = 39, states = 3, divisions = 37, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Kingdom of Hungary', player_number = 40, states = 3, divisions = 37, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'South Africa', player_number = 41, states = 7, divisions = 33, boats = 50, planes = 5000, alliance_name='Allies', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Philippines', player_number = 42, states = 7, divisions = 33, boats = 50, planes = 5000, alliance_name='Neutrality Pact', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Ireland', player_number = 43, states = 3, divisions = 37, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Guangxi Clique', player_number = 44, states = 5, divisions = 35, boats = 50, planes = 5000, alliance_name='Second United Front', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Latvia', player_number = 45, states = 5, divisions = 35, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'New Zealand', player_number = 46, states = 3, divisions = 37, boats = 50, planes = 5000, alliance_name='Allies', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Mongolia', player_number = 47, states = 5, divisions = 35, boats = 50, planes = 5000, alliance_name='Comintern', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Xibei San Ma', player_number = 48, states = 7, divisions = 33, boats = 50, planes = 5000, alliance_name='Second United Front', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Colombia', player_number = 49, states = 3, divisions = 37, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Dutch East Indies', player_number = 50, states = 8, divisions = 32, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Lithuania', player_number = 51, states = 5, divisions = 35, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Albania', player_number = 52, states = 3, divisions = 37, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Argentina', player_number = 53, states = 14, divisions = 34, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'British Malaya', player_number = 54, states = 2, divisions = 38, boats = 50, planes = 5000, alliance_name='Allies', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Siam', player_number = 55, states = 4, divisions = 36, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Yunnan', player_number = 56, states = 2, divisions = 38, boats = 50, planes = 5000, alliance_name='Second United Front', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Chile', player_number = 57, states = 8, divisions = 37, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Estonia', player_number = 58, states = 5, divisions = 35, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Sinkiang', player_number = 59, states = 6, divisions = 34, boats = 50, planes = 5000, alliance_name='Second United Front', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Afghanistan', player_number = 60, states = 2, divisions = 38, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Venezuela', player_number = 61, states = 3, divisions = 37, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Saudi Arabia', player_number = 62, states = 9, divisions = 31, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Peru', player_number = 63, states = 5, divisions = 35, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Ecuador', player_number = 65, states = 2, divisions = 38, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Dominican Republic', player_number = 66, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Panama', player_number = 67, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Manchukuo', player_number = 68, states = 7, divisions = 33, boats = 50, planes = 5000, alliance_name='GEACPS', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Tibet', player_number = 69, states = 3, divisions = 37, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Bolivian Republic', player_number = 70, states = 2, divisions = 38, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Haiti', player_number = 71, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Uruguay', player_number = 72, states = 3, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Republic of Paraguay', player_number = 73, states = 2, divisions = 38, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Luxembourg', player_number = 74, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Mengkukuo', player_number = 75, states = 2, divisions = 38, boats = 50, planes = 5000, alliance_name='GEACPS', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Shanxi', player_number = 76, states = 3, divisions = 37, boats = 50, planes = 5000, alliance_name='Second United Front', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Communist China', player_number = 77, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='Second United Front', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Nepal', player_number = 78, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Yemen', player_number = 79, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Guatemala', player_number = 80, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'El Salvador', player_number = 81, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Honduras', player_number = 82, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Liberia', player_number = 83, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Nicaragua', player_number = 84, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Costa Rica', player_number = 85, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Bhutan', player_number = 86, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Oman', player_number = 87, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Tannu Tuva', player_number = 88, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='Comintern', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Sultanate of Aussa', player_number = 89, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Iceland', player_number = 90, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
+    Nations.objects.create(    game=game_obj,    name='United Kingdom',  user = user_uk,  player_number=1,    states=67,    divisions=170,    boats=300,    planes=2000,    alliance_name='Allies',    points=1,    nuke_time=8,    nukes=0, attacks = 5, requests = 10)#Player 2
+    Nations.objects.create(    game=game_obj,    name='United States',  user = user_usa,  player_number=2,    states=45,    divisions=70,    boats=250,    planes=3000,    alliance_name='Neutrality Pact',    points=1,    nuke_time=8,    nukes=0, attacks = 5, requests = 10)#Player 3
+    Nations.objects.create(    game=game_obj,    name='France', user = user_france,   player_number=3,    states=68,    divisions=70,    boats=100,    planes=5000,    alliance_name='Allies',    points=1,    nuke_time=8,    nukes=0, attacks = 5, requests = 10)#Player 4
+    Nations.objects.create(    game=game_obj,    name='Soviet Union',  user = user_ussr,  player_number=4,    states=152,    divisions=30,    boats=100,    planes=7000,    alliance_name='Comintern',    points=1,    nuke_time=8,    nukes=0, attacks = 5, requests = 10)#Player 5
+    Nations.objects.create(    game=game_obj,    name='German Reich', user = user_germany,   player_number=5,    states=23,    divisions=570,    boats=200,    planes=5000,    alliance_name='Axis',    points=1,    nuke_time=8,    nukes=0, attacks = 5, requests = 10)#Player 6
+    Nations.objects.create(    game=game_obj,    name='Italy',   user = user_italy, player_number=6,    states=28,    divisions=320,    boats=150,    planes=4500,    alliance_name='Axis',    points=1,    nuke_time=8,    nukes=0, attacks = 5, requests = 10)#Player 7
+    Nations.objects.create(    game=game_obj,    name='Japan',  user = user_japan,  player_number=7,    states=18,    divisions=340,    boats=300,    planes=6500,    alliance_name='GEACPS',    points=1,    nuke_time=8,    nukes=0, attacks = 5, requests = 10)#Player 8
+    
+    Nations.objects.create( game=game_obj, name = 'Afghanistan',user = minor_user,  player_number = 60, states = 2, divisions = 38, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Austria',user = minor_user,  player_number = 24, states = 4, divisions = 36, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Australia',user = minor_user,  player_number = 18, states = 15, divisions = 25, boats = 50, planes = 5000, alliance_name='Allies', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Argentina',user = minor_user,  player_number = 53, states = 14, divisions = 34, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Albania',user = minor_user,  player_number = 52, states = 3, divisions = 37, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+
+    Nations.objects.create( game=game_obj, name = 'Belgium',user = minor_user,  player_number = 21, states = 10, divisions = 30, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Bulgaria',user = minor_user,  player_number = 32, states = 4, divisions = 36, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Bhutan',user = minor_user,  player_number = 86, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 10, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Bolivian Republic',user = minor_user,  player_number = 70, states = 2, divisions = 38, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Brazil',user = minor_user,  player_number = 33, states = 31, divisions = 28, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'British Malaya',user = minor_user,  player_number = 54, states = 2, divisions = 38, boats = 50, planes = 5000, alliance_name='Allies', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'British Raj',user = minor_user,  player_number = 26, states = 26, divisions = 14, boats = 50, planes = 5000, alliance_name='Allies', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+
+    Nations.objects.create( game=game_obj, name = 'Canada',user = minor_user,  player_number = 23, states = 23, divisions = 17, boats = 50, planes = 5000, alliance_name='Allies', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'China',user = minor_user,  player_number = 19, states = 22, divisions = 37, boats = 50, planes = 5000, alliance_name='Second United Front', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Chile',user = minor_user,  player_number = 57, states = 8, divisions = 37, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Colombia',user = minor_user,  player_number = 49, states = 3, divisions = 37, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Communist China',user = minor_user,  player_number = 77, states = 1, divisions = 86, boats = 50, planes = 5000, alliance_name='Second United Front', points = 0, nuke_time = 8, nukes = 0, attacks = 2, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Costa Rica',user = minor_user,  player_number = 85, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 10, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Cuba',  user = minor_user,  player_number=91,    states=1,    divisions=80,    boats=200,    planes=4000,    alliance_name='',    points=1,    nuke_time=8,    nukes=0, attacks = 5, requests = 10) #Player 1
+    Nations.objects.create( game=game_obj, name = 'Czechoslovakia',user = minor_user,  player_number = 20, states = 9, divisions = 31, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+
+    Nations.objects.create( game=game_obj, name = 'Denmark',user = minor_user,  player_number = 36, states = 7, divisions = 33, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Dutch East Indies',user = minor_user,  player_number = 50, states = 8, divisions = 32, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Dominican Republic',user = minor_user,  player_number = 66, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 10, requests = 4 )
+    
+    Nations.objects.create( game=game_obj, name = 'Ecuador',user = minor_user,  player_number = 65, states = 2, divisions = 38, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'El Salvador',user = minor_user,  player_number = 81, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Estonia',user = minor_user,  player_number = 58, states = 5, divisions = 35, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Ethiopia',user = minor_user,  player_number = 38, states = 10, divisions = 30, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+
+    Nations.objects.create( game=game_obj, name = 'Finland',user = minor_user,  player_number = 28, states = 12, divisions = 27, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+
+    Nations.objects.create( game=game_obj, name = 'Guangxi Clique',user = minor_user,  player_number = 44, states = 5, divisions = 35, boats = 50, planes = 5000, alliance_name='Second United Front', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Guatemala',user = minor_user,  player_number = 80, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 10, requests = 4 )
+
+    Nations.objects.create( game=game_obj, name = 'Haiti',user = minor_user,  player_number = 71, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 10, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Honduras',user = minor_user,  player_number = 82, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 10, requests = 4 )
+
+    Nations.objects.create( game=game_obj, name = 'Iceland',user = minor_user,  player_number = 90, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 10, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Iran',user = minor_user,  player_number = 31, states = 12, divisions = 28, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Iraq',user = minor_user,  player_number = 39, states = 3, divisions = 37, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Ireland',user = minor_user,  player_number = 43, states = 3, divisions = 37, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+
+    Nations.objects.create( game=game_obj, name = 'Kingdom of Greece',user = minor_user,  player_number = 30, states = 5, divisions = 33, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Kingdom of Hungary',user = minor_user,  player_number = 40, states = 3, divisions = 37, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+
+    Nations.objects.create( game=game_obj, name = 'Latvia',user = minor_user,  player_number = 45, states = 5, divisions = 35, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Liberia',user = minor_user,  player_number = 83, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Lithuania',user = minor_user,  player_number = 51, states = 5, divisions = 35, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Luxembourg',user = minor_user,  player_number = 74, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+
+    Nations.objects.create( game=game_obj, name = 'Manchukuo',user = minor_user,  player_number = 68, states = 7, divisions = 33, boats = 50, planes = 5000, alliance_name='GEACPS', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Mexico',user = minor_user,  player_number = 15, states = 13, divisions = 27, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Mongolia',user = minor_user,  player_number = 47, states = 5, divisions = 35, boats = 50, planes = 5000, alliance_name='Comintern', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Mengkukuo',user = minor_user,  player_number = 75, states = 2, divisions = 38, boats = 50, planes = 5000, alliance_name='GEACPS', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+
+    Nations.objects.create( game=game_obj, name = 'Nepal',user = minor_user,  player_number = 78, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 10, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Netherlands',user = minor_user,  player_number = 22, states = 4, divisions = 35, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'New Zealand',user = minor_user,  player_number = 46, states = 3, divisions = 37, boats = 50, planes = 5000, alliance_name='Allies', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Nicaragua',user = minor_user,  player_number = 84, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 10, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Norway',user = minor_user,  player_number = 35, states = 11, divisions = 29, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+
+    Nations.objects.create( game=game_obj, name = 'Oman',user = minor_user,  player_number = 87, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 10, requests = 4 )
+
+    Nations.objects.create( game=game_obj, name = 'Panama',user = minor_user,  player_number = 67, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 10, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Peru',user = minor_user,  player_number = 63, states = 5, divisions = 35, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )    
+    Nations.objects.create( game=game_obj, name = 'Philippines',user = minor_user,  player_number = 42, states = 7, divisions = 33, boats = 50, planes = 5000, alliance_name='Neutrality Pact', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Portugal',user = minor_user,  player_number = 23, states = 20, divisions = 20, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Poland',user = minor_user,  player_number = 17, states = 18, divisions = 22, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+
+    Nations.objects.create( game=game_obj, name = 'Romania',user = minor_user,  player_number = 34, states = 11, divisions = 29, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Republic of Paraguay',user = minor_user,  player_number = 73, states = 2, divisions = 38, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    
+    Nations.objects.create( game=game_obj, name = 'Siam',user = minor_user,  player_number = 55, states = 4, divisions = 36, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Sinkiang',user = minor_user,  player_number = 59, states = 6, divisions = 34, boats = 50, planes = 5000, alliance_name='Second United Front', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+        
+    Nations.objects.create( game=game_obj, name = 'Saudi Arabia',user = minor_user,  player_number = 62, states = 9, divisions = 31, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Shanxi',user = minor_user,  player_number = 76, states = 3, divisions = 37, boats = 50, planes = 5000, alliance_name='Second United Front', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'South Africa',user = minor_user,  player_number = 41, states = 7, divisions = 33, boats = 50, planes = 5000, alliance_name='Allies', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Spain',user = minor_user,  player_number = 16, states = 24, divisions = 14, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Sweden',user = minor_user,  player_number = 25, states = 13, divisions = 27, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Switzerland',user = minor_user,  player_number = 37, states = 5, divisions = 35, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Sultanate of Aussa',user = minor_user,  player_number = 89, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 10, requests = 4 )
+
+    Nations.objects.create( game=game_obj, name = 'Tannu Tuva',user = minor_user,  player_number = 88, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='Comintern', points = 0, nuke_time = 8, nukes = 0, attacks = 10, requests = 4 )    
+    Nations.objects.create( game=game_obj, name = 'Turkey',user = minor_user,  player_number = 13, states = 21, divisions = 19, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Tibet',user = minor_user,  player_number = 69, states = 3, divisions = 37, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+
+    Nations.objects.create( game=game_obj, name = 'Uruguay',user = minor_user,  player_number = 72, states = 3, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    
+    Nations.objects.create( game=game_obj, name = 'Venezuela',user = minor_user,  player_number = 61, states = 3, divisions = 37, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+
+    Nations.objects.create( game=game_obj, name = 'Xibei San Ma',user = minor_user,  player_number = 48, states = 7, divisions = 33, boats = 50, planes = 5000, alliance_name='Second United Front', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+
+    Nations.objects.create( game=game_obj, name = 'Yugoslavia',user = minor_user,  player_number = 27, states = 14, divisions = 26, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Yunnan',user = minor_user,  player_number = 56, states = 2, divisions = 38, boats = 50, planes = 5000, alliance_name='Second United Front', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Yemen',user = minor_user,  player_number = 79, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 10, requests = 4 )
+
+
 
     map_obj = Map.objects.get_or_create(number=game_id, game =game_obj)
     map_obj = Map.objects.get(game = game_obj)
@@ -2361,7 +2384,7 @@ def makegame(request,game_id):
         {"name": "Abkhazia", "color": "#a3101f", "owner_name": "Soviet Union"},
         {"name": "Abruzzo", "color": "#56a552", "owner_name": "Italy"},
         {"name": "Abu Dhabi", "color": "#ff4879", "owner_name": "United Kingdom"},
-        {"name": "Acre", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
+        {"name": "Acre", "color": "#62bd52", "owner_name": "Brazil"},
         {"name": "Aden", "color": "#ff4879", "owner_name": "United Kingdom"},
         {"name": "Afar", "color": "#08c237", "owner_name": "Sultanate of Aussa"},
         {"name": "Afyon", "color": "#c7e9b4", "owner_name": "Turkey"},
@@ -2373,7 +2396,7 @@ def makegame(request,game_id):
         {"name": "Alabama", "color": "#57a1ff", "owner_name": "United States"},
         {"name": "Alaska", "color": "#57a1ff", "owner_name": "United States"},
         {"name": "Albania", "color": "#c23b85", "owner_name": "Albania"},
-        {"name": "Alberta", "color": "#9b3e33", "owner_name": "Dominion of Canada"},
+        {"name": "Alberta", "color": "#9b3e33", "owner_name": "Canada"},
         {"name": "Aleppo", "color": "#4993ff", "owner_name": "France"},
         {"name": "Alexandria", "color": "#ff4879", "owner_name": "United Kingdom"},
         {"name": "Alfold", "color": "#ffa47f", "owner_name": "Kingdom of Hungary"},
@@ -2384,17 +2407,17 @@ def makegame(request,game_id):
         {"name": "Alsace Lorraine", "color": "#4993ff", "owner_name": "France"},
         {"name": "Altai Krai", "color": "#a3101f", "owner_name": "Soviet Union"},
         {"name": "Alto Adige", "color": "#56a552", "owner_name": "Italy"},
-        {"name": "Amapa", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
+        {"name": "Amapa", "color": "#62bd52", "owner_name": "Brazil"},
         {"name": "Amasya", "color": "#c7e9b4", "owner_name": "Turkey"},
-        {"name": "Amazon impassable 1", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
-        {"name": "Amazon impassable 2", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
-        {"name": "Amazon impassable 3", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
-        {"name": "Amazon impassable 4", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
-        {"name": "Amazon impassable 5", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
-        {"name": "Amazon impassable 6", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
-        {"name": "Amazon impassable 7", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
-        {"name": "Amazon impassable 8", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
-        {"name": "Amazonas", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
+        {"name": "Amazon impassable 1", "color": "#62bd52", "owner_name": "Brazil"},
+        {"name": "Amazon impassable 2", "color": "#62bd52", "owner_name": "Brazil"},
+        {"name": "Amazon impassable 3", "color": "#62bd52", "owner_name": "Brazil"},
+        {"name": "Amazon impassable 4", "color": "#62bd52", "owner_name": "Brazil"},
+        {"name": "Amazon impassable 5", "color": "#62bd52", "owner_name": "Brazil"},
+        {"name": "Amazon impassable 6", "color": "#62bd52", "owner_name": "Brazil"},
+        {"name": "Amazon impassable 7", "color": "#62bd52", "owner_name": "Brazil"},
+        {"name": "Amazon impassable 8", "color": "#62bd52", "owner_name": "Brazil"},
+        {"name": "Amazonas", "color": "#62bd52", "owner_name": "Brazil"},
         {"name": "Amur", "color": "#a3101f", "owner_name": "Soviet Union"},
         {"name": "Anhui", "color": "#dfe5a0", "owner_name": "China"},
         {"name": "Ankara", "color": "#c7e9b4", "owner_name": "Turkey"},
@@ -2423,7 +2446,7 @@ def makegame(request,game_id):
         {"name": "Aysen", "color": "#ca828b", "owner_name": "Chile"},
         {"name": "Azerbaijan", "color": "#a3101f", "owner_name": "Soviet Union"},
         {"name": "Baghdad", "color": "#e79481", "owner_name": "Iraq"},
-        {"name": "Bahia", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
+        {"name": "Bahia", "color": "#62bd52", "owner_name": "Brazil"},
         {"name": "Bahr al Ghazal", "color": "#ff4879", "owner_name": "United Kingdom"},
         {"name": "Baja California", "color": "#86c66c", "owner_name": "Mexico"},
         {"name": "Balakovo", "color": "#a3101f", "owner_name": "Soviet Union"},
@@ -2460,7 +2483,7 @@ def makegame(request,game_id):
         {"name": "Brabant", "color": "#ffb35f", "owner_name": "Netherlands"},
         {"name": "Brandenburg", "color": "#525252", "owner_name": "German Reich"},
         {"name": "Bratsk", "color": "#a3101f", "owner_name": "Soviet Union"},
-        {"name": "British Columbia", "color": "#9b3e33", "owner_name": "Dominion of Canada"},
+        {"name": "British Columbia", "color": "#9b3e33", "owner_name": "Canada"},
         {"name": "British Guyana", "color": "#ff4879", "owner_name": "United Kingdom"},
         {"name": "British Honduras", "color": "#ff4879", "owner_name": "United Kingdom"},
         {"name": "British Somaliland", "color": "#ff4879", "owner_name": "United Kingdom"},
@@ -2484,7 +2507,7 @@ def makegame(request,game_id):
         {"name": "Carpathian Ruthenia", "color": "#46d8cb", "owner_name": "Czechoslovakia"},
         {"name": "Casablanca", "color": "#4993ff", "owner_name": "France"},
         {"name": "Cataluna", "color": "#ffff79", "owner_name": "Spain"},
-        {"name": "Ceara", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
+        {"name": "Ceara", "color": "#62bd52", "owner_name": "Brazil"},
         {"name": "Cebu", "color": "#b496e6", "owner_name": "Philippines"},
         {"name": "Central Australia", "color": "#49bb7e", "owner_name": "Australia"},
         {"name": "Central Islands", "color": "#b496e6", "owner_name": "Philippines"},
@@ -2521,7 +2544,7 @@ def makegame(request,game_id):
         {"name": "Corsica", "color": "#4993ff", "owner_name": "France"},
         {"name": "Costa Rica", "color": "#927a30", "owner_name": "Costa Rica"},
         {"name": "Costermansville", "color": "#fbdf0a", "owner_name": "Belgium"},
-        {"name": "Cote Nord", "color": "#9b3e33", "owner_name": "Dominion of Canada"},
+        {"name": "Cote Nord", "color": "#9b3e33", "owner_name": "Canada"},
         {"name": "Crimea", "color": "#a3101f", "owner_name": "Soviet Union"},
         {"name": "Crisana", "color": "#9e9e00", "owner_name": "Romania"},
         {"name": "Croatia", "color": "#5e5ea4", "owner_name": "Yugoslavia"},
@@ -2543,7 +2566,7 @@ def makegame(request,game_id):
         {"name": "Deir az Zur", "color": "#4993ff", "owner_name": "France"},
         {"name": "Delhi", "color": "#c80a0a", "owner_name": "British Raj"},
         {"name": "Derna", "color": "#56a552", "owner_name": "Italy"},
-        {"name": "Districts of Ontario", "color": "#9b3e33", "owner_name": "Dominion of Canada"},
+        {"name": "Districts of Ontario", "color": "#9b3e33", "owner_name": "Canada"},
         {"name": "Diyarbakir", "color": "#c7e9b4", "owner_name": "Turkey"},
         {"name": "Dnipropetrovsk", "color": "#a3101f", "owner_name": "Soviet Union"},
         {"name": "Dobrudja", "color": "#9e9e00", "owner_name": "Romania"},
@@ -2574,7 +2597,7 @@ def makegame(request,game_id):
         {"name": "Equatorial Guinea", "color": "#ffff79", "owner_name": "Spain"},
         {"name": "Eritrea", "color": "#56a552", "owner_name": "Italy"},
         {"name": "Ermland Masuren", "color": "#525252", "owner_name": "German Reich"},
-        {"name": "Espirito Santo", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
+        {"name": "Espirito Santo", "color": "#62bd52", "owner_name": "Brazil"},
         {"name": "Extremadura", "color": "#ffff79", "owner_name": "Spain"},
         {"name": "Fars", "color": "#5c927e", "owner_name": "Iran"},
         {"name": "Fiji", "color": "#ff4879", "owner_name": "United Kingdom"},
@@ -2607,7 +2630,7 @@ def makegame(request,game_id):
         {"name": "Gloucestershire", "color": "#ff4879", "owner_name": "United Kingdom"},
         {"name": "Goa", "color": "#33965b", "owner_name": "Portugal"},
         {"name": "Gobi", "color": "#5a771d", "owner_name": "Mongolia"},
-        {"name": "Goias", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
+        {"name": "Goias", "color": "#62bd52", "owner_name": "Brazil"},
         {"name": "Gojjam", "color": "#c3a5f5", "owner_name": "Ethiopia"},
         {"name": "Golog", "color": "#685b84", "owner_name": "Xibei San Ma"},
         {"name": "Gomel", "color": "#a3101f", "owner_name": "Soviet Union"},
@@ -2621,7 +2644,7 @@ def makegame(request,game_id):
         {"name": "Guangxi", "color": "#8a9a74", "owner_name": "Guangxi Clique"},
         {"name": "Guangzhou", "color": "#8a9a74", "owner_name": "Guangxi Clique"},
         {"name": "Guangzhouwan", "color": "#4993ff", "owner_name": "France"},
-        {"name": "Guapore", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
+        {"name": "Guapore", "color": "#62bd52", "owner_name": "Brazil"},
         {"name": "Guarda", "color": "#33965b", "owner_name": "Portugal"},
         {"name": "Guatemala", "color": "#473070", "owner_name": "Guatemala"},
         {"name": "Guerrero", "color": "#86c66c", "owner_name": "Mexico"},
@@ -2629,7 +2652,7 @@ def makegame(request,game_id):
         {"name": "Guizhou", "color": "#dfe5a0", "owner_name": "China"},
         {"name": "Gujarat", "color": "#c80a0a", "owner_name": "British Raj"},
         {"name": "Guryev", "color": "#a3101f", "owner_name": "Soviet Union"},
-        {"name": "Haida Gwaii", "color": "#9b3e33", "owner_name": "Dominion of Canada"},
+        {"name": "Haida Gwaii", "color": "#9b3e33", "owner_name": "Canada"},
         {"name": "Hainan", "color": "#8a9a74", "owner_name": "Guangxi Clique"},
         {"name": "Haiti", "color": "#ab6f72", "owner_name": "Haiti"},
         {"name": "Haixi", "color": "#685b84", "owner_name": "Xibei San Ma"},
@@ -2816,14 +2839,14 @@ def makegame(request,game_id):
         {"name": "Mandalay", "color": "#c80a0a", "owner_name": "British Raj"},
         {"name": "Manica e Sofala", "color": "#33965b", "owner_name": "Portugal"},
         {"name": "Manila", "color": "#b496e6", "owner_name": "Philippines"},
-        {"name": "Manitoba", "color": "#9b3e33", "owner_name": "Dominion of Canada"},
-        {"name": "Maranhao", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
+        {"name": "Manitoba", "color": "#9b3e33", "owner_name": "Canada"},
+        {"name": "Maranhao", "color": "#62bd52", "owner_name": "Brazil"},
         {"name": "Mari El", "color": "#a3101f", "owner_name": "Soviet Union"},
         {"name": "Marrakech", "color": "#4993ff", "owner_name": "France"},
         {"name": "Maryland", "color": "#57a1ff", "owner_name": "United States"},
-        {"name": "Mato Grosso", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
+        {"name": "Mato Grosso", "color": "#62bd52", "owner_name": "Brazil"},
         {"name": "Matrouh", "color": "#ff4879", "owner_name": "United Kingdom"},
-        {"name": "Maurice", "color": "#9b3e33", "owner_name": "Dominion of Canada"},
+        {"name": "Maurice", "color": "#9b3e33", "owner_name": "Canada"},
         {"name": "Mauritania", "color": "#4993ff", "owner_name": "France"},
         {"name": "Mauritanian Desert", "color": "#4993ff", "owner_name": "France"},
         {"name": "Mecklenburg", "color": "#525252", "owner_name": "German Reich"},
@@ -2839,7 +2862,7 @@ def makegame(request,game_id):
         {"name": "Mikhaylovka", "color": "#a3101f", "owner_name": "Soviet Union"},
         {"name": "Mikkeli", "color": "#ffffff", "owner_name": "Finland"},
         {"name": "Millerovo", "color": "#a3101f", "owner_name": "Soviet Union"},
-        {"name": "Minas Gerais", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
+        {"name": "Minas Gerais", "color": "#62bd52", "owner_name": "Brazil"},
         {"name": "Mindanao", "color": "#b496e6", "owner_name": "Philippines"},
         {"name": "Minnesota", "color": "#57a1ff", "owner_name": "United States"},
         {"name": "Minsk", "color": "#a3101f", "owner_name": "Soviet Union"},
@@ -2876,7 +2899,7 @@ def makegame(request,game_id):
         {"name": "Nepal", "color": "#c8aafa", "owner_name": "Nepal"},
         {"name": "Nevada", "color": "#57a1ff", "owner_name": "United States"},
         {"name": "Nevel", "color": "#a3101f", "owner_name": "Soviet Union"},
-        {"name": "New Brunswick", "color": "#9b3e33", "owner_name": "Dominion of Canada"},
+        {"name": "New Brunswick", "color": "#9b3e33", "owner_name": "Canada"},
         {"name": "New Caledonia", "color": "#4993ff", "owner_name": "France"},
         {"name": "New England", "color": "#57a1ff", "owner_name": "United States"},
         {"name": "New Jersey", "color": "#57a1ff", "owner_name": "United States"},
@@ -2891,7 +2914,7 @@ def makegame(request,game_id):
         {"name": "Niger", "color": "#4993ff", "owner_name": "France"},
         {"name": "Nikolayevsk", "color": "#a3101f", "owner_name": "Soviet Union"},
         {"name": "Ningxia", "color": "#685b84", "owner_name": "Xibei San Ma"},
-        {"name": "Nord du Quebec", "color": "#9b3e33", "owner_name": "Dominion of Canada"},
+        {"name": "Nord du Quebec", "color": "#9b3e33", "owner_name": "Canada"},
         {"name": "Nord Pas de Calais", "color": "#4993ff", "owner_name": "France"},
         {"name": "Nordland", "color": "#623c3c", "owner_name": "Norway"},
         {"name": "Normandy", "color": "#4993ff", "owner_name": "France"},
@@ -2914,18 +2937,18 @@ def makegame(request,game_id):
         {"name": "Northern Ireland", "color": "#ff4879", "owner_name": "United Kingdom"},
         {"name": "Northern Kashmir", "color": "#c80a0a", "owner_name": "British Raj"},
         {"name": "Northern Malay", "color": "#d7f0c8", "owner_name": "Siam"},
-        {"name": "Northern Manitoba", "color": "#9b3e33", "owner_name": "Dominion of Canada"},
-        {"name": "Northern Ontario", "color": "#9b3e33", "owner_name": "Dominion of Canada"},
-        {"name": "Northern Saskatchewan", "color": "#9b3e33", "owner_name": "Dominion of Canada"},
+        {"name": "Northern Manitoba", "color": "#9b3e33", "owner_name": "Canada"},
+        {"name": "Northern Ontario", "color": "#9b3e33", "owner_name": "Canada"},
+        {"name": "Northern Saskatchewan", "color": "#9b3e33", "owner_name": "Canada"},
         {"name": "Northern Territory", "color": "#49bb7e", "owner_name": "Australia"},
         {"name": "Northern Urals", "color": "#a3101f", "owner_name": "Soviet Union"},
         {"name": "Northumberland", "color": "#ff4879", "owner_name": "United Kingdom"},
-        {"name": "Northwest Territories", "color": "#9b3e33", "owner_name": "Dominion of Canada"},
-        {"name": "Nova Scotia", "color": "#9b3e33", "owner_name": "Dominion of Canada"},
+        {"name": "Northwest Territories", "color": "#9b3e33", "owner_name": "Canada"},
+        {"name": "Nova Scotia", "color": "#9b3e33", "owner_name": "Canada"},
         {"name": "Novgorod", "color": "#a3101f", "owner_name": "Soviet Union"},
         {"name": "Novosibirsk", "color": "#a3101f", "owner_name": "Soviet Union"},
         {"name": "Nowogrodek", "color": "#ff7789", "owner_name": "Poland"},
-        {"name": "Nunavut", "color": "#9b3e33", "owner_name": "Dominion of Canada"},
+        {"name": "Nunavut", "color": "#9b3e33", "owner_name": "Canada"},
         {"name": "Nyanza Rift Valley", "color": "#ff4879", "owner_name": "United Kingdom"},
         {"name": "Oaxaca", "color": "#86c66c", "owner_name": "Mexico"},
         {"name": "Oberbayern", "color": "#525252", "owner_name": "German Reich"},
@@ -2950,7 +2973,7 @@ def makegame(request,game_id):
         {"name": "Ostergotland", "color": "#2eadff", "owner_name": "Sweden"},
         {"name": "Ostmark", "color": "#525252", "owner_name": "German Reich"},
         {"name": "Otjozondjupa", "color": "#be96fa", "owner_name": "South Africa"},
-        {"name": "Ouest du Quebec", "color": "#9b3e33", "owner_name": "Dominion of Canada"},
+        {"name": "Ouest du Quebec", "color": "#9b3e33", "owner_name": "Canada"},
         {"name": "Oulu", "color": "#ffffff", "owner_name": "Finland"},
         {"name": "Oyrot Region", "color": "#a3101f", "owner_name": "Soviet Union"},
         {"name": "Pais Vasco", "color": "#ffff79", "owner_name": "Spain"},
@@ -2960,9 +2983,9 @@ def makegame(request,game_id):
         {"name": "Panama", "color": "#9e8add", "owner_name": "Panama"},
         {"name": "Panama Canal", "color": "#57a1ff", "owner_name": "United States"},
         {"name": "Papua", "color": "#49bb7e", "owner_name": "Australia"},
-        {"name": "Para", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
+        {"name": "Para", "color": "#62bd52", "owner_name": "Brazil"},
         {"name": "Paraguay", "color": "#4696fa", "owner_name": "Republic of Paraguay"},
-        {"name": "Parana", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
+        {"name": "Parana", "color": "#62bd52", "owner_name": "Brazil"},
         {"name": "Parnu", "color": "#63cdfe", "owner_name": "Estonia"},
         {"name": "Pastaza", "color": "#ffbe7f", "owner_name": "Ecuador"},
         {"name": "Pavlodar", "color": "#a3101f", "owner_name": "Soviet Union"},
@@ -2972,10 +2995,10 @@ def makegame(request,game_id):
         {"name": "Pennsylvania", "color": "#57a1ff", "owner_name": "United States"},
         {"name": "Penza", "color": "#a3101f", "owner_name": "Soviet Union"},
         {"name": "Perm", "color": "#a3101f", "owner_name": "Soviet Union"},
-        {"name": "Pernambuco", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
+        {"name": "Pernambuco", "color": "#62bd52", "owner_name": "Brazil"},
         {"name": "Peshawar", "color": "#c80a0a", "owner_name": "British Raj"},
         {"name": "Petsamo", "color": "#ffffff", "owner_name": "Finland"},
-        {"name": "Piaui", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
+        {"name": "Piaui", "color": "#62bd52", "owner_name": "Brazil"},
         {"name": "Picardy", "color": "#4993ff", "owner_name": "France"},
         {"name": "Piemonte", "color": "#56a552", "owner_name": "Italy"},
         {"name": "Plock", "color": "#ff7789", "owner_name": "Poland"},
@@ -2990,7 +3013,7 @@ def makegame(request,game_id):
         {"name": "Pskov", "color": "#a3101f", "owner_name": "Soviet Union"},
         {"name": "Puglia", "color": "#56a552", "owner_name": "Italy"},
         {"name": "Punjab", "color": "#c80a0a", "owner_name": "British Raj"},
-        {"name": "Punta Pora", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
+        {"name": "Punta Pora", "color": "#62bd52", "owner_name": "Brazil"},
         {"name": "Pyrenees Atlantiques", "color": "#4993ff", "owner_name": "France"},
         {"name": "Qatar", "color": "#ff4879", "owner_name": "United Kingdom"},
         {"name": "Qingdao", "color": "#dfe5a0", "owner_name": "China"},
@@ -3003,11 +3026,11 @@ def makegame(request,game_id):
         {"name": "Rhodesia", "color": "#ff4879", "owner_name": "United Kingdom"},
         {"name": "Rhone", "color": "#4993ff", "owner_name": "France"},
         {"name": "Riga", "color": "#7b7cb8", "owner_name": "Latvia"},
-        {"name": "Rio Branco", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
-        {"name": "Rio de Janeiro", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
+        {"name": "Rio Branco", "color": "#62bd52", "owner_name": "Brazil"},
+        {"name": "Rio de Janeiro", "color": "#62bd52", "owner_name": "Brazil"},
         {"name": "Rio de Oro", "color": "#ffff79", "owner_name": "Spain"},
-        {"name": "Rio Grande do Norte", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
-        {"name": "Rio Grande do Sul", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
+        {"name": "Rio Grande do Norte", "color": "#62bd52", "owner_name": "Brazil"},
+        {"name": "Rio Grande do Sul", "color": "#62bd52", "owner_name": "Brazil"},
         {"name": "Rio Negro", "color": "#bdccff", "owner_name": "Argentina"},
         {"name": "Roslavl", "color": "#a3101f", "owner_name": "Soviet Union"},
         {"name": "Rostov", "color": "#a3101f", "owner_name": "Soviet Union"},
@@ -3016,8 +3039,8 @@ def makegame(request,game_id):
         {"name": "Ryazan", "color": "#a3101f", "owner_name": "Soviet Union"},
         {"name": "Rzhev", "color": "#a3101f", "owner_name": "Soviet Union"},
         {"name": "Sachsen", "color": "#525252", "owner_name": "German Reich"},
-        {"name": "Saguenay", "color": "#9b3e33", "owner_name": "Dominion of Canada"},
-        {"name": "Saint Lawrence", "color": "#9b3e33", "owner_name": "Dominion of Canada"},
+        {"name": "Saguenay", "color": "#9b3e33", "owner_name": "Canada"},
+        {"name": "Saint Lawrence", "color": "#9b3e33", "owner_name": "Canada"},
         {"name": "Salamanca", "color": "#ffff79", "owner_name": "Spain"},
         {"name": "Salekhard", "color": "#a3101f", "owner_name": "Soviet Union"},
         {"name": "Salla", "color": "#ffffff", "owner_name": "Finland"},
@@ -3025,15 +3048,15 @@ def makegame(request,game_id):
         {"name": "Samsun", "color": "#c7e9b4", "owner_name": "Turkey"},
         {"name": "San Juan y La Rioja", "color": "#bdccff", "owner_name": "Argentina"},
         {"name": "San Luis y La Pampa", "color": "#bdccff", "owner_name": "Argentina"},
-        {"name": "Santa Catarina", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
+        {"name": "Santa Catarina", "color": "#62bd52", "owner_name": "Brazil"},
         {"name": "Santa Cruz", "color": "#ffeab1", "owner_name": "Bolivian Republic"},
         {"name": "Santa Cruz AR", "color": "#bdccff", "owner_name": "Argentina"},
         {"name": "Santarem", "color": "#33965b", "owner_name": "Portugal"},
         {"name": "Santiago", "color": "#ca828b", "owner_name": "Chile"},
-        {"name": "Sao Paulo", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
+        {"name": "Sao Paulo", "color": "#62bd52", "owner_name": "Brazil"},
         {"name": "Saratov", "color": "#a3101f", "owner_name": "Soviet Union"},
         {"name": "Sardegna", "color": "#56a552", "owner_name": "Italy"},
-        {"name": "Saskatchewan", "color": "#9b3e33", "owner_name": "Dominion of Canada"},
+        {"name": "Saskatchewan", "color": "#9b3e33", "owner_name": "Canada"},
         {"name": "Savoy", "color": "#4993ff", "owner_name": "France"},
         {"name": "Schleswig", "color": "#525252", "owner_name": "German Reich"},
         {"name": "Scottish Highlands", "color": "#ff4879", "owner_name": "United Kingdom"},
@@ -3088,7 +3111,7 @@ def makegame(request,game_id):
         {"name": "South West England", "color": "#ff4879", "owner_name": "United Kingdom"},
         {"name": "Southern Bessarabia", "color": "#9e9e00", "owner_name": "Romania"},
         {"name": "Southern Indochina", "color": "#4993ff", "owner_name": "France"},
-        {"name": "Southern Ontario", "color": "#9b3e33", "owner_name": "Dominion of Canada"},
+        {"name": "Southern Ontario", "color": "#9b3e33", "owner_name": "Canada"},
         {"name": "Southern Sahara", "color": "#4993ff", "owner_name": "France"},
         {"name": "Southern Serbia", "color": "#5e5ea4", "owner_name": "Yugoslavia"},
         {"name": "Southern Slovakia", "color": "#46d8cb", "owner_name": "Czechoslovakia"},
@@ -3140,7 +3163,7 @@ def makegame(request,game_id):
         {"name": "Tikhvin", "color": "#a3101f", "owner_name": "Soviet Union"},
         {"name": "Tlemcen", "color": "#4993ff", "owner_name": "France"},
         {"name": "Tobolsk", "color": "#a3101f", "owner_name": "Soviet Union"},
-        {"name": "Tocantins", "color": "#62bd52", "owner_name": "Second Brazilian Republic"},
+        {"name": "Tocantins", "color": "#62bd52", "owner_name": "Brazil"},
         {"name": "Togo", "color": "#4993ff", "owner_name": "France"},
         {"name": "Tohoku", "color": "#fee8c8", "owner_name": "Japan"},
         {"name": "Tokai", "color": "#fee8c8", "owner_name": "Japan"},
@@ -3172,7 +3195,7 @@ def makegame(request,game_id):
         {"name": "Ulaanbaatar", "color": "#5a771d", "owner_name": "Mongolia"},
         {"name": "Ulyanovsky", "color": "#a3101f", "owner_name": "Soviet Union"},
         {"name": "Upper Austria", "color": "#a999f0", "owner_name": "Austria"},
-        {"name": "Upper British Columbia", "color": "#9b3e33", "owner_name": "Dominion of Canada"},
+        {"name": "Upper British Columbia", "color": "#9b3e33", "owner_name": "Canada"},
         {"name": "Upper Nile", "color": "#ff4879", "owner_name": "United Kingdom"},
         {"name": "Upper Volta", "color": "#4993ff", "owner_name": "France"},
         {"name": "Uralsk", "color": "#a3101f", "owner_name": "Soviet Union"},
@@ -3185,7 +3208,7 @@ def makegame(request,game_id):
         {"name": "Valencia", "color": "#ffff79", "owner_name": "Spain"},
         {"name": "Valladolid", "color": "#ffff79", "owner_name": "Spain"},
         {"name": "Van", "color": "#c7e9b4", "owner_name": "Turkey"},
-        {"name": "Vancouver Island", "color": "#9b3e33", "owner_name": "Dominion of Canada"},
+        {"name": "Vancouver Island", "color": "#9b3e33", "owner_name": "Canada"},
         {"name": "Var", "color": "#4993ff", "owner_name": "France"},
         {"name": "Varmland", "color": "#2eadff", "owner_name": "Sweden"},
         {"name": "Vasterbotten", "color": "#2eadff", "owner_name": "Sweden"},
@@ -3244,7 +3267,7 @@ def makegame(request,game_id):
         {"name": "Yeniseisk", "color": "#a3101f", "owner_name": "Soviet Union"},
         {"name": "Yorkshire", "color": "#ff4879", "owner_name": "United Kingdom"},
         {"name": "Yucatan", "color": "#86c66c", "owner_name": "Mexico"},
-        {"name": "Yukon Territory", "color": "#9b3e33", "owner_name": "Dominion of Canada"},
+        {"name": "Yukon Territory", "color": "#9b3e33", "owner_name": "Canada"},
         {"name": "Yunnan", "color": "#698948", "owner_name": "Yunnan"},
         {"name": "Zambesi", "color": "#33965b", "owner_name": "Portugal"},
         {"name": "Zambezia Mocambique", "color": "#33965b", "owner_name": "Portugal"},

@@ -11,16 +11,6 @@ class User(AbstractUser):
 
 class Games(models.Model):
     id = models.BigAutoField(primary_key=True)
-    players = models.IntegerField(default=7)
-    player0 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='games_player0', null=True) #Cuba
-    player1 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='games_player1', null=True) #UK
-    player2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='games_player2', null=True) #USA
-    player3 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='games_player3', null=True) #France
-    player4 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='games_player4', null=True) #USSR
-    player5 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='games_player5', null=True) #Germany
-    player6 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='games_player6', null=True) #Italy
-    player7 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='games_player7', null=True) #Japan
-
 class Nations(models.Model):
     game = models.ForeignKey(Games, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)

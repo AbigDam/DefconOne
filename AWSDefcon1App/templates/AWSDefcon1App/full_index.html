@@ -4,125 +4,38 @@
 
     <h2 style = "text-align: center;" >Games</h2>
   </div>
-  <div class="game-container" style="text-align: center;"> 
-    {% for game in games %}
-      <div class="game">
-        <hr>
-        <div class="info-bubble"> <h3><a class="game-link button" >Pick a Country Before Entering</a> <span class="info-icon">🛈</span> </h3>  <span class="tooltip-text">Join as as a nation before entering the game</span> </div> 
-        <div class="game-info">
-          <p class="boxed-list-instance"> UK: 
-            {% if game.player1.username == request.user.username %}
-              <span class="user-text">{{ game.player1.username }}</span>
-            {% elif game.player1.username == 'loser' %}
-              <span class="defeated-text">Defeated</span>
-            {% elif game.player1.username == 'closed' %}
-              <span class="bot-text">John Defcon(Bot)</span>
-            {% elif game.player1.username == 'empty' %}
-              <a class="player-link button" href="{% url 'joingame' game_id=game.id player_number=1 %}">Join as Player 1</a>
-            {% else %}
-              {{ game.player1.username }}
-            {% endif %}
-          </p>
-          <p class="boxed-list-instance">USA: 
-            {% if game.player2.username == request.user.username %}
-              <span class="user-text">{{ game.player2.username }}</span>
-            {% elif game.player2.username == 'loser' %}
-              <span class="defeated-text">Defeated</span>
-            {% elif game.player2.username == 'closed' %}
-              <span class="bot-text">John Defcon(Bot)</span>
-            {% elif game.player2.username == 'empty' %}
-              <a class="player-link button" href="{% url 'joingame' game_id=game.id player_number=2 %}">Join as Player 2</a>
-            {% else %}
-              {{ game.player2.username }}
-            {% endif %}
-          </p>
-  
-          <p class="boxed-list-instance">France: 
-            {% if game.player3.username == request.user.username %}
-              <span class="user-text">{{ game.player3.username }}</span>
-            {% elif game.player3.username == 'loser' %}
-              <span class="defeated-text">Defeated</span>
-            {% elif game.player3.username == 'closed' %}
-              <span class="bot-text">John Defcon(Bot)</span>
-            {% elif game.player3.username == 'empty' %}
-              <a class="player-link button" href="{% url 'joingame' game_id=game.id player_number=3 %}">Join as Player 3</a>
-            {% else %}
-              {{ game.player3.username }}
-            {% endif %}
-          </p>
-  
-          <p class="boxed-list-instance">USSR: 
-            {% if game.player4.username == request.user.username %}
-              <span class="user-text">{{ game.player4.username }}</span>
-            {% elif game.player4.username == 'loser' %}
-              <span class="defeated-text">Defeated</span>
-            {% elif game.player4.username == 'closed' %}
-              <span class="bot-text">John Defcon(Bot)</span>
-            {% elif game.player4.username == 'empty' %}
-              <a class="player-link button" href="{% url 'joingame' game_id=game.id player_number=4 %}">Join as Player 4</a>
-            {% else %}
-              {{ game.player4.username }}
-            {% endif %}
-          </p>
-  
-          <p class="boxed-list-instance">Germany: 
-            {% if game.player5.username == request.user.username %}
-              <span class="user-text">{{ game.player5.username }}</span>
-            {% elif game.player5.username == 'loser' %}
-              <span class="defeated-text">Defeated</span>
-            {% elif game.player5.username == 'closed' %}
-              <span class="bot-text">John Defcon(Bot)</span>
-            {% elif game.player5.username == 'empty' %}
-              <a class="player-link button" href="{% url 'joingame' game_id=game.id player_number=5 %}">Join as Player 5</a>
-            {% else %}
-              {{ game.player5.username }}
-            {% endif %}
-          </p>
-  
-          <p class="boxed-list-instance">Italy: 
-            {% if game.player6.username == request.user.username %}
-              <span class="user-text">{{ game.player6.username }}</span>
-            {% elif game.player6.username == 'loser' %}
-              <span class="defeated-text">Defeated</span>
-            {% elif game.player6.username == 'closed' %}
-              <span class="bot-text">John Defcon(Bot)</span>
-            {% elif game.player6.username == 'empty' %}
-              <a class="player-link button" href="{% url 'joingame' game_id=game.id player_number=6 %}">Join as Player 6</a>
-            {% else %}
-              {{ game.player6.username }}
-            {% endif %}
-          </p>
-  
-          <p class="boxed-list-instance">Japan: 
-            {% if game.player7.username == request.user.username %}
-              <span class="user-text">{{ game.player7.username }}</span>
-            {% elif game.player7.username == 'loser' %}
-              <span class="defeated-text">Defeated</span>
-            {% elif game.player7.username == 'closed' %}
-              <span class="bot-text">John Defcon(Bot)</span>
-            {% elif game.player7.username == 'empty' %}
-              <a class="player-link button" href="{% url 'joingame' game_id=game.id player_number=7 %}">Join as Player 7</a>
-            {% else %}
-              {{ game.player7.username }}
-            {% endif %}
-          </p>
-  
-          <p class="boxed-list-instance">Cuba: 
-            {% if game.player0.username == request.user.username %}
-              <span class="user-text">{{ game.player0.username }}</span>
-            {% elif game.player0.username == 'loser' %}
-              <span class="defeated-text">Defeated</span>
-            {% elif game.player0.username == 'closed' %}
-              <span class="bot-text">John Defcon(Bot)</span>
-            {% elif game.player0.username == 'empty' %}
-              <a class="player-link button" href="{% url 'joingame' game_id=game.id player_number=0 %}">Join as Player 8</a>
-            {% else %}
-              {{ game.player0.username }}
-            {% endif %}
-          </p>
-        </div>
-        <hr>
-      </div>
+  <div class="game-container" style="text-align: center;">
+
+      {% for nation_list in games %}
+<div class="game">
+  <hr>
+  <div class="info-bubble">
+    <h3>
+      <a class="game-link button" href="{% url 'map' game_id=nation_list.0 %}">Enter Game</a>
+      <span class="info-icon">🛈</span>
+    </h3>
+    <span class="tooltip-text">This will take you to the games map, allowing you to play the game!</span>
+  </div>
+
+  <!-- Make this div scrollable -->
+  <div class="game-info scrollable-list">
+    {% for nation in nation_list|slice:"1:" %}
+      <p class="boxed-list-instance"> {{ nation.name }}:
+        {% if nation.user.username == request.user.username %}
+          <span class="user-text">{{ nation.user.username }}</span>
+        {% elif nation.user.username == 'loser' %}
+          <span class="defeated-text">Defeated</span>
+        {% elif nation.user.username == 'closed' %}
+          <span class="bot-text">John Defcon(Bot)</span>
+        {% elif nation.user.username == 'empty' %}
+            <a class="player-link button" href="{% url 'joingame' game_id=nation_list.0  player_number=nation.player_number %}">Join as {{ nation.name }}</a>
+        {% else %}
+          {{ nation.user.username }}
+        {% endif %}
+      </p>
+    {% endfor %}
+  </div>
+</div>
     {% endfor %}
 </div>
 
@@ -132,6 +45,13 @@
               color: green;
               font-weight: bold;
             }
+            .scrollable-list {
+            max-height: 600px; /* adjust as needed */
+            overflow-y: auto;
+            border: 1px solid #444;
+            padding: 10px;
+            margin-top: 10px;
+          }
             .game-link, .player-link {
             display: inline-block;
             padding: 0.6px 5px; 
