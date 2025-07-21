@@ -151,49 +151,47 @@ def passer(request, game_id):
     nation = Nations.objects.get(game = game_id, user = user)
     nation.attacks = 0
     nation.save()
-    all_nations = Nations.objects.filter(game = game_id, player_number__lt = 8).exclude(user = User.objects.get(username = "loser")).exclude(user = User.objects.get(username = "empty")).exclude(user = User.objects.get(username = "closed"))
-    i = 0
-    j = 0
-    for nation in all_nations:
-      i += 1
-      if nation.attacks == 0:
-        j += 1
-    j += 2
-    if i < j:
-      nations = Nations.objects.filter(game = game_id)
-      for nation in nations:
-          states = nation.states
-          mult = 1
-          if states <= 20:
-              mult = 2
-          elif states < 50:
-              mult = 1.7
-          elif states < 150:
-              mult = 1.5
-          elif states < 200:
-              mult = 1.4
-          elif states < 250:
-              mult = 1
+    loser_user = User.objects.get(username="loser")
+    empty_user = User.objects.get(username="empty")
+    closed_user = User.objects.get(username="closed")
+    active_nations = Nations.objects.filter(game=game_id).exclude(user__in=[loser_user, empty_user, closed_user]).exclude(user = None)
 
-          nation.divisions = nation.divisions + states * mult
-          nation.planes = nation.planes + states * 10
-          nation.boats = nation.boats + states / 2
-          nation.points += 1
-          if nation.nuke_time <= 0:
-              nation.nukes += 1
-          else:
-              nation.nuke_time -= 1
-          nation.attacks = 5
-          nation.requests = 10
-          nation.save()
-    nations = Nations.objects.filter(game=game_id)
-    user = request.user.username
-    # Get the player's nation
-    playernation = Nations.objects.filter(game=game_id, user=request.user).first()
-    if playernation and playernation.alliance_name:
-        knownnations = Nations.objects.filter(game=game_id, alliance_name=playernation.alliance_name)
-    else:
-        knownnations = [playernation] if playernation else []
+    # Check how many players have completed their turn
+    players_ready = sum(1 for nation in active_nations if nation.attacks == 0)
+
+    # Allow two extra players not required to play
+    if len(active_nations) == players_ready:
+        all_nations = Nations.objects.filter(game=game_id)
+        for nation in all_nations:
+            states = nation.states
+
+            # Production multiplier based on number of states
+            if states <= 20:
+                mult = 2
+            elif states < 50:
+                mult = 1.7
+            elif states < 150:
+                mult = 1.5
+            elif states < 200:
+                mult = 1.4
+            elif states < 250:
+                mult = 1
+            else:
+                mult = 0.8  # You may want to penalize huge nations? Optional.
+
+            # Apply production values
+            nation.divisions += int(states * mult)
+            nation.planes += states * 10
+            nation.boats += states // 2
+            nation.points += 1
+            nation.nuke_time -= 1
+
+            if nation.nuke_time <= 0:
+                nation.nukes += 1
+                nation.nuke_time = 5  # Reset or leave at 0 if auto-generating
+            nation.attacks = 5
+            nation.requests = 10
+            nation.save()
     return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
 
 
@@ -1697,7 +1695,6 @@ def battle(request, game_id):
         loser_user = User.objects.get(username="loser")
         empty_user = User.objects.get(username="empty")
         closed_user = User.objects.get(username="closed")
-        no_user = ""
 
         # Get active nations
         active_nations = Nations.objects.filter(game=game_id).exclude(user__in=[loser_user, empty_user, closed_user]).exclude(user = None)
