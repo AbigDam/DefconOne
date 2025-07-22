@@ -5,12 +5,14 @@ from django.db import models
 class User(AbstractUser):
     id = models.BigAutoField(primary_key=True)
     wins = models.IntegerField(default=0)
+    donations = models.IntegerField(default=0)
     achievements = models.IntegerField(default=0)
     bio = models.CharField(max_length=500, null=True, blank=True)
     pass
 
 class Games(models.Model):
     id = models.BigAutoField(primary_key=True)
+
 class Nations(models.Model):
     game = models.ForeignKey(Games, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)

@@ -511,6 +511,7 @@ def index(request):
             next_id = max_id + 1
 
     leaderboard = User.objects.filter(wins__gt=0).order_by('-wins').exclude(username ='closed').exclude(username ='empty').exclude(username ='loser')
+    leaderboard2 = User.objects.filter(donations__gt=0).order_by('-wins').exclude(username ='closed').exclude(username ='empty').exclude(username ='loser')
 
     games  = Games.objects.all()
     played_games = []     
@@ -530,7 +531,7 @@ def index(request):
 
     
 
-    return render(request, "AWSDefcon1App/index.html", {"games": games, "game_list":game_list, "user": user, "max_game_id":max_game_id,'next_id':next_id,'leaderboard': leaderboard})
+    return render(request, "AWSDefcon1App/index.html", {"games": games, "game_list":game_list, "user": user, "max_game_id":max_game_id,'next_id':next_id,'leaderboard': leaderboard,'leaderboard2': leaderboard2})
 
 def full_index(request):
     games = Games.objects.all()
@@ -634,6 +635,7 @@ def full_index(request):
             next_id = max_id + 1
 
     leaderboard = User.objects.filter(wins__gt=0).order_by('-wins').exclude(username ='closed').exclude(username ='empty').exclude(username ='loser')
+    leaderboard2 = User.objects.filter(donations__gt=0).order_by('-wins').exclude(username ='closed').exclude(username ='empty').exclude(username ='loser')
 
     games  = Games.objects.all()
     played_games = []     
@@ -652,7 +654,7 @@ def full_index(request):
         nations = list(Nations.objects.filter(game=game))
         games.append([game.id] + nations)  
 
-    return render(request, "AWSDefcon1App/full_index.html", {"games": games, "game_list":games_list, "user": user, "max_game_id":max_game_id,'next_id':next_id,'leaderboard': leaderboard})
+    return render(request, "AWSDefcon1App/full_index.html", {"games": games, "game_list":games_list, "user": user, "max_game_id":max_game_id,'next_id':next_id,'leaderboard': leaderboard,'leaderboard2': leaderboard2})
 
 
 @login_required(login_url='login')

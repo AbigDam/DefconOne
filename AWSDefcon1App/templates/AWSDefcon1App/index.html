@@ -39,7 +39,7 @@
 
   </div>
 
-<h2 style="text-align: center;">Leaderboard</h2>
+<h2 style="text-align: center;">Leaderboards</h2>
         <style>
             .user-text {
               color: green;
@@ -124,33 +124,60 @@
             cursor: pointer;
           }
 
-        .leaderboard {
-            width: 300px;
-            margin: 0 auto;
-            border: 1px solid #ccc;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            text-align: center;
-            background-color: #000000;
-        }
-        .leaderboard ol {
-            padding-left: 0;
-            list-style: decimal inside;
-        }
-        .leaderboard li {
-            margin: 10px 0;
-            font-size: 18px;
-        }
+    .leaderboard-container {
+      display: flex;
+      justify-content: center;
+      gap: 40px; /* space between the two leaderboards */
+      margin-top: 20px;
+    }
 
+    .leaderboard {
+      background-color: #1c1c1c;
+      border-radius: 10px;
+      padding: 20px;
+      color: white;
+      width: 250px;
+      box-shadow: 0 0 10px rgba(255,255,255,0.1);
+    }
+
+    .leaderboard ol {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .leaderboard li {
+      margin: 10px 0;
+      font-weight: bold;
+    }
+
+    .leaderboard-title {
+      text-align: center;
+      font-size: 1.2em;
+      margin-bottom: 10px;
+      border-bottom: 1px solid white;
+      padding-bottom: 5px;
+    }
     </style>
 
-<div class="leaderboard">
-  <ol>
+
+<div class="leaderboard-container">
+  <div class="leaderboard">
+    <div class="leaderboard-title">Top Wins</div>
+    <ol>
       {% for user in leaderboard|slice:":10" %}
       <li>{{ user.username }} || {{ user.wins }}</li>
       {% endfor %}
-  </ol>
+    </ol>
+  </div>
+
+  <div class="leaderboard">
+    <div class="leaderboard-title">Top Donators</div>
+    <ol>
+      {% for user in leaderboard2|slice:":10" %}
+      <li>{{ user.username }} || ${{ user.donations }}</li>
+      {% endfor %}
+    </ol>
+  </div>
 </div>
 
 {% endblock %}
