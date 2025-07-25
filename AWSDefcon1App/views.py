@@ -511,7 +511,7 @@ def index(request):
             next_id = max_id + 1
 
     leaderboard = User.objects.filter(wins__gt=0).order_by('-wins').exclude(username ='closed').exclude(username ='empty').exclude(username ='loser')
-    leaderboard2 = User.objects.filter(donations__gt=0).order_by('-wins').exclude(username ='closed').exclude(username ='empty').exclude(username ='loser')
+    leaderboard2 = User.objects.filter(donations__gt=0).order_by('-donations').exclude(username ='closed').exclude(username ='empty').exclude(username ='loser')
 
     games  = Games.objects.all()
     played_games = []     
@@ -635,7 +635,7 @@ def full_index(request):
             next_id = max_id + 1
 
     leaderboard = User.objects.filter(wins__gt=0).order_by('-wins').exclude(username ='closed').exclude(username ='empty').exclude(username ='loser')
-    leaderboard2 = User.objects.filter(donations__gt=0).order_by('-wins').exclude(username ='closed').exclude(username ='empty').exclude(username ='loser')
+    leaderboard2 = User.objects.filter(donations__gt=0).order_by('-donations').exclude(username ='closed').exclude(username ='empty').exclude(username ='loser')
 
     games  = Games.objects.all()
     played_games = []     
@@ -2066,7 +2066,7 @@ def map(request, game_id):
         ).exclude(
             user__username__in=['loser', request.user.username]
         ).filter(
-            Q(player_number__lt=8) | ~Q(user = empty_user)
+            Q(player_number__lt=8) | ~Q(user__username__in=['closed', 'empty'])
         ).values_list('name', flat=True)
     )
     nations = kill_list
@@ -2176,13 +2176,15 @@ def map(request, game_id):
     nation_list = list(Nations.objects.filter(game=game_id).exclude(user = User.objects.get(username = "loser")).values_list('name', flat=True))
 
     empty = User.objects.get(username = "empty")
+    closed = User.objects.get(username = "closed")
+
     kill_list = list(
         Nations.objects.filter(
-            game=game
+            game=game_id
         ).exclude(
             user__username__in=['loser', request.user.username]
         ).filter(
-            Q(player_number__lt=8) | ~Q(user = empty)
+            Q(player_number__lt=8) | ~Q(user__username__in=['closed', 'empty'])
         ).values_list('name', flat=True)
     )
 
