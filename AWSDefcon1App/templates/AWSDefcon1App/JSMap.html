@@ -20,17 +20,29 @@
                 <!-- First Form -->
                 <form method="post" action="{% url 'beg' game_id=game_id %}" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2);">
                     {% csrf_token %}
-                    <h3 style="text-align: center;">Ask allies for aid <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Uses a diplomatic request, asks every single ally to give you aid, each has a chance to give you aid based on hostility</span> </div></h3>
-                    <input type="image" src="/static/AWSDefcon1App/RequestAid.png" alt="Submit" class="submit-button" 
-                           style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;">
+                    <h3 style="text-align: center;">Ask allies for aid</h3>
+
+                    <div style="text-align: center;" class = "info-bubble">
+                        <span class="info-icon">🛈</span> 
+                        <input type="image" src="/static/AWSDefcon1App/RequestAid.png" 
+                            alt="Submit" class="submit-button"
+                            style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;">
+                        <span class="tooltip-text">
+                            Uses a diplomatic request, asks every single ally to give you aid, 
+                            each has a chance to give you aid based on hostility
+                        </span> 
+                    </div>
                 </form>
         
                 <!-- Second Form -->
                 <form method="post" action="{% url 'makealliance' game_id=game_id %}" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2);">
                     {% csrf_token %}
                     <input type="hidden" name="selected_nation" id="alliance-input" value="">
-                    <h3> <h3 id="offerDisplay" style="text-align: center;">No Nation Selected </h3> <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Asks a nation to join your alliance, their chance to join is based on hostility</span> </div></h3>
+                    <h3 id="offerDisplay" style="text-align: center;">No Nation Selected </h3> 
+                    <div style = "text-align: center;" class="info-bubble"> <span class="info-icon">🛈</span> 
                     <button type="submit" style="display: block; width: 100%; padding: 10px; color: black;  background-color: #000000; border: none; border-radius: 5px; cursor: pointer;"><img src="/static/AWSDefcon1App/Alliance_Offer.png" alt="Offer" style = "height: 100px;"> </button>
+                    <span class="tooltip-text">Asks a nation to join your alliance, their chance to join is based on hostility</span> 
+                </div>
                 </form>
         
                 <!-- Third Form -->
@@ -57,7 +69,7 @@
                     </div>
 
                     <div style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2);">
-                        <h3 id = "sendText" style = "text-align: center;">Send Supplies <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Send a percent of your boats, planes, or divisions to a nation in order to decrease hostility!</span> </div></h3>
+                        <h3 id = "sendText" style = "text-align: center;">Send Supplies </h3>
                         <form method="post" action="{% url 'send' game_id=game_id %}" style="text-align: center;">
                             {% csrf_token %}
                         
@@ -70,7 +82,9 @@
                             <span id="amount_label">Amount: 1</span><br><br>
                         
                             <!-- Image buttons -->
-                            <button type="submit" onclick="document.getElementById('send_type').value = '1'" style="background: none; border: none; cursor: pointer;">
+                            <div style = "text-align: center;"  class="info-bubble"><span class="info-icon">🛈</span> 
+                            <div>
+                                <button type="submit" onclick="document.getElementById('send_type').value = '1'" style="background: none; border: none; cursor: pointer;">
                                 <img src="/static/AWSDefcon1App/Gun.png" alt="Send Divisions" style="width: 100px; height: auto;">
                             </button>
                         
@@ -82,6 +96,8 @@
                                 <img src="/static/AWSDefcon1App/Boat.png" alt="Send Boats" style="width: 100px; height: auto;">
                             </button>
                         </form>
+                        </div>
+                        <span class="tooltip-text">Send a percent of your boats, planes, or divisions to a nation in order to decrease hostility!</span> </div>
                 </div>
             </div>
             <script>
@@ -247,7 +263,7 @@
                     <button class = "attacker" class = "attacker" type="submit" name="action" value="division">
                         <img src="/static/AWSDefcon1App/Encirclement_1.gif" alt="Attempt an Encirclement" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
                     </button>
-                    <figcaption> Attempt an Encirclement  <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Risks a lot of soldeirs for the potential to take more land</span> </div> </figcaption>
+                    <figcaption> Attempt an Encirclement  <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Risky attack that could lead to major losses on either side (not both)</span> </div> </figcaption>
                 </div>
                 
                 <div style="display: inline-block;">
@@ -310,7 +326,7 @@
                         <button class = "attacker" class = "attacker" type="submit" name="action" value="division">
                             <img src="/static/AWSDefcon1App/Encirclement_1.gif" alt="Attempt an Encirclement" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
                         </button>
-                        <figcaption> Attempt an Encirclement  <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Risks a lot of soldeirs for the potential to take more land</span> </div> </figcaption>
+                        <figcaption> Attempt an Encirclement  <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Risky attack that could lead to major losses on either side (not both)</span> </div> </figcaption>
                     </div>
                     
                     <div style="display: inline-block;">
@@ -369,75 +385,74 @@
               <h3 style="text-align: center;">Buy Supplies</h3>
               <p style="text-align: center;">Points: {{PlayerAAA.points}}</p>
               <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-                  <button type="submit" name="air" value="1" 
+                    
+                 <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                    <div class="info-bubble" style="display: flex; align-items: center;">
+                    <button type="submit" name="air" value="1" 
                           style="flex: 1; background: none; border: none; padding: 0; cursor: pointer;">
                       <img src="/static/AWSDefcon1App/Airplane.png" alt="Air" 
                            style="height: 50px; border: 2px solid #ffffff; border-radius: 5px;">
                   </button>
-                  <div style="display: flex; flex-direction: column; align-items: flex-start;">
-                    <div class="info-bubble" style="display: flex; align-items: center;">
                         <span class="info-icon" style="margin-right: 5px;">🛈</span>
                         <span class="tooltip-text" style="font-size: 14px;">Buy 1000 planes for 1 point</span>
                     </div>
                     </div>
 
+                  <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                <div class="info-bubble" style="display: flex; align-items: center;">
                   <button type="submit" name="army" value="1" 
                           style="flex: 1; background: none; border: none; padding: 0; cursor: pointer;">
                       <img src="/static/AWSDefcon1App/Gun.png" alt="Army" 
-                           style="height: 50px; border: 2px solid #ffffff; border-radius: 5px;"><div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">80 Divisions for 1 point</span> </div>
+                           style="height: 50px; border: 2px solid #ffffff; border-radius: 5px;">
                   </button>
-                  
-                  <div style="display: flex; flex-direction: column; align-items: flex-start;">
-                    <div class="info-bubble" style="display: flex; align-items: center;">
                         <span class="info-icon" style="margin-right: 5px;">🛈</span>
                         <span class="tooltip-text" style="font-size: 14px;">Buy 80 divisions for 1 point</span>
                     </div>
                     </div>
 
-                  <button type="submit" name="navy" value="1" 
+                    <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                    <div class="info-bubble" style="display: flex; align-items: center;">
+                    <button type="submit" name="navy" value="1" 
                           style="flex: 1; background: none; border: none; padding: 0; cursor: pointer;">
                       <img src="/static/AWSDefcon1App/Boat.png"alt="Navy" 
                            style="height: 50px; border: 2px solid #ffffff; border-radius: 5px;">
                   </button>
-                  <div style="display: flex; flex-direction: column; align-items: flex-start;">
-                    <div class="info-bubble" style="display: flex; align-items: center;">
                         <span class="info-icon" style="margin-right: 5px;">🛈</span>
                         <span class="tooltip-text" style="font-size: 14px;">Buy 60 boats for 1 point</span>
                     </div>
                     </div>
 
-                  <button type="submit" name="nuke" value="1" 
+                    <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                    <div class="info-bubble" style="display: flex; align-items: center;">
+                    <button type="submit" name="nuke" value="1" 
                           style="flex: 1; background: none; border: none; padding: 0; cursor: pointer;">
                       <img src="/static/AWSDefcon1App/Nukes.png" alt="Nukes" 
                            style="height: 50px; border: 2px solid #ffffff; border-radius: 5px;">
                   </button>
-
-                  <div style="display: flex; flex-direction: column; align-items: flex-start;">
-                    <div class="info-bubble" style="display: flex; align-items: center;">
                         <span class="info-icon" style="margin-right: 5px;">🛈</span>
                         <span class="tooltip-text" style="font-size: 14px;">Buys 1 spy for 1 point</span>
                     </div>
                     </div>
+
+                    <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                    <div class="info-bubble" style="display: flex; align-items: center;">
                     <button type="submit" name="spies" value="1" 
                     style="flex: 1; background: none; border: none; padding: 0; cursor: pointer;">
                 <img src="/static/AWSDefcon1App/Spies.png" alt="Air" 
                      style="height: 50px; border: 2px solid #ffffff; border-radius: 5px;">
-            </button>
+                </button>
+                        <span class="info-icon" style="margin-right: 5px;">🛈</span>
+                        <span class="tooltip-text" style="font-size: 14px;">Works towards building Nukes 1 point</span>
+                    </div>
+                    </div>
 
-            <div style="display: flex; flex-direction: column; align-items: flex-start;">
-              <div class="info-bubble" style="display: flex; align-items: center;">
-                  <span class="info-icon" style="margin-right: 5px;">🛈</span>
-                  <span class="tooltip-text" style="font-size: 14px;">Buy 1000 planes for 1 point</span>
-              </div>
-              </div>
+                    <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                    <div class="info-bubble" style="display: flex; align-items: center;">
                   <button type="submit" name="policy" value="1" 
                           style="flex: 1; background: none; border: none; padding: 0; cursor: pointer;">
                       <img src="/static/AWSDefcon1App/Chains.png" alt="Revolt" 
                            style="height: 50px; border: 2px solid #ffffff; border-radius: 5px;">
                   </button>
-
-                  <div style="display: flex; flex-direction: column; align-items: flex-start;">
-                    <div class="info-bubble" style="display: flex; align-items: center;">
                         <span class="info-icon" style="margin-right: 5px;">🛈</span>
                         <span class="tooltip-text" style="font-size: 14px;">Disband your alliance for 2 points (This is the only way to break an alliance, hence why they can be trusted)</span>
                     </div>
@@ -946,4 +961,189 @@
 
             });
         </script>
-        {% endblock %}
+
+
+  <div class="qa-widget">
+  <button class="qa-toggle-button">❔ How to Play </button>
+  <div class="qa-container" style="display: none;">
+    <button class="qa-close">❌ Close</button>
+    
+    <div class="qa-item"> (Tutorial is not complete, contribute by asking questions to a moderator via the profiles tab)</div>
+    <div class="qa-item">
+      <button class="qa-question">How to win a game?</button>
+      <div class="qa-answer">
+      • Defeat every nation that is a major nation or another player (see: "How to defeat a nation")<br>
+      • This is listed in the "Defeat these nations to win the game:" list<br>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <button class="qa-question">How to defeat a nation?</button>
+      <div class="qa-answer">
+      • Click on the nation, and then click "Declare War"<br>
+      • When you reclick you can attack them using either<br>
+      • Military (see: "How to win military battles") <br>
+      • or Espionage (see "How to win espionage attacks")<br>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <button class="qa-question">How to win military battles?</button>
+      <div class="qa-answer">
+      • A "normal ground attack" will attack a nation from you or your ally's border.  It is won by a bit of luck and mostly having a larger army (see: "How do I grow my army")<br>
+      • An "attempted encirclement attack" will lead to either you or you're enemy randomly taking much more casulties, but victory is still detirmed by having a larger army  (see: "How do I grow my army")<br>
+      • A "naval invasion" will land on your enemies beaches, this can be done when you don't border an enemy, but requires having more boats then an enemy  (see: "How do I grow my army")<br>
+      • You can also use planes to lower you're enemies numbers of sodliers, planes, or boats<br>
+      • Planes can also be used to drop nuclear bombs, though it only works when you have many more planes than your enemy ("See how to get nukes")<br>
+      • A nation will automatically surrender (you get all their land) when it has been nuked a certain number of times, this is based on population<br>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <button class="qa-question">How to win espionage attacks?</button>
+      <div class="qa-answer">
+      • All espionage attacks have at max a 90% chance of succeding<br>
+      • Most attacks requires having double your enemies spies to reach 90% (see: "How to get more spies)<br>
+      • The "revolt" attack requires having tripple your enemies spies to reach 90% (see: "How to get more spies)<br>
+      • The "civil war" attack requires having four times your enemies spies to reach 90% (see: "How to get more spies)<br>
+      • You can never know how many spies your enemy has due to the fog of war <br>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <button class="qa-question">How to get more spies</button>
+      <div class="qa-answer">
+      • Launch "recruiting double agents" attacks on smaller countries<br>
+      • Buy spies using points (see "How to get points")<br>
+      • Getting aid from allies (see "How to maximize allies Aid")<br>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <button class="qa-question">How to get nukes?</button>
+      <div class="qa-answer">
+      • Your "nuke time" is the time left before you get you're next nuke<br>
+      • You can lower "nuke time" by spending points <br>
+      • You can also lower "nuke time" by getting aid from allies<br>
+      • You will also see it go down automatically as time passes<br>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <button class="qa-question">How do I grow my army?</button>
+      <div class="qa-answer">
+      • Gain more states to train soldiers (and boats/plants) automatically<br>
+      • Spend points on buying stuff (see "How to get points")<br>
+      • Get aid from allies (see "How to maximize allies Aid")<br>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <button class="qa-question">How to get points?</button>
+      <div class="qa-answer">
+      • You get 1 point automatically every turn<br>
+      • Get points from allies aid(see "How to maximize allies Aid")<br>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <button class="qa-question">How to maximize allies Aid</button>
+      <div class="qa-answer">
+      • If you don't have an alliance (Nothing written under alliance name) your aid is random and you can't maximize it<br>
+      • If you have an alliance, the more allies you have, the more aid you will gets<br>
+      • Get allies by offering alliance to low-hostility nations (check hostility after clicking a nation)<br>
+      • Get low-hostility nations by giving away resources to nations you want to ally with<br>
+      </div>
+    </div>
+
+
+  </div>
+</div>
+<style>
+.qa-widget {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  max-width: 300px;
+  font-family: sans-serif;
+  z-index: 999;
+}
+
+.qa-toggle-button {
+  background-color: #444;
+  color: white;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 50px;
+  cursor: pointer;
+  font-size: 18px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.qa-container {
+  background-color: #222;
+  color: white;
+  padding: 15px;
+  border-radius: 10px;
+  margin-top: 10px;
+  box-shadow: 0 0 10px rgba(255,255,255,0.1);
+}
+
+.qa-close {
+  background: none;
+  border: none;
+  color: #ccc;
+  font-size: 16px;
+  float: right;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.qa-question {
+  background-color: #333;
+  color: white;
+  border: none;
+  padding: 10px;
+  margin-top: 5px;
+  border-radius: 5px;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+}
+
+.qa-answer {
+  display: none;
+  background-color: #111;
+  padding: 10px;
+  margin-top: 5px;
+  border-left: 3px solid #007BFF;
+  border-radius: 5px;
+}
+</style>
+
+
+<script>
+document.querySelector('.qa-toggle-button').addEventListener('click', function() {
+  const container = document.querySelector('.qa-container');
+  container.style.display = (container.style.display === 'none' || container.style.display === '') ? 'block' : 'none';
+});
+
+document.querySelector('.qa-close').addEventListener('click', function() {
+  document.querySelector('.qa-container').style.display = 'none';
+});
+
+const questions = document.querySelectorAll('.qa-question');
+questions.forEach(q => {
+  q.addEventListener('click', function() {
+    const answer = this.nextElementSibling;
+
+    // Hide all answers
+    document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+
+    // Toggle this one
+    answer.style.display = 'block';
+  });
+});
+</script>
+
+{% endblock %}

@@ -124,10 +124,6 @@ Select Countries
 
         <div class="submit-section">
             <button class="attacker" type="submit">Submit</button>
-            <div class="info-bubble">
-                <span class="info-icon">🛈</span>
-                <span class="tooltip-text">Unselected countries will appear on the map but be unplayable</span>
-            </div>
         </div>
     </form>
 </div>
@@ -174,4 +170,19 @@ Select Countries
         });
     });
 </script>
+
+<div class="tutorial-widget">
+  <input type="checkbox" id="tutorial-toggle" hidden>
+  <label for="tutorial-toggle" class="tutorial-button">❔</label>
+  <div class="tutorial-content">
+    <h4>How to Play</h4>
+    <p>
+      Making You're Lobby<br><br>
+      • If this is you're first lobby, I suggest only selecting Japan for a single-player tutorial experience<br>
+      • If you want to play with friends, make sure you ask them what countries they want to play as so you can unlock them here<br>
+      • If you just want to play online, unlock every country, and only disable overpower ones like USSR<br>
+      Enjoy!
+    </p>
+  </div>
+</div>
 {% endblock %}

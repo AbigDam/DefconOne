@@ -1,0 +1,86 @@
+{% extends "AWSDefcon1App/layout.html" %}
+{% block body %}
+<body>
+  <h1 style = "text-align: center;">Welcome to <span style="color: red;">DEFCON1</span></h1>
+    <div  style = "text-align: center;">
+  <p >
+    Defcon1, an online strategy game set in 1936<br>
+    Bring you're nation to victory or destruction in this fully online multiplayer turn based strategy game
+  </p>
+
+  <p>
+    You can achievement hunt, get to the top of leaderboard, or speedrun. .  We have somthing for everyone
+  </p>
+
+  <p>
+    New here? No worries. Click the <strong>❔</strong> button in the <strong>bottom-left corner</strong> at any time to open the tutorial and learn the ropes.
+  </p>
+
+    <p>
+        Log-in or Register below to being your gaming experience
+    </p>
+</div>  
+  <div  style = "text-align: center;" class="button-row">
+    <a href="{% url 'login' %}" class="wel_button">Log In</a>
+    <a href="{% url 'register' %}" class="wel_button">Register</a>
+  </div>
+
+  <div class="tutorial-hint">📘 Click the ❔ button in the bottom-left for tutorial help!</div>
+
+</body>
+<style>
+    body {
+      margin: 0;
+      background: black;
+      color: white;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      height: 100vh;
+      padding: 2rem;
+    }
+    p {
+      font-size: 1.25em;
+      max-width: 800px;
+      margin: 1em auto;
+      line-height: 1.6em;
+    }
+    .wel_button {
+      background: #0af;
+      color: black;
+      padding: 0.8em 2em;
+      border: none;
+      border-radius: 10px;
+      margin: 0 1em;
+      font-size: 1.1em;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .button:hover {
+      background: #08c;
+    }
+    .tutorial-hint {
+      position: absolute;
+      bottom: 1rem;
+      left: 1rem;
+      font-size: 1em;
+      color: #ccc;
+      opacity: 0.8;
+    }
+  </style>
+
+  <div class="tutorial-widget">
+  <input type="checkbox" id="tutorial-toggle" hidden>
+  <label for="tutorial-toggle" class="tutorial-button">❔</label>
+  <div class="tutorial-content">
+    <h4>How to Play</h4>
+    <p>
+      Welcome!<br><br>
+      This is where you can get tutorial information throughout your gaming journey<br>
+      Enjoy!
+    </p>
+  </div>
+</div>
+{% endblock %}

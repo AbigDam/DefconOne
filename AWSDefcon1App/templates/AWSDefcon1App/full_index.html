@@ -2,7 +2,7 @@
 
 {% block body %}
 
-    <h2 style = "text-align: center;" >Games</h2>
+    <h2 style = "text-align: center;" >Open Lobbies</h2>
   </div>
   <div class="game-container" style="text-align: center;">
 
@@ -11,7 +11,7 @@
   <hr>
   <div class="info-bubble">
     <h3>
-      <a class="game-link button" href="{% url 'map' game_id=nation_list.0 %}">Enter Game</a>
+      <a class="game-link button" href="">Join a nation to enter the lobby</a>
       <span class="info-icon">🛈</span>
     </h3>
     <span class="tooltip-text">This will take you to the games map, allowing you to play the game!</span>
@@ -179,5 +179,17 @@
     </ol>
   </div>
 </div>
-
+<div class="tutorial-widget">
+  <input type="checkbox" id="tutorial-toggle" hidden>
+  <label for="tutorial-toggle" class="tutorial-button">❔</label>
+  <div class="tutorial-content">
+    <h4>How to Play</h4>
+    <p>
+      Welcome, Commander!<br><br>
+      • Make sure you are logged in before trying to join a lobby<br>
+      • If you don't want to join a lobby here, you can click "make new lobby" on the nav-bar<br>
+      Good luck!
+    </p>
+  </div>
+</div>
 {% endblock %}

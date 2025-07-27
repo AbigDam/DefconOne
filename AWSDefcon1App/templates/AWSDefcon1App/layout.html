@@ -128,13 +128,13 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- First Nav Bar -->
 <ul class="nav" style="align-items: center; justify-content: center;">
   <li class="{% if request.path == '/' %}active{% else %}nav-item{% endif %}">
-    <a class="nav-link" href="{% url 'index' %}">Current Games</a>
+    <a class="nav-link" href="{% url 'index' %}">Current Lobbies</a>
   </li>
   <li class="{% if request.path == '/full_index' %}active{% else %}nav-item{% endif %}">
-    <a class="nav-link" href="{% url 'full_index' %}">Join New Game</a>
+    <a class="nav-link" href="{% url 'full_index' %}">Join New Lobby</a>
   </li>
   <li class="{% if request.path == '/game_maker_redirrect' %}active{% else %}nav-item{% endif %}">
-    <a class="nav-link" href="{% url 'game_maker_redirrect' %}">Make New Game</a>
+    <a class="nav-link" href="{% url 'game_maker_redirrect' %}">Make New Lobby</a>
   </li>
   {% if request.user.username %}
       <li class="{% if request.path == '/users/0' %}active{% else %}nav-item{% endif %}">      
@@ -227,10 +227,6 @@ document.addEventListener('DOMContentLoaded', function() {
            </script>-->
 
               <style>
-        .info-bubble {
-            position: relative;
-            display: inline-block;
-        }
 
         .info-icon {
             font-size: 12px;
@@ -260,8 +256,54 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     </style>
 </head>
+
 <body>
 <style>
+.tutorial-widget {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  font-family: Arial, sans-serif;
+}
+
+/* Button appearance */
+.tutorial-button {
+  display: inline-block;
+  background-color: #444;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 40px;
+  cursor: pointer;
+  box-shadow: 0 0 10px #000;
+  font-size: 24px;
+  transition: background 0.3s;
+}
+.tutorial-button:hover {
+  background-color: #666;
+}
+
+/* Hidden by default */
+.tutorial-content {
+  display: none;
+  background: #222;
+  color: white;
+  padding: 15px;
+  width: 250px;
+  border-radius: 10px;
+  position: absolute;
+  bottom: 60px;
+  right: 0;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+}
+
+/* Show when checked */
+#tutorial-toggle:checked ~ .tutorial-content {
+  display: block;
+}
   .unread-indicator {
     color: red;
     font-size: 1.2em;
@@ -269,7 +311,6 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   .info-bubble {
       position: relative;
-      display: inline-block;
   }
 
   .info-icon {

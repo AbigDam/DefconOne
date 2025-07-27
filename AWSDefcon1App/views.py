@@ -144,7 +144,23 @@ def error500(request):
 
 def error404(request, exception):
     return bad_request(request, title="Page does not exsist", message="The page you are trying to access does not exsist, check the URL to make sure there are no typos")
-    
+
+
+def welcome(request):
+   return render(request, "AWSDefcon1App/welcome.html")
+
+@login_required(login_url='login')
+def delete(request, game_id):
+   allowed_list = [request.user.username, 'loser', 'closed']
+   deletable_list = []
+   for game in Games.objects.all():
+        if not Nations.objects.filter(game=game).exclude(user__username__in=allowed_list).exists():
+            deletable_list.append(game.id)
+   if game_id in deletable_list:
+    Games.objects.get(id = game_id).delete()
+   return HttpResponseRedirect(reverse('index'))
+
+
 @login_required(login_url='login')
 def passer(request, game_id):
     user = request.user
@@ -319,15 +335,25 @@ def announcemnts(request, game_id):
 def beg(request, game_id):
   PlayerAAA = Nations.objects.get(game=game_id, user=request.user)
   user = request.user
-  alliance = Nations.objects.get(game = game_id, user = user).alliance_name 
-  allies = Nations.objects.filter(game = game_id, alliance_name = alliance, player_number__gt=7)
+  alliance = Nations.objects.get(game = game_id, user = user).alliance_name
+  if alliance == '':
+    if random.random() < 0.30:
+        allies = Nations.objects.filter(game = game_id, alliance_name = alliance, player_number__gt=7).filter( Q(user__username='empty') | Q(user__username='closed'))
+    else:
+        if PlayerAAA.requests < 1:
+            return bad_request(request, title="User Error", message="You are out of diplomatic requests for the day. Please click the back button to return to the game")
+        PlayerAAA.requests -= 1
+        PlayerAAA.save()
+        announcements = Announcements.objects.create(text =f"No nation has given aid to {PlayerAAA.name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
+        return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
+  else:
+    allies = Nations.objects.filter(game = game_id, alliance_name = alliance, player_number__gt=7).filter( Q(user__username='empty') | Q(user__username='closed'))
   ally_num = len(allies)
   user = request.user
   player = Nations.objects.get(game = game_id, user = user)
   if request.method == 'POST':
     if player.requests < 1:
         return bad_request(request, title="User Error", message="You are out of diplomatic requests for the day. Please click the back button to return to the game")
-        return HttpResponseBadRequest("You are out of diplomatic requests for the day. Please click the back button to return to the game")
     player.requests -= 1
     player.save()
     try:
@@ -407,6 +433,8 @@ def beg(request, game_id):
   return render(request, "AWSDefcon1App/beg.html", {"game_id": game_id, "requesters":requesters, "PlayerAAA":PlayerAAA, "knownnations":knownnations})
 
 def index(request):
+    if request.user.is_anonymous:
+        return HttpResponseRedirect(reverse('welcome'))
     games = Games.objects.all()
     user = request.user.username
     for game in games:
@@ -522,16 +550,19 @@ def index(request):
 
 
     game_list = played_games
-    
-
+    allowed_list = [request.user.username, 'loser', 'closed']
+    deletable_list = []
+    for game in game_list:
+        if not Nations.objects.filter(game=game).exclude(user__username__in=allowed_list).exists():
+            deletable_list.append(game.id)
     games = []
     for game in game_list:
         nations = list(Nations.objects.filter(game=game))
         games.append([game.id] + nations)  
 
-    
 
-    return render(request, "AWSDefcon1App/index.html", {"games": games, "game_list":game_list, "user": user, "max_game_id":max_game_id,'next_id':next_id,'leaderboard': leaderboard,'leaderboard2': leaderboard2})
+
+    return render(request, "AWSDefcon1App/index.html", {"games": games, "game_list":game_list, "deletable_list":deletable_list, "user": user, "max_game_id":max_game_id,'next_id':next_id,'leaderboard': leaderboard,'leaderboard2': leaderboard2})
 
 def full_index(request):
     games = Games.objects.all()
@@ -645,7 +676,10 @@ def full_index(request):
                 played_games.append(game)
 
 
-    un_played_games = [game for game in games if game not in played_games]
+    un_played_games = [
+        game for game in games
+        if game not in played_games and Nations.objects.filter(game=game, user__username='empty').exists()
+    ]
     games_list =  un_played_games
     
 
@@ -1352,10 +1386,7 @@ def battle(request, game_id):
             
             if ogap > ogdp:
                 enemy = Nations.objects.get(game=game_id, name=nuke_defender)
-                player = Nations.objects.get(game=game_id, user=request.user)
-                nuke_amount = player.nukes
-                player.nukes = nuke_amount - 1
-                player.save()
+
                 nuked = enemy.nuked
                 enemy.nuked = nuked + 1
                 enemy.save()
@@ -1367,6 +1398,8 @@ def battle(request, game_id):
                 numerator = math.log(enemy.states / 10)
                 denominator = math.log(1.5)
                 result = numerator / denominator
+            else:
+                announcements = Announcements.objects.create(text =f"{owner} has failed to use nuclear weapons against {planes_defender}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
 
                 if nuked == result or nuked > result:
                     player.boats += enemy.boats
@@ -2345,7 +2378,7 @@ def makegame(request,game_id):
     Nations.objects.create( game=game_obj, name = 'Panama',user = minor_user,  player_number = 67, states = 1, divisions = 39, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 10, requests = 4 )
     Nations.objects.create( game=game_obj, name = 'Peru',user = minor_user,  player_number = 63, states = 5, divisions = 35, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )    
     Nations.objects.create( game=game_obj, name = 'Philippines',user = minor_user,  player_number = 42, states = 7, divisions = 33, boats = 50, planes = 5000, alliance_name='Neutrality Pact', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
-    Nations.objects.create( game=game_obj, name = 'Portugal',user = minor_user,  player_number = 23, states = 20, divisions = 20, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
+    Nations.objects.create( game=game_obj, name = 'Portugal',user = minor_user,  player_number = 29, states = 20, divisions = 20, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
     Nations.objects.create( game=game_obj, name = 'Poland',user = minor_user,  player_number = 17, states = 18, divisions = 22, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )
 
     Nations.objects.create( game=game_obj, name = 'Romania',user = minor_user,  player_number = 34, states = 11, divisions = 29, boats = 50, planes = 5000, alliance_name='', points = 0, nuke_time = 8, nukes = 0, attacks = 5, requests = 4 )

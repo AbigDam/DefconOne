@@ -16,28 +16,36 @@
     </thead>
     <tbody id="userTableBody">
         {% for user in users %}
+            {%if user.username != 'loser' and  user.username != 'empty' and user.username != 'closed'%}
             <tr>
-                {%if user.username != 'loser' and  user.username != 'empty' and user.username != 'closed'%}
                 <td><a style = "font-size: 20px;" href="{% url 'profile' user_id=user.id %}">{{ user.username }}'s Profile</a></td>
-                {% endif %}
             </tr>
+                {% endif %}
+
         {% endfor %}
     </tbody>
 </table>
 
 <script>
-    document.getElementById('userSearch').addEventListener('input', function() {
-        var searchQuery = this.value.toLowerCase();
-        var rows = document.querySelectorAll('#userTableBody tr');
+document.getElementById('userSearch').addEventListener('input', function () {
+    var searchQuery = this.value.toLowerCase();
+    var rows = document.querySelectorAll('#userTableBody tr');
 
-        rows.forEach(function(row) {
-            var username = row.querySelector('td a').textContent.toLowerCase();
-            if (username.includes(searchQuery)) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
+    rows.forEach(function (row) {
+        var link = row.querySelector('td a');
+        if (!link) {
+            row.style.display = 'none';
+            return;
+        }
+
+        var username = link.textContent.toLowerCase();
+        if (username.includes(searchQuery)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
     });
+});
+
 </script>
 {% endblock %}
