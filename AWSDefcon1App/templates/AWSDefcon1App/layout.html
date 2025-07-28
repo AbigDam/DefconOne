@@ -40,7 +40,8 @@
         <!-- Logo section -->
         <section>
             <a href = "{% url 'index' %}"><img style= "position: fixed; width:70px; height:auto; border-radius: 40%;" id="logo" src="/static/AWSDefcon1App/Defcon1Logo.png" alt="Your Logo"> </a>
-            <img id="musicButton" style="width:60px; position: fixed; left: 100px; top:1%; border-radius: 100%;" src="/static/AWSDefcon1App/AudioMutedIcon.png" alt="Play Music">
+            <img id="musicButton" style="position: fixed; width:70px; height:auto; border-radius: 100%;" src="/static/AWSDefcon1App/AudioMutedIcon.png" alt="Play Music">
+            <label for="volumeSlider" style="color: white;">Volume:</label>
             <h1 style = "text-align: center; top: 6%;">Defcon1</h1>
         </section>
     
@@ -186,9 +187,11 @@ document.addEventListener('DOMContentLoaded', function() {
       <li class="{% if request.path|slice:':14' == '/announcement/' %}active{% else %}nav-item{% endif %}">
         <a class="nav-link" href="{% url 'announcement' game_id=game_id %}">History</a>
       </li>
+        {% if single_player %}
       <li class="{% if request.path|slice:':7' == '/users/' %}active{% else %}nav-item{% endif %}">
         <a class="nav-link" href="{% url 'user_list' game_id=game_id %}">Message</a>
       </li>
+      {% endif %}
   </ul>
 {% endif %}
 

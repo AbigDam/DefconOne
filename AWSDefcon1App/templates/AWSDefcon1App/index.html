@@ -10,17 +10,25 @@
   {% for nation_list in games %}
 <div class="game">
   <hr>
-  <div class="info-bubble">
+
+<div class="button-row">
+  <div  class="info-bubble">
     <h3>
-      
-      <a class="game-link button" href="{% url 'map' game_id=nation_list.0 %}">Enter Game</a>
-      {% if nation_list.0 in deletable_list%}
-      <a class="game-link button" href="{% url 'delete' game_id=nation_list.0 %}">Delete Game</a>
-      {% endif %}
-      <span class="info-icon">🛈</span>
+      <a class="game-link button" href="{% url 'map' game_id=nation_list.0 %}">
+        Enter Lobby <span class="info-icon">🛈</span>
+      </a>
     </h3>
-    <span class="tooltip-text">This will take you to the games map, allowing you to play the game!</span>
+    <span class="tooltip-text">This will take you to the game's map, allowing you to play!</span>
   </div>
+
+  {% if nation_list.0 in deletable_list %}
+    <h3>
+      <a class="game-link button" href="{% url 'delete' game_id=nation_list.0 %}">
+        Delete Lobby
+      </a>
+    </h3>
+  {% endif %}
+</div>
 
   <!-- Make this div scrollable -->
   <div class="game-info scrollable-list">
@@ -37,14 +45,23 @@
         {% endif %}
       </p>
     {% endfor %}
+
   </div>
 </div>
     {% endfor %}
 
   </div>
-
+  {% if not games %}
+<p style="text-align:center; color: grey; font-size: 1.2em; margin-top: 2rem;">No lobbies open right now.</p>
+{% endif%}
 <h2 style="text-align: center;">Leaderboards</h2>
         <style>
+          .button-row {
+            display: flex;
+            gap: 10px; 
+            align-items: center; /* Aligns them vertically */
+            justify-content: center; /* <- centers the buttons horizontally */
+            }
             .user-text {
               color: green;
               font-weight: bold;
@@ -169,7 +186,7 @@
     <div class="leaderboard-title">Top Wins</div>
     <ol>
       {% for user in leaderboard|slice:":10" %}
-      <li>{{ user.username }} || {{ user.wins }}</li>
+      <li> <a href = "{% url 'profile' user_id=user.id %}"> {{ user.username }} || {{ user.wins }} </a></li>
       {% endfor %}
     </ol>
   </div>
@@ -178,7 +195,7 @@
     <div class="leaderboard-title">Top Donators</div>
     <ol>
       {% for user in leaderboard2|slice:":10" %}
-      <li>{{ user.username }} || ${{ user.donations }}</li>
+      <li>  <a href = "{% url 'profile' user_id=user.id %}">  {{ user.username }} || ${{ user.donations }}  </a> </li>
       {% endfor %}
     </ol>
   </div>
@@ -190,7 +207,7 @@
     <h4>How to Play</h4>
     <p>
       Welcome Back!<br><br>
-      • Click Enter Game to Join any past games<br>
+      • Click Enter Lobby to Join any past games<br>
       • If you don't want to join a lobby here, you can click "make new lobby" or "join new lobby" on the nav-bar<br>
       Enjoy!
     </p>

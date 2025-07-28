@@ -9,14 +9,14 @@
       {% for nation_list in games %}
 <div class="game">
   <hr>
-  <div class="info-bubble">
-    <h3>
-      <a class="game-link button" href="">Join a nation to enter the lobby</a>
+
+      <div class="info-bubble">
+      <h3>
+      <a class="game-link button" href="">Join a nation to enter lobby</a>
       <span class="info-icon">🛈</span>
     </h3>
-    <span class="tooltip-text">This will take you to the games map, allowing you to play the game!</span>
-  </div>
-
+        <span class="tooltip-text">Scroll down in the box if you don't see an available nation</span>
+      </div>
   <!-- Make this div scrollable -->
   <div class="game-info scrollable-list">
     {% for nation in nation_list|slice:"1:" %}
@@ -38,7 +38,9 @@
 </div>
     {% endfor %}
 </div>
-
+  {% if not games %}
+<p style="text-align:center; color: grey; font-size: 1.2em; margin-top: 2rem;">No lobbies open right now.</p>
+{% endif %}
 <h2 style="text-align: center;">Leaderboards</h2>
         <style>
             .user-text {
@@ -165,7 +167,7 @@
     <div class="leaderboard-title">Top Wins</div>
     <ol>
       {% for user in leaderboard|slice:":10" %}
-      <li>{{ user.username }} || {{ user.wins }}</li>
+      <li> <a href = "{% url 'profile' user_id=user.id %}"> {{ user.username }} || {{ user.wins }} </a></li>
       {% endfor %}
     </ol>
   </div>
@@ -174,11 +176,13 @@
     <div class="leaderboard-title">Top Donators</div>
     <ol>
       {% for user in leaderboard2|slice:":10" %}
-      <li>{{ user.username }} || ${{ user.donations }}</li>
+      <li>  <a href = "{% url 'profile' user_id=user.id %}">  {{ user.username }} || ${{ user.donations }}  </a> </li>
       {% endfor %}
     </ol>
   </div>
 </div>
+</div>
+
 <div class="tutorial-widget">
   <input type="checkbox" id="tutorial-toggle" hidden>
   <label for="tutorial-toggle" class="tutorial-button">❔</label>
@@ -187,7 +191,7 @@
     <p>
       Welcome, Commander!<br><br>
       • Make sure you are logged in before trying to join a lobby<br>
-      • If you don't want to join a lobby here, you can click "make new lobby" on the nav-bar<br>
+      • If you don't want to join an exsisting lobby, you can click "make new lobby" on the nav-bar<br>
       Good luck!
     </p>
   </div>

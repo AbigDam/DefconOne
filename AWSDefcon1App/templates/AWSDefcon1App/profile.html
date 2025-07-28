@@ -22,14 +22,19 @@
         </div>
 
         {% if is_owner %}
-            <div class="edit-bio">
-                <h2>Edit Your Bio</h2>
-                <form method="post">
-                    {% csrf_token %}
-                    <textarea name="bio" rows="4" placeholder="Write something about yourself...">{{ bio }}</textarea>
-                    <button type="submit" class="save-btn">Save Bio</button>
-                </form>
-            </div>
+<div class="edit-bio">
+    <h2>Edit Your Bio</h2>
+    <form method="post">
+        {% csrf_token %}
+        <textarea 
+            name="bio" 
+            rows="4" 
+            placeholder="Write something about yourself..." 
+            style="background-color: grey;" 
+            maxlength="500">{% if not bio%}Write something about yourself..{% else %} {{ bio }} {%endif%}</textarea>
+        <button type="submit" class="save-btn">Save Bio</button>
+    </form>
+</div>
         {% endif %}
 
         {% if name != request.user.username %}
@@ -90,6 +95,9 @@
     
     
     <style>
+        textarea::placeholder {
+    color: black;
+}
         .gold-text {
             color: gold;
         }
@@ -101,9 +109,9 @@
         .profile-container {
             width: 60%;
             margin: 0 auto;
-            background: #f9f9f9;
+            background: #3a3838;
             border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 15px rgba(161, 146, 146, 0.1);
             padding: 20px;
             font-family: 'Lato', sans-serif;
         }
@@ -111,13 +119,13 @@
         .profile-header {
             text-align: center;
             padding-bottom: 20px;
-            border-bottom: 1px solid #e0e0e0;
+            border-bottom: 1px solid #8d8080;
             margin-bottom: 20px;
         }
 
         .profile-header h1 {
             font-size: 2.5em;
-            color: #333;
+            color: #806f6f;
             font-weight: 700;
             margin-bottom: 10px;
         }
@@ -184,7 +192,7 @@
             width: 100%;
             padding: 10px;
             border-radius: 8px;
-            border: 1px solid #ddd;
+            border: 1px solid #837f7f;
             font-size: 1.1em;
             margin-bottom: 15px;
             resize: none;

@@ -1,11 +1,44 @@
 {% extends "AWSDefcon1App/layout.html" %}
 
 {% block body %}
+<style>
+    .centered-form {
+        max-width: 400px;
+        margin: 0 auto;
+        padding: 30px;
+        background-color: #1a1a1a;
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        color: white;
+    }
 
+    .centered-form input,
+    .centered-form a {
+        width: 100%;
+    }
+
+    .centered-form h2 {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .centered-form a {
+        color: #4fa3ff;
+        display: block;
+        text-align: center;
+        margin-top: 15px;
+    }
+
+    .centered-form div {
+        margin-bottom: 10px;
+    }
+</style>
+
+<div class="centered-form">
     <h2>Register</h2>
 
     {% if message %}
-        <div>{{ message }}</div>
+        <div class="alert alert-warning">{{ message }}</div>
     {% endif %}
 
     <form action="{% url 'register' %}" method="post">
@@ -22,5 +55,6 @@
         <input class="btn btn-primary" type="submit" value="Register">
     </form>
 
-    Already have an account? <a href="{% url 'login' %}">Log In here.</a>
+    <a href="{% url 'login' %}">Already have an account? Log in here.</a>
+</div>
 {% endblock %}

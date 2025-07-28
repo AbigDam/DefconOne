@@ -151,7 +151,7 @@ def welcome(request):
 
 @login_required(login_url='login')
 def delete(request, game_id):
-   allowed_list = [request.user.username, 'loser', 'closed']
+   allowed_list = [request.user.username, 'loser', 'closed', 'empty']
    deletable_list = []
    for game in Games.objects.all():
         if not Nations.objects.filter(game=game).exclude(user__username__in=allowed_list).exists():
@@ -367,35 +367,35 @@ def beg(request, game_id):
       ally.save()
       player.divisions += amount
       player.save()
-      announcements = Announcements.objects.create(text =f"{player.name} has recived divisions from {ally.name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
+      announcements = Announcements.objects.create(text =f"{player.name} has received divisions from {ally.name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
     if type == 2:
       amount = random.randint(0,ally.planes)
       ally.planes -= amount
       ally.save()
       player.planes += amount
       player.save()
-      announcements = Announcements.objects.create(text =f"{player.name} has recived planes from {ally.name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
+      announcements = Announcements.objects.create(text =f"{player.name} has received planes from {ally.name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
     if type == 3:
       amount = random.randint(0,ally.boats)
       ally.boats -= amount
       ally.save()
       player.boats += amount
       player.save()
-      announcements = Announcements.objects.create(text =f"{player.name} has recived boats from {ally.name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
+      announcements = Announcements.objects.create(text =f"{player.name} has received boats from {ally.name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
     if type == 4:
       amount = random.randint(0,ally.points)
       ally.points -= amount
       ally.save()
       player.points += amount
       player.save()
-      announcements = Announcements.objects.create(text =f"{player.name} has recived points from {ally.name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
+      announcements = Announcements.objects.create(text =f"{player.name} has received points from {ally.name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
     if type == 6:
       amount = random.randint(0,ally.spies)
       ally.spies -= amount
       ally.save()
       player.spies += amount
       player.save()
-      announcements = Announcements.objects.create(text =f"{player.name} has recived spies from {ally.name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
+      announcements = Announcements.objects.create(text =f"{player.name} has received spies from {ally.name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
     if type == 5:
       if ally.nukes > 0:
         amount = random.randint(0,ally.nukes)
@@ -403,14 +403,14 @@ def beg(request, game_id):
         ally.save()
         player.nukes += amount
         player.save()
-        announcements = Announcements.objects.create(text =f"{player.name} has recived nukes from {ally.name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
+        announcements = Announcements.objects.create(text =f"{player.name} has received nukes from {ally.name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
       else:
         times = 8 - ally.nuke_time
         ally.nuke_time += times
         ally.save()
         player.nuke_time -= times
         player.save()
-        announcements = Announcements.objects.create(text =f"{player.name} has recived nuclear technology from {ally.name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
+        announcements = Announcements.objects.create(text =f"{player.name} has received nuclear technology from {ally.name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
           
     player = Nations.objects.get(game = game_id, user = user)
     user = request.user
@@ -550,7 +550,7 @@ def index(request):
 
 
     game_list = played_games
-    allowed_list = [request.user.username, 'loser', 'closed']
+    allowed_list = [request.user.username, 'loser', 'closed', 'empty']
     deletable_list = []
     for game in game_list:
         if not Nations.objects.filter(game=game).exclude(user__username__in=allowed_list).exists():
@@ -1386,7 +1386,7 @@ def battle(request, game_id):
             
             if ogap > ogdp:
                 enemy = Nations.objects.get(game=game_id, name=nuke_defender)
-
+                player = Nations.objects.get(game=game_id, user=request.user)
                 nuked = enemy.nuked
                 enemy.nuked = nuked + 1
                 enemy.save()
@@ -1398,8 +1398,7 @@ def battle(request, game_id):
                 numerator = math.log(enemy.states / 10)
                 denominator = math.log(1.5)
                 result = numerator / denominator
-            else:
-                announcements = Announcements.objects.create(text =f"{owner} has failed to use nuclear weapons against {planes_defender}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
+           
 
                 if nuked == result or nuked > result:
                     player.boats += enemy.boats
@@ -1427,7 +1426,8 @@ def battle(request, game_id):
                     enemy.save()
                     player.save()
                     War.objects.filter(Q(nation1=enemy) | Q(nation2=enemy)).delete()
-
+            else:
+                announcements = Announcements.objects.create(text =f"{owner} has failed to use nuclear weapons against {planes_defender}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
         if division_attack_amount:
             # Fetch attacker and defender nations only once
             attacker_nation = Nations.objects.get(game=game_id, user=request.user)
@@ -1856,15 +1856,19 @@ def makealliance(request,game_id):
     if request.method == 'POST':
         if player.requests < 1:
           return bad_request(request, title="User Error", message= "You are out of diplomatic requests. Please click the back button to return to the game")
-          return HttpResponseBadRequest("You are out of diplomatic requests. Please click the back button to return to the game")
-        player.requests -= 1
-        player.save()
         selected_nation = request.POST.get('selected_nation')
+        player.requests -= 1
         yesman = False
         accepting_nation = request.POST.get('accepting_nation')
         rejecting_nation = request.POST.get('rejected_nation')
         action = request.POST.get('action')
         player_nation = Nations.objects.get(user=request.user,game_id = game_id)
+        print(f"selected_nation:{action} ")
+        if selected_nation == "Ocean" or selected_nation == player_nation.name:
+            player.requests += 1
+        if action == None and selected_nation == "":
+            player.requests += 1
+        player.save()
 
         if action == 'reject':
             rejected_nation = MakeAlliance.objects.filter(nation1__name = rejecting_nation, nation2 = player_nation).first()
@@ -1881,7 +1885,7 @@ def makealliance(request,game_id):
             war = War.objects.filter(nation2__alliance_name = accepting_nation.alliance_name, nation1 = player_nation)
             war.delete()
             player_nation.save()
-        elif not selected_nation == "":
+        elif not selected_nation == "" and not selected_nation == "Ocean" and not selected_nation == Nations.objects.get(user=request.user, game=game_id).name:
             nation2 = Nations.objects.get(name=selected_nation, game=game_id)
             selected_nation_alliance = MakeAlliance.objects.get_or_create(nation1 = Nations.objects.get(user=request.user, game=game_id), nation2 = Nations.objects.get(name=selected_nation, game=game_id))    
             selected_nation_alliance = MakeAlliance.objects.get(nation1 = Nations.objects.get(user=request.user, game=game_id), nation2 = Nations.objects.get(name=selected_nation, game=game_id))    
@@ -1981,16 +1985,16 @@ def send(request,game_id):
     PlayerAAA = Nations.objects.get(game=game_id, user=request.user)
     if request.method == 'POST':
         selected_nation = request.POST.get('selected_nation')
+        try:   
+            reciver_nation = Nations.objects.get(game=game_id , name=selected_nation)
+        except:
+            return bad_request(request, title="User Error", message= "Please select a nation to send your aid to")
         send_type = request.POST.get('send_type')
         amount = int(request.POST.get('amount'))
         amount = amount/100
         if amount < 0:
           amount = amount * -1
         playernation = Nations.objects.get(user=request.user, game=game_id)
-        try:
-            reciver_nation = Nations.objects.get(game=game_id,name=selected_nation)
-        except:
-            bad_request("Too Fast!","Sorry, you clicked that a little too fast for our servers, wait a few seconds and try again!")
         if int(send_type) == 1:
             if amount > playernation.divisions:
                 amount = playernation.divisions
@@ -2085,11 +2089,9 @@ def current_wars(request,game_id):
 
 @login_required(login_url='login')
 def map(request, game_id):
+    allowed_list = [request.user.username, 'loser', 'closed', 'empty']
+    single_player = Nations.objects.filter(game=game_id).exclude(user__username__in=allowed_list).exists()
 
-    loser_user = User.objects.get(username="loser")
-    empty_user = User.objects.get(username="empty")
-    closed_user = User.objects.get(username="closed")
-    no_user = " "
 
     # Get active nations
 
@@ -2221,12 +2223,14 @@ def map(request, game_id):
         ).values_list('name', flat=True)
     )
 
+    kill_list = str(kill_list).replace("'","").replace("[","]").replace("]","").strip()
+
     
     version = int(os.path.getmtime(os.path.join(settings.MEDIA_ROOT, f"AWSDefcon1App/MapChart_Game_{game_id}.png")))
 
     path = f"/media/AWSDefcon1App/MapChart_Game_{game_id}.png?v={version}"
 
-    return render(request, "AWSDefcon1App/JSMap.html",{"game_id":game_id,'path':path, 'kill_list':kill_list, 'nation_list':nation_list, 'PlayerAAA':PlayerAAA,'alliances':alliances, 'nation_name_at_war':nation_name_at_war, 'nations_at_war':nations_at_war,'attacks_left':attacks_left, 'owner':owner, "requesters":requesters, "knownnations":knownnations, 'announce':announce, 'nations':nations})
+    return render(request, "AWSDefcon1App/JSMap.html",{"game_id":game_id,'path':path,'single_player':single_player, 'kill_list':kill_list, 'nation_list':nation_list, 'PlayerAAA':PlayerAAA,'alliances':alliances, 'nation_name_at_war':nation_name_at_war, 'nations_at_war':nations_at_war,'attacks_left':attacks_left, 'owner':owner, "requesters":requesters, "knownnations":knownnations, 'announce':announce, 'nations':nations})
 
     
 def makegame(request,game_id):

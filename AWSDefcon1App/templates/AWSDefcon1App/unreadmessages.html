@@ -10,7 +10,7 @@
     <ul>
         {% for message in unread_game_messages %}
             <li>
-                    {{ sender.username }} 
+                {{ sender.username }} 
                 {% if message.game_id %}
                 {% endif %}
                 - Unread: {{ message.unread_count }}
@@ -41,4 +41,6 @@
         {% endfor %}
     </ul>
 </body>
+
+
 {% endblock %}

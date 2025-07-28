@@ -1,19 +1,14 @@
 {% extends "AWSDefcon1App/layout.html" %}
 {% block body %}
 <body>
-  <h1 style = "text-align: center;">Welcome to <span style="color: red;">DEFCON1</span></h1>
+  <h1 style = "text-align: center;">Welcome to <span style="color: red;">Defcon1</span></h1>
     <div  style = "text-align: center;">
   <p >
-    Defcon1, an online strategy game set in 1936<br>
-    Bring you're nation to victory or destruction in this fully online multiplayer turn based strategy game
+    Defcon1, an online multiplayer strategy game set in 1936<br>
   </p>
 
   <p>
-    You can achievement hunt, get to the top of leaderboard, or speedrun. .  We have somthing for everyone
-  </p>
-
-  <p>
-    New here? No worries. Click the <strong>❔</strong> button in the <strong>bottom-left corner</strong> at any time to open the tutorial and learn the ropes.
+    New here? No worries. Click the <strong>❔</strong> button in the <strong>bottom-right corner</strong> at any time to open the tutorial and learn the ropes.
   </p>
 
     <p>
@@ -24,8 +19,6 @@
     <a href="{% url 'login' %}" class="wel_button">Log In</a>
     <a href="{% url 'register' %}" class="wel_button">Register</a>
   </div>
-
-  <div class="tutorial-hint">📘 Click the ❔ button in the bottom-left for tutorial help!</div>
 
 </body>
 <style>

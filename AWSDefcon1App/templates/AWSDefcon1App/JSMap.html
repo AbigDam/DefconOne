@@ -77,7 +77,7 @@
                             <input type="hidden" name="send_type" id="send_type" value="">
                         
                             <label for="amount" style="font-weight: bold;">Enter Percent:</label><br>
-                            <input type="range" id="amount" name="amount" min="1" max="100" style="width: 80%; margin-bottom: 10px;">
+                            <input type="range" id="amount" name="amount" value="1"  min="1" max="100" style="width: 80%; margin-bottom: 10px;">
                             <br>
                             <span id="amount_label">Amount: 1</span><br><br>
                         
@@ -171,8 +171,8 @@
             
                 <div id="battle-form" style="text-align: center; display: none;">
                     <h4 id = "atWar" style="text-align: center; display: none;">At War!</h4> <br>
-                    <button id="showDiv1" class="toggle-button">Military <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Uses soldeirs to make large attacks, you can only do 5 battles in a turn!</span> </div></button>
-                    <button id="showDiv2" class="toggle-button">Espionage <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Uses spies to preform special operations, counts as diplomatic requests</span> </div> </button> 
+                    <button id="showDiv1" class="toggle-button"><div class="info-bubble"><span class="info-icon">🛈</span>Military<span class="tooltip-text">Uses soldeirs to make large attacks, you can only do 5 battles in a turn!</span> </div></button>
+                    <button id="showDiv2" class="toggle-button"><div class="info-bubble"><span class="info-icon">🛈</span>Espionage<span class="tooltip-text">Uses spies to preform special operations, counts as diplomatic requests</span> </div> </button> 
                 </div>
                 <div id="div2" style = "display: none;" class="toggle-div">
                     <form style = "text-align: center;" action="{% url 'spies' game_id=game_id %}" method="post">
@@ -183,46 +183,69 @@
                         <h3 style = "text-align: center;">Requests Left: {{requesters}}</h3>
                         <h4 style = "text-align: center;">Uses diplomatic requests*</h4>
                         
+                        <div style="display: inline-block;">
+                        <div class="info-bubble">
                         <button type="submit" name="get" value="1" style="background: none; border: none; cursor: pointer; margin-bottom: 10px;">
                             <img src="/static/AWSDefcon1App/Recruit_Double_Agent.gif" alt="Recruit Double Agent" style="border: 2px solid white; border-radius: 10px; width: 100px; display: block; margin: 0 auto;">
-                            <figcaption style = "color:#ccc;" >Recruit Double Agent  <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Try to take 1 spy from your enemy, risk losing 1 agent (Chance of sucess increased by having more agents)</span> </div> </figcaption>
+                            <figcaption style = "color:#ccc;" >Kidnap Their Spy<span class="info-icon">🛈</span> <span class="tooltip-text">Try to take 1 spy from your enemy, risk losing 1 spy (Chance of sucess increased by having more spies)</span> </div> </figcaption>
                         </button>
+                        </div>
 
+                        <div style="display: inline-block;">
+                        <div class="info-bubble">
                         <button type="submit" name="kill" value="1" style="background: none; border: none; cursor: pointer; margin-bottom: 10px;">
                             <img src="/static/AWSDefcon1App/Assassinate_Spy.gif" alt="Assassinate Spy" style="border: 2px solid white; border-radius: 10px; width: 100px; display: block; margin: 0 auto;">
-                            <figcaption style = "color:#ccc;"> Assassinate Spy<div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Try to kill an enemy spy, risk losing 1 agent (Chance of sucess increased by having more agents)</span> </div></figcaption>
+                            <figcaption style = "color:#ccc;">Assassinate Spy<span class="info-icon">🛈</span> <span class="tooltip-text">Try to kill an enemy spy, risk losing 1 spy (Chance of sucess increased by having more spies)</span> </div></figcaption>
                         </button>
+                        </div>
 
+                        <div style="display: inline-block;">
+                        <div class="info-bubble">
                         <button type="submit" name="army" value="1" style="background: none; border: none; cursor: pointer; margin-bottom: 10px;">
                             <img src="/static/AWSDefcon1App/Sabotage_Army.gif" alt="Sabotage Army" style="border: 2px solid white; border-radius: 10px; width: 100px; display: block; margin: 0 auto;">
-                            <figcaption style = "color:#ccc;">Sabotage Army  <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Try to destroy some of your enemy's divisions, risk losing 1 agent (Chance of sucess increased by having more agents)</span> </div></figcaption>
+                            <figcaption style = "color:#ccc;">Sabotage Army<span class="info-icon">🛈</span> <span class="tooltip-text">Try to destroy some of your enemy's divisions, risk losing 1 spy (Chance of sucess increased by having more spies)</span> </div></figcaption>
                         </button>
-                    
+                        </div>
+
+                        <div style="display: inline-block;">
+                        <div class="info-bubble">
                         <button type="submit" name="air" value="1" style="background: none; border: none; cursor: pointer; margin-bottom: 10px;">
                             <img src="/static/AWSDefcon1App/Sabotage_Air_Force.gif" alt="Sabotage Air Force" style="border: 2px solid white; border-radius: 10px; width: 100px; display: block; margin: 0 auto;">
-                            <figcaption style = "color:#ccc;">Sabotage Air Force <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Try to destroy some of your enemy's airplanes, risk losing 1 agent (Chance of sucess increased by having more agents)</span> </div></figcaption>
+                            <figcaption style = "color:#ccc;">Sabotage Planes<span class="info-icon">🛈</span> <span class="tooltip-text">Try to destroy some of your enemy's airplanes, risk losing 1 spy (Chance of sucess increased by having more spies)</span> </div></figcaption>
                         </button>
-                    
+                        </div>
+
+                        <div style="display: inline-block;">
+                        <div class="info-bubble">
                         <button type="submit" name="navy" value="1" style="background: none; border: none; cursor: pointer; margin-bottom: 10px;">
                             <img src="/static/AWSDefcon1App/Sabotage_Navy.gif" alt="Sabotage Navy" style="border: 2px solid white; border-radius: 10px; width: 100px; display: block; margin: 0 auto;">
-                            <figcaption style = "color:#ccc;">Sabotage Navy <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Try to destroy some of your enemy's boats, risk losing 1 agent (Chance of sucess increased by having more agents)</span> </div></figcaption>
+                            <figcaption style = "color:#ccc;">Sabotage Navy<span class="info-icon">🛈</span> <span class="tooltip-text">Try to destroy some of your enemy's boats, risk losing 1 spy (Chance of sucess increased by having more spies)</span> </div></figcaption>
                         </button>
-                    
+                        </div>
+
+                        <div style="display: inline-block;">
+                        <div class="info-bubble">
                         <button type="submit" name="nuke" value="1" style="background: none; border: none; cursor: pointer; margin-bottom: 10px;">
                             <img src="/static/AWSDefcon1App/Steal_Nuclear_Technology.gif" alt="Steal Nuclear Technology" style="border: 2px solid white; border-radius: 10px; width: 100px; display: block; margin: 0 auto;">
-                            <figcaption style = "color:#ccc;">Steal Nuclear Technology <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Try to decrease your nuke time, risk losing 1 agent (Chance of sucess increased by having more agents)</span> </div></figcaption>
+                            <figcaption style = "color:#ccc;">Steal Nuke Tech<span class="info-icon">🛈</span> <span class="tooltip-text">Try to decrease your nuke time, risk losing 1 spy (Chance of sucess increased by having more spies)</span> </div></figcaption>
                         </button>
-                    
+                        </div>
+
+                        <div style="display: inline-block;">
+                        <div class="info-bubble">
                         <button type="submit" name="coup" value="1" style="background: none; border: none; cursor: pointer; margin-bottom: 10px;">
                             <img src="/static/AWSDefcon1App/Fund_Revolt.gif" alt="Fund Revolt in a Single State" style="border: 2px solid white; border-radius: 10px; width: 100px; display: block; margin: 0 auto;">
-                            <figcaption style = "color:#ccc;">Fund Revolt <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Try to capture a random state, risk losing half your agents (Chance of sucess increased by having more agents)</span> </div></figcaption>
+                            <figcaption style = "color:#ccc;">Start Revolt<span class="info-icon">🛈</span> <span class="tooltip-text">Try to capture a random state, risk losing half your spies (Chance of sucess increased by having more spies)</span> </div></figcaption>
                         </button>
-                    
+                        </div>
+
+                        <div style="display: inline-block;">
+                        <div class="info-bubble">
                         <button type="submit" name="civil" value="1" style="background: none; border: none; cursor: pointer; margin-bottom: 10px;">
                             <img src="/static/AWSDefcon1App/Start_Civil_War.gif" alt="Start Civil War" style="border: 2px solid white; border-radius: 10px; width: 100px; display: block; margin: 0 auto;">
-                            <figcaption style = "color:#ccc;">Start Civil War <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Try to capture hald your enemies states instantly, risk losing all your agents (Chance of sucess increased by having more agents)</span> </div></figcaption>
+                            <figcaption style = "color:#ccc;">Start Uprising<span class="info-icon">🛈</span> <span class="tooltip-text">Try to capture half your enemies states instantly, risk losing all your spies (Chance of sucess increased by having more spies)</span> </div></figcaption>
                         </button>
-                    
+                        </div>
 
                     
                     </form>
@@ -232,134 +255,86 @@
             
             <h3 style = "text-align: center;">Battles Left: {{ attacks_left }}</h3>
             
-                      {% if owner.nukes > 0 %}
                 <form method="post" action="{% url 'battle' game_id=game_id %}" style="text-align: center;">
                 {% csrf_token %}
                 
                 <input type="hidden" name="defender" id="defender-input" value="">
                 
                 <div style="display: inline-block;">
+                <div class="info-bubble">
                     <button class = "attacker" type="submit" name="action" value="Ndivision">
                         <img src="/static/AWSDefcon1App/Army_man.gif" alt="Normal Ground Attack" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
                     </button>
-                    <figcaption> Normal Ground Attack   <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Attempt to take some of your enemies land, make sure you have a land border</span> </div> </figcaption>
+                    <figcaption> Ground Attack<span class="info-icon">🛈</span> <span class="tooltip-text">Attempt to take some of your enemies land, make sure you have a land border</span> </div> </figcaption>
                 </div>
-                
+
                 <div style="display: inline-block;">
-                    <button class = "attacker" type="submit" name="action" value="Nplanes">
-                        <img src="/static/AWSDefcon1App/Plane.gif" alt="Attack Their Planes" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" > 
-                    </button>
-                    <figcaption> Planes  Attack  <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Destroys some of your enemies planes, risking your own planes</span> </div>  </figcaption>
-                </div>
-                
-                <div style="display: inline-block;">
-                    <button class = "attacker"  type="submit" name="action" value="Nboat">
-                        <img src="/static/AWSDefcon1App/Boat.gif" alt="Attack Their Boats" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
-                    </button>
-                    <figcaption> Boat  Attack   <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Destroys some of your enemies boats, risking your own planes</span> </div> </figcaption>
-                </div>
-                
-                <div style="display: inline-block;">
+                <div class="info-bubble">
                     <button class = "attacker" class = "attacker" type="submit" name="action" value="division">
                         <img src="/static/AWSDefcon1App/Encirclement_1.gif" alt="Attempt an Encirclement" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
                     </button>
-                    <figcaption> Attempt an Encirclement  <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Risky attack that could lead to major losses on either side (not both)</span> </div> </figcaption>
+                    <figcaption> Encirclement<span class="info-icon">🛈</span> <span class="tooltip-text">Risky attack that could lead to major losses on either side (not both)</span> </div> </figcaption>
+                </div>
+
+                <div style="display: inline-block;">
+                <div class="info-bubble">
+                    <button class = "attacker" type="submit" name="action" value="Nplanes">
+                        <img src="/static/AWSDefcon1App/Plane.gif" alt="Attack Their Planes" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" > 
+                    </button>
+                    <figcaption> Planes  Attack<span class="info-icon">🛈</span> <span class="tooltip-text">Destroys some of your enemies planes, risking your own planes</span> </div>  </figcaption>
                 </div>
                 
                 <div style="display: inline-block;">
+                <div class="info-bubble">
+                    <button class = "attacker"  type="submit" name="action" value="Nboat">
+                        <img src="/static/AWSDefcon1App/Boat.gif" alt="Attack Their Boats" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
+                    </button>
+                    <figcaption>Naval Attack<span class="info-icon">🛈</span> <span class="tooltip-text">Destroys some of your enemies boats, risking your own planes</span> </div> </figcaption>
+                </div>
+                
+                <div style="display: inline-block;">
+                <div class="info-bubble">
                     <button class = "attacker" type="submit" name="action" value="planes">
                         <img src="/static/AWSDefcon1App/Bombing.gif" alt="Bomb Their Soldiers" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
                     </button>
-                    <figcaption> Bomb Their Soldiers <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Destroys some of your enemy's soldeirs based on how many planes you have</span> </div> </figcaption>
+                    <figcaption>Bomb Army<span class="info-icon">🛈</span> <span class="tooltip-text">Destroys some of your enemy's soldeirs based on how many planes you have</span> </div> </figcaption>
                 </div>
                 
                 <div style="display: inline-block;">
+                <div class="info-bubble">
                     <button class = "attacker" type="submit" name="action" value="Bplanes">
                         <img src="/static/AWSDefcon1App/Plane_bombing_boat_gif.gif" alt="Bomb Their Boats" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
                     </button>
-                    <figcaption> Bomb Their Boats  <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Destroy some of your enemy's boats based on how many planes you have</span> </div> </figcaption>
+                    <figcaption> Bomb Boats<span class="info-icon">🛈</span> <span class="tooltip-text">Destroy some of your enemy's boats based on how many planes you have</span> </div> </figcaption>
                 </div>
               
                 <div style="display: inline-block;">
+                <div class="info-bubble">
                     <button class = "attacker"  type="submit" name="action" value="boat">
                         <img src="/static/AWSDefcon1App/Naval_invasion.gif" alt="Naval Invasion" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;">
                     </button>
-                    <figcaption> Naval Invasion  <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Attempts to take a state bordering the water, a good way to establish a border with someone!</span> </div></figcaption>
+                    <figcaption> Naval Landing<span class="info-icon">🛈</span> <span class="tooltip-text">Attempts to take a state bordering the water, a good way to establish a border with someone!</span> </div></figcaption>
                 </div>
-                
+
+                {% if owner.nukes > 0 %}
                 <div style="display: inline-block;">
+                <div class="info-bubble">
                     <button class = "attacker" type="submit" name="action" value="nuke">
                         <img src="/static/AWSDefcon1App/Nuke.gif" alt="Nuclear Attack" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" > 
                     </button>
-                    <figcaption> Nuclear Bombing  <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">If you have more than 150% of your enemies planes, then this will nuke them.  If your drop enough nukes they will automatically lose!</span> </div></figcaption>
+                    <figcaption> Drop Nukes<span class="info-icon">🛈</span> <span class="tooltip-text">If you have more than 150% of your enemies planes, then this will nuke them.  If you drop enough nukes they will automatically lose!</span> </div></figcaption>
                 </div>
-            
+                {% endif %}
             </form>
-            
-                    {% else %}
-                <form  method="post" action="{% url 'battle' game_id=game_id %}" style="text-align: center;" style = "display: none;">
-                    {% csrf_token %}
-                    
-                    <input type="hidden" name="defender" id="defender-input" value="">
-                    <div style="display: inline-block;">
-                        <button class = "attacker" type="submit" name="action" value="Ndivision">
-                            <img src="/static/AWSDefcon1App/Army_man.gif" alt="Normal Ground Attack" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
-                        </button>
-                        <figcaption> Normal Ground Attack   <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Attempt to take some of your enemies land, make sure you have a land border</span> </div> </figcaption>
-                    </div>
-                    
-                    <div style="display: inline-block;">
-                        <button class = "attacker" type="submit" name="action" value="Nplanes">
-                            <img src="/static/AWSDefcon1App/Plane.gif" alt="Attack Their Planes" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" > 
-                        </button>
-                        <figcaption> Planes  Attack  <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Destroys some of your enemies planes, risking your own planes</span> </div>  </figcaption>
-                    </div>
-                    
-                    <div style="display: inline-block;">
-                        <button class = "attacker"  type="submit" name="action" value="Nboat">
-                            <img src="/static/AWSDefcon1App/Boat.gif" alt="Attack Their Boats" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
-                        </button>
-                        <figcaption> Boat  Attack   <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Destroys some of your enemies boats, risking your own planes</span> </div> </figcaption>
-                    </div>
-                    
-                    <div style="display: inline-block;">
-                        <button class = "attacker" class = "attacker" type="submit" name="action" value="division">
-                            <img src="/static/AWSDefcon1App/Encirclement_1.gif" alt="Attempt an Encirclement" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
-                        </button>
-                        <figcaption> Attempt an Encirclement  <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Risky attack that could lead to major losses on either side (not both)</span> </div> </figcaption>
-                    </div>
-                    
-                    <div style="display: inline-block;">
-                        <button class = "attacker" type="submit" name="action" value="planes">
-                            <img src="/static/AWSDefcon1App/Bombing.gif" alt="Bomb Their Soldiers" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
-                        </button>
-                        <figcaption> Bomb Their Soldiers <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Destroys some of your enemy's soldeirs based on how many planes you have</span> </div> </figcaption>
-                    </div>
-                    
-                    <div style="display: inline-block;">
-                        <button class = "attacker" type="submit" name="action" value="Bplanes">
-                            <img src="/static/AWSDefcon1App/Plane_bombing_boat_gif.gif" alt="Bomb Their Boats" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
-                        </button>
-                        <figcaption> Bomb Their Boats  <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Destroy some of your enemy's boats based on how many planes you have</span> </div> </figcaption>
-                    </div>
-                  
-                    <div style="display: inline-block;">
-                        <button class = "attacker"  type="submit" name="action" value="boat">
-                            <img src="/static/AWSDefcon1App/Naval_invasion.gif" alt="Naval Invasion" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;">
-                        </button>
-                        <figcaption> Naval Invasion  <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Attempts to take a state bordering the water, a good way to establish a border with someone!</span> </div></figcaption>
-                    </div>
-                </form>
-                    {% endif %}
-                      <br> <br> 
-            </div>       
+                      <br> <br>
+            </div>   
+             <br> <br>     
             <div style="display: flex; justify-content: center; align-items: center;">
                 <a class="linker" 
                    style="display: inline-block; width: 50px; height: 50px; background-color: #007bff; color: white; text-align: center; line-height: 50px; border-radius: 50%; text-decoration: none; font-size: 14px; transition: background-color 0.3s ease;" 
                    href="{% url 'passer' game_id=game_id %}">
-                   Pass
+                <div class="info-bubble">Pass<span class="info-icon">🛈</span> <span sytle = "text-decoration: none;" class="tooltip-text">This will skip your turn, preventing you from fighting until every other player has completed their turn</span> </div>
                 </a>
-                <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">This will prevent you from fighting until all other players have passed or fought 5 battles</span> </div>
             
             </div>
             </div>
@@ -383,7 +358,7 @@
                 style="border: 1px solid #ccc; padding: 15px; border-radius: 5px; box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2); margin-top: 20px;">
               {% csrf_token %}
               <h3 style="text-align: center;">Buy Supplies</h3>
-              <p style="text-align: center;">Points: {{PlayerAAA.points}}</p>
+              <p style="text-align: center;">Focus Points: {{PlayerAAA.points}}</p>
               <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
                     
                  <div style="display: flex; flex-direction: column; align-items: flex-start;">
@@ -430,7 +405,7 @@
                            style="height: 50px; border: 2px solid #ffffff; border-radius: 5px;">
                   </button>
                         <span class="info-icon" style="margin-right: 5px;">🛈</span>
-                        <span class="tooltip-text" style="font-size: 14px;">Buys 1 spy for 1 point</span>
+                        <span class="tooltip-text" style="font-size: 14px;">Lowers Nuke Time/Build Nuke for 1 point</span>
                     </div>
                     </div>
 
@@ -442,7 +417,7 @@
                      style="height: 50px; border: 2px solid #ffffff; border-radius: 5px;">
                 </button>
                         <span class="info-icon" style="margin-right: 5px;">🛈</span>
-                        <span class="tooltip-text" style="font-size: 14px;">Works towards building Nukes 1 point</span>
+                        <span class="tooltip-text" style="font-size: 14px;">Buys 1 spy for 1 point</span>
                     </div>
                     </div>
 
@@ -632,9 +607,90 @@
             const rgbColor = hexToRgb(colors[country]);
             rgbToCountry[rgbColor] = country;
         }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const country = localStorage.getItem('selectedCountry');
+        const nationSelect = document.getElementById('nationSelect');
+        // Check if the country is still a valid option
+        const isCountryValid = [...nationSelect.options].some(
+            option => option.value === country
+        );
+
+        if (country && isCountryValid) {
+            console.log(`Closest color name: ${country}`);
+            
+            colorDisplay.textContent = `${country}`;
+            offerDisplay.textContent = `Offer Alliance to ${country}`;
+            statisticsText.textContent = `Statistics of ${country}`;
+            sendText.textContent = `Send Supplies to ${country}`; 
+
+            var some_var = "{{ nation_name_at_war }}";
+            nationsAtWar = some_var.replaceAll("&#x27;", "");
+            var playerA = "{{PlayerAAA.name}}"
+            console.log(playerA);
+            if (!nationsAtWar.includes(country)) {
+                document.getElementById("battle-form").style.display = "none";
+                document.getElementById('div1').style.display = "none";
+                document.getElementById('div2').style.display = "none";
+                document.getElementById('showDiv1').style.display = "none";
+                document.getElementById('showDiv2').style.display = "none";
+                if(playerA != country && "Ocean" != country){
+                    document.getElementById('peace-form').style.display = "block";
+                    const warInput = document.getElementById('war-input');
+                    const allianceInput = document.getElementById('alliance-input');
+                    const sendInput = document.getElementById('send-input');
+                    warInput.value = country;
+                    sendInput.value = country;
+                    allianceInput.value = country;
+                }
+                if(playerA == country || "Ocean" == country){
+                    document.getElementById('peace-form').style.display = "none";
+                }
+                
+            } else {
+                document.getElementById("battle-form").style.display = "block";
+                document.getElementById('showDiv1').style.display = "inline-block";
+                document.getElementById('showDiv2').style.display = "inline-block";
+                document.getElementById('atWar').style.display = "inline-block";
+                document.getElementById('peace-form').style.display = "none";
+                const victimInput = document.getElementById('victim-input');
+                const defenderInput = document.getElementById('defender-input');
+                defenderInput.value = country;
+                victimInput.value = country;
+            }
+
+            console.log("Starting Next Part");
+            // Get the table element
+            // JavaScript variable 'country' (set this value dynamically)
+
+            // Get the table element and its rows
+            
+            const filter = country.toLowerCase(); // Convert country to lowercase for case-insensitive comparison
+            const nationsTable = document.getElementById('nationsTable'); // Reference the table element
+            const rows = nationsTable.getElementsByTagName('tbody')[0].getElementsByTagName('tr'); // Get all rows from the table body
+
+            // Loop through each row in the table
+            for (const row of rows) {
+                const name = row.cells[1].textContent.toLowerCase(); // Get text content from the 2nd column (index 1) and convert to lowercase
+                console.log(filter); // Debugging: Log the filter value
+                console.log(name); // Debugging: Log the nation name from the table
+
+                if (name === filter) {
+                    row.style.display = "table-row"; // Show matching row
+                } else {
+                    row.style.display = "none"; // Hide non-matching rows
+                }
+            }
+
+            // Make the table visible if at least one row matches
+            nationsTable.style.display = "table";
+        }
+    });
+
     document.getElementById('nationForm').addEventListener('submit', function(event) {
             event.preventDefault();  
             const country = document.getElementById('nationSelect').value;
+            localStorage.setItem('selectedCountry', country);
             console.log(`Closest color name: ${country}`);
             
             colorDisplay.textContent = `${country}`;
@@ -736,6 +792,7 @@
             }
             console.log(rgb);
             const country = closestColorName;
+            localStorage.setItem('selectedCountry', country);
             console.log(`Closest color name: ${country}`);
             colorDisplay.textContent = `${country}`;
             offerDisplay.textContent = `Offer Alliance to ${country}`;
@@ -811,19 +868,24 @@
 <table id="nationsTable" class="table table-striped table-sm" style="display: none;">
     <thead>
         <tr>
-            <th scope="col">Player <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Username of Player</span> </div> </th>
-            <th scope="col">Name <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Name of Country</span> </div> </th>
-            <th scope="col">States<div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Amount of Land</span> </div> </th>
-            <th scope="col">Alliance Name <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Name of Alliance (None indicates no alliance)</span> </div> </th>
-            <th scope="col">Times Nuked<div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Number of times they have been nuked</span> </div> </th>
-            <th scope="col">Attacks Left<div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Ammount of attacks left in the turn</span> </div> </th>
-            <th scope="col">Hostility <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Determined by How much aid you've given them, and determines things like "ask for aid" and "ask to be allies"</span> </div> </th>
+            {% if single_player %}
+            <th scope="col"><div class="info-bubble">Player<span class="info-icon">🛈</span> <span class="tooltip-text">Username</span> </div></th>
+            {% endif %}            
+            <th scope="col"><div class="info-bubble">Name<span class="info-icon">🛈</span> <span class="tooltip-text">Name of Country</span> </div> </th>
+            <th scope="col"><div class="info-bubble">States<span class="info-icon">🛈</span> <span class="tooltip-text">Amount of Land</span> </div> </th>
+            <th scope="col"><div class="info-bubble">Alliance Name<span class="info-icon">🛈</span> <span class="tooltip-text">Name of Alliance (None indicates no alliance)</span> </div> </th>
+            <th scope="col"><div class="info-bubble">Times Nuked<span class="info-icon">🛈</span> <span class="tooltip-text">Number of times they have been nuked</span> </div> </th>
+            <th scope="col"><div class="info-bubble">Attacks Left<span class="info-icon">🛈</span> <span class="tooltip-text">Ammount of attacks left in the turn</span> </div> </th>
+            <th scope="col"><div class="info-bubble">Hostility<span class="info-icon">🛈</span> <span class="tooltip-text">Determined by How much aid you've given them, and determines things like "ask for aid" and "ask to be allies"</span> </div> </th>
         </tr>
     </thead>
     <tbody>
         {% for nation in nations %}
         <tr>
+            {% if single_player %}
             <td scope="row">{{ nation.user.username }}</td>
+            {% endif %}
+
             <td scope="row">{{ nation.name }}</td>
             <td scope="row">{{ nation.states }}</td>
             <td scope="row">{{ nation.alliance_name }}</td>
@@ -870,23 +932,28 @@
        <table class="table table-striped table-sm">
         <thead>
             <tr>
-                <th scope="col">Player<div class="info-bubble">  <span class="info-icon">🛈</span> <span class="tooltip-text">Username</span> </div></th>
-                <th scope="col">Name <div class="info-bubble">  <span class="info-icon">🛈</span> <span class="tooltip-text">Name of Country</span> </div></th>
-                <th scope="col">States <div class="info-bubble">  <span class="info-icon">🛈</span><span class="tooltip-text">Ammount of Land</span> </div> </th>
-                <th scope="col">Divisions <div class="info-bubble">  <span class="info-icon">🛈</span> <span class="tooltip-text">Number of Divisions(Sets of 10,000 Soldeirs)</span> </div> </th>
-                <th scope="col">Boats <div class="info-bubble">  <span class="info-icon">🛈</span><span class="tooltip-text">Number of Boats</span> </div> </th>
-                <th scope="col">Planes <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">Number of Airplanes</span> </div> </th>
-                <th scope="col">Alliance Name <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">The name of your alliance</span> </div> </th>
-                <th scope="col">Points <div class="info-bubble">  <span class="info-icon">🛈</span><span class="tooltip-text">The amount of points you have to spend at the store</span> </div> </th>
-                <th scope="col">Nuke Time <div class="info-bubble">  <span class="info-icon">🛈</span><span class="tooltip-text">Turns left before nukes are developed by you</span> </div> </th>
-                <th scope="col">Nukes <div class="info-bubble">  <span class="info-icon">🛈</span><span class="tooltip-text">Nukes, They can force nations to surrender</span> </div> </th>
-                <th scope="col">Spies <div class="info-bubble"> <span class="info-icon">🛈</span> <span class="tooltip-text">Number of Spies you have, use them for espionage!</span> </div></th>
+                {% if single_player %}
+                <th scope="col"><div class="info-bubble">Player<span class="info-icon">🛈</span> <span class="tooltip-text">Username</span> </div></th>
+                {% endif %}
+                <th scope="col"><div class="info-bubble">Name<span class="info-icon">🛈</span> <span class="tooltip-text">Name of Country</span> </div></th>
+                <th scope="col"><div class="info-bubble">States<span class="info-icon">🛈</span><span class="tooltip-text">Ammount of Land</span> </div> </th>
+                <th scope="col"><div class="info-bubble">Divisions<span class="info-icon">🛈</span> <span class="tooltip-text">Number of Divisions(Sets of 10,000 Soldeirs)</span> </div> </th>
+                <th scope="col"><div class="info-bubble">Boats<span class="info-icon">🛈</span><span class="tooltip-text">Number of Boats</span> </div> </th>
+                <th scope="col"><div class="info-bubble">Planes<span class="info-icon">🛈</span> <span class="tooltip-text">Number of Airplanes</span> </div> </th>
+                <th scope="col"><div class="info-bubble">Alliance Name<span class="info-icon">🛈</span> <span class="tooltip-text">The name of your alliance</span> </div> </th>
+                <th scope="col"><div class="info-bubble">Focus Points<span class="info-icon">🛈</span><span class="tooltip-text">The amount of points you have to spend at the store</span> </div> </th>
+                <th scope="col"><div class="info-bubble">Nuke Time<span class="info-icon">🛈</span><span class="tooltip-text">Turns left before you get your next nuke</span> </div> </th>
+                <th scope="col"><div class="info-bubble">Nukes<span class="info-icon">🛈</span><span class="tooltip-text">Nukes, They can force nations to surrender</span> </div> </th>
+                <th scope="col"><div class="info-bubble">Spies<span class="info-icon">🛈</span> <span class="tooltip-text">Number of Spies you have, use them for espionage!</span> </div></th>
             </tr>
         </thead>
         <tbody>
             {% for nation in knownnations %}
                 <tr>
+                    {% if single_player %}
                     <td scope="row">{{ nation.user.username }}</td>
+                    {% endif %}
+
                     <td scope="row">{{ nation.name }}</td>
                     <td scope="row">{{ nation.states }}</td>
                     <td scope="row">{{ nation.divisions }}</td>
@@ -1064,7 +1131,7 @@
   position: fixed;
   bottom: 20px;
   right: 20px;
-  max-width: 300px;
+  max-height: 720px;
   font-family: sans-serif;
   z-index: 999;
 }
