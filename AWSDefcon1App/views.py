@@ -923,7 +923,7 @@ def spies(request, game_id):
         coup = request.POST.get("coup")
         civil = request.POST.get("civil")
         kill = request.POST.get("kill")
-
+        changed_squares = []
         target = request.POST.get("target")
         enemy = Nations.objects.get(game = game_id, name = target)
         player = Nations.objects.get(game = game_id, user = request.user)
@@ -1020,6 +1020,7 @@ def spies(request, game_id):
                     random_square = random.choice(squares)
                     random_square.owner = player
                     random_square.color = colors.get(player.name)
+                    changed_squares.append(random_square)
                     player.states += 1
                     random_square.save()
                     player.save()
@@ -1054,6 +1055,7 @@ def spies(request, game_id):
                     random.shuffle(square_list)
                     half_count = len(square_list) // 2
                     random_half_squares = square_list[:half_count]
+                    changed_squares = random_half_squares
                     for square in random_half_squares:
                         square.owner = player
                         square.color = colors.get(player.name)
@@ -1077,6 +1079,31 @@ def spies(request, game_id):
     if player.spies < 0:
         player.spies = 0
         player.save()
+
+    output_path = os.path.join(settings.MEDIA_ROOT, f"AWSDefcon1App/MapChart_Game_{game_id}.png")
+    final_image = Image.open(output_path).convert("RGBA")
+
+    white_image_dir = "AWSDefcon1App/static/AWSDefcon1App/white_image"
+    existing_images = set(os.listdir(white_image_dir))
+
+    for square in changed_squares:
+        print("Changing a Square")
+        filename = f"MapChart_Map.{square.name}.png"
+        if filename not in existing_images:
+            continue
+
+        image_path = os.path.join(white_image_dir, filename)
+        try:
+            img = Image.open(image_path).convert("RGBA")
+            r, g, b = tuple(int(square.color[i:i+2], 16) for i in (1, 3, 5))  # hex to RGB
+            r_img, _, _, alpha = img.split()
+            colorized = ImageOps.colorize(r_img, black=(r, g, b), white=(r, g, b))
+            colorized.putalpha(alpha)
+            final_image.alpha_composite(colorized)
+        except Exception as e:
+            print(f"Error processing {filename}: {e}")
+            continue
+    final_image.save(output_path, optimize=True)
     return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
 
 @login_required(login_url='login')
@@ -1487,6 +1514,7 @@ def battle(request, game_id):
             
             ## Offensive Wins 
             if state_changeD < state_changeA:
+                print("Offesnive Wins")
                 state_change = min(state_changeA - state_changeD, 15)
 
                 owner = Nations.objects.select_related("game").get(game=game_id, user=request.user)
@@ -1550,6 +1578,7 @@ def battle(request, game_id):
 
             ## Defensive Wins
             elif state_changeD >= state_changeA:
+                print("Defensive Wins")
                 game = Games.objects.only("id").get(id=game_id)
                 map_obj = Map.objects.only("id").get(game=game)
 
@@ -1616,7 +1645,7 @@ def battle(request, game_id):
                     attacker.save()
                     defender.save()
 
-        
+            print(changed_squares)
 
             div_attackers_lost = oga - int(division_attack_amount)
 
@@ -1796,42 +1825,41 @@ def battle(request, game_id):
                 nation.attacks = 5
                 nation.requests = 10
                 nation.save()
-
-        if division_attack_amount or nuke_defender or boat_attack_type == "amphibious":
-            canvas_width, canvas_height = 1120, 480
+        canvas_width, canvas_height = 1120, 480
 
 
+        try:
+            game = Games.objects.get(id=game_id)
+            map_obj = Map.objects.get(number=game_id, game=game)
+        except (Games.DoesNotExist, Map.DoesNotExist):
+            return bad_request(request, title="User Error", message= "You chose a game that doesn't exsist!")
+        
+        
+        output_path = os.path.join(settings.MEDIA_ROOT, f"AWSDefcon1App/MapChart_Game_{game_id}.png")
+        final_image = Image.open(output_path).convert("RGBA")
+
+        white_image_dir = "AWSDefcon1App/static/AWSDefcon1App/white_image"
+        existing_images = set(os.listdir(white_image_dir))
+
+        for square in changed_squares:
+            print("Changing a Square")
+            filename = f"MapChart_Map.{square.name}.png"
+            if filename not in existing_images:
+                continue
+
+            image_path = os.path.join(white_image_dir, filename)
             try:
-                game = Games.objects.get(id=game_id)
-                map_obj = Map.objects.get(number=game_id, game=game)
-            except (Games.DoesNotExist, Map.DoesNotExist):
-                return bad_request(request, title="User Error", message= "You chose a game that doesn't exsist!")
-            
-            
-            output_path = os.path.join(settings.MEDIA_ROOT, f"AWSDefcon1App/MapChart_Game_{game_id}.png")
-            final_image = Image.open(output_path).convert("RGBA")
-
-            white_image_dir = "AWSDefcon1App/static/AWSDefcon1App/white_image"
-            existing_images = set(os.listdir(white_image_dir))
-
-            for square in changed_squares:
-                filename = f"MapChart_Map.{square.name}.png"
-                if filename not in existing_images:
-                    continue
-
-                image_path = os.path.join(white_image_dir, filename)
-                try:
-                    img = Image.open(image_path).convert("RGBA")
-                    r, g, b = tuple(int(square.color[i:i+2], 16) for i in (1, 3, 5))  # hex to RGB
-                    r_img, _, _, alpha = img.split()
-                    colorized = ImageOps.colorize(r_img, black=(r, g, b), white=(r, g, b))
-                    colorized.putalpha(alpha)
-                    final_image.alpha_composite(colorized)
-                except Exception as e:
-                    print(f"Error processing {filename}: {e}")
-                    continue
-            final_image.save(output_path, optimize=True)
-        return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
+                img = Image.open(image_path).convert("RGBA")
+                r, g, b = tuple(int(square.color[i:i+2], 16) for i in (1, 3, 5))  # hex to RGB
+                r_img, _, _, alpha = img.split()
+                colorized = ImageOps.colorize(r_img, black=(r, g, b), white=(r, g, b))
+                colorized.putalpha(alpha)
+                final_image.alpha_composite(colorized)
+            except Exception as e:
+                print(f"Error processing {filename}: {e}")
+                continue
+        final_image.save(output_path, optimize=True)
+    return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
 
 @login_required(login_url='login')
 def loader(request, game_id, reload):
