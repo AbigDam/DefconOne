@@ -38,7 +38,8 @@
                 <form method="post" action="{% url 'makealliance' game_id=game_id %}" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2);">
                     {% csrf_token %}
                     <input type="hidden" name="selected_nation" id="alliance-input" value="">
-                    <h3 id="offerDisplay" style="text-align: center;">No Nation Selected </h3> 
+                    <h3 id="offerDisplay" style="text-align: center;">No Nation Selected </h3>
+                    <h4 id="offerHostility" style="text-align: center;">Test Hostility</h4> 
                     <div style = "text-align: center;" class="info-bubble"> <span class="info-icon">🛈</span> 
                     <button type="submit" style="display: block; width: 100%; padding: 10px; color: black;  background-color: #000000; border: none; border-radius: 5px; cursor: pointer;"><img src="/static/AWSDefcon1App/Alliance_Offer.png" alt="Offer" style = "height: 100px;"> </button>
                     <span class="tooltip-text">Asks a nation to join your alliance, their chance to join is based on hostility</span> 
@@ -106,9 +107,11 @@
                 output.innerHTML = "Amount: " + slider.value;
         
                 slider.oninput = function() {
-                    output.innerHTML = "Amount: " + this.value;
+                    output.innerHTML = "Amount: " + slider.value;
                 }
             </script>
+
+
             <!-- Canvas in the center -->
                 
             <div style=" text-align: center;">
@@ -261,6 +264,26 @@
                 <input type="hidden" name="defender" id="defender-input" value="">
                 
                 <div style="display: inline-block;">
+
+                <label for="div_attack" style="font-weight: bold;">Active Armies</label><br>
+                <input type="range" id="div_attack" name="div_attack" value="1" min="1" max="{{PlayerAAA.act_divisions}}" style="width: 80%; margin-bottom: 10px;">
+                <br>
+                <span id="div_attack_label">Amount: 1</span><br><br>
+
+                <script>
+                    var div_attack_slider = document.getElementById("div_attack");
+                    var div_attack_output = document.getElementById("div_attack_label");
+
+                    div_attack_output.innerHTML = "Amount: " + div_attack_slider.value;
+
+                    div_attack_slider.oninput = function () {
+                        div_attack_output.innerHTML = "Amount: " + this.value;
+                    };
+                </script>
+
+
+                <div style="display: inline-block;">
+
                 <div class="info-bubble">
                     <button class = "attacker" type="submit" name="action" value="Ndivision">
                         <img src="/static/AWSDefcon1App/Army_man.gif" alt="Normal Ground Attack" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
@@ -275,15 +298,28 @@
                     </button>
                     <figcaption> Encirclement<span class="info-icon">🛈</span> <span class="tooltip-text">Risky attack that could lead to major losses on either side (not both)</span> </div> </figcaption>
                 </div>
+                
+                </div>
+
 
                 <div style="display: inline-block;">
-                <div class="info-bubble">
-                    <button class = "attacker" type="submit" name="action" value="Nplanes">
-                        <img src="/static/AWSDefcon1App/Plane.gif" alt="Attack Their Planes" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" > 
-                    </button>
-                    <figcaption> Planes  Attack<span class="info-icon">🛈</span> <span class="tooltip-text">Destroys some of your enemies planes, risking your own planes</span> </div>  </figcaption>
-                </div>
-                
+
+                <label for="boat_attack" style="font-weight: bold;">Active Boats</label><br>
+                <input type="range" id="boat_attack" name="boat_attack" value="1" min="1" max="{{PlayerAAA.act_boats}}" style="width: 80%; margin-bottom: 10px;">
+                <br>
+                <span id="boat_attack_label">Amount: 1</span><br><br>
+
+                <script>
+                    var boat_attack_slider = document.getElementById("boat_attack");
+                    var boat_attack_output = document.getElementById("boat_attack_label");
+
+                    boat_attack_output.innerHTML = "Amount: " + boat_attack_slider.value;
+
+                    boat_attack_slider.oninput = function () {
+                        boat_attack_output.innerHTML = "Amount: " + this.value;
+                    };
+                </script>
+
                 <div style="display: inline-block;">
                 <div class="info-bubble">
                     <button class = "attacker"  type="submit" name="action" value="Nboat">
@@ -292,6 +328,44 @@
                     <figcaption>Naval Attack<span class="info-icon">🛈</span> <span class="tooltip-text">Destroys some of your enemies boats, risking your own planes</span> </div> </figcaption>
                 </div>
                 
+                <div style="display: inline-block;">
+                <div class="info-bubble">
+                    <button class = "attacker"  type="submit" name="action" value="boat">
+                        <img src="/static/AWSDefcon1App/Naval_invasion.gif" alt="Naval Invasion" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;">
+                    </button>
+                    <figcaption> Naval Landing<span class="info-icon">🛈</span> <span class="tooltip-text">Attempts to take a state bordering the water, a good way to establish a border with someone!</span> </div></figcaption>
+                </div>
+
+                </div>
+
+
+                
+                <div style="display: inline-block;">
+
+                <label for="planes_attack" style="font-weight: bold;">Active Planes</label><br>
+                <input type="range" id="planes_attack" name="planes_attack" value="1" min="1" max="{{PlayerAAA.act_planes}}" style="width: 80%; margin-bottom: 10px;">
+                <br>
+                <span id="planes_attack_label">Amount: 1</span><br><br>
+
+                <script>
+                    var planes_attack_slider = document.getElementById("planes_attack");
+                    var planes_attack_output = document.getElementById("planes_attack_label");
+
+                    planes_attack_output.innerHTML = "Amount: " + planes_attack_slider.value;
+
+                    planes_attack_slider.oninput = function () {
+                        planes_attack_output.innerHTML = "Amount: " + this.value;
+                    };
+                </script>
+
+                <div style="display: inline-block;">
+                <div class="info-bubble">
+                    <button class = "attacker" type="submit" name="action" value="Nplanes">
+                        <img src="/static/AWSDefcon1App/Plane.gif" alt="Attack Their Planes" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" > 
+                    </button>
+                    <figcaption> Planes  Attack<span class="info-icon">🛈</span> <span class="tooltip-text">Destroys some of your enemies planes, risking your own planes</span> </div>  </figcaption>
+                </div>
+
                 <div style="display: inline-block;">
                 <div class="info-bubble">
                     <button class = "attacker" type="submit" name="action" value="planes">
@@ -308,13 +382,6 @@
                     <figcaption> Bomb Boats<span class="info-icon">🛈</span> <span class="tooltip-text">Destroy some of your enemy's boats based on how many planes you have</span> </div> </figcaption>
                 </div>
               
-                <div style="display: inline-block;">
-                <div class="info-bubble">
-                    <button class = "attacker"  type="submit" name="action" value="boat">
-                        <img src="/static/AWSDefcon1App/Naval_invasion.gif" alt="Naval Invasion" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;">
-                    </button>
-                    <figcaption> Naval Landing<span class="info-icon">🛈</span> <span class="tooltip-text">Attempts to take a state bordering the water, a good way to establish a border with someone!</span> </div></figcaption>
-                </div>
 
                 {% if owner.nukes > 0 %}
                 <div style="display: inline-block;">
@@ -324,7 +391,18 @@
                     </button>
                     <figcaption> Drop Nukes<span class="info-icon">🛈</span> <span class="tooltip-text">If you have more than 150% of your enemies planes, then this will nuke them.  If you drop enough nukes they will automatically lose!</span> </div></figcaption>
                 </div>
+
+                {% else %}
+                <div style="display: inline-block;">
+                <div class="info-bubble">
+                    <button class = "attacker" style="pointer-events: none;">
+                        <img src="/static/AWSDefcon1App/Nuke.gif" alt="Nuclear Attack" style="filter: grayscale(100%); border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" > 
+                    </button>
+                    <figcaption>Nukes in {{PlayerAAA.nuke_time}} turns<span class="info-icon">🛈</span> <span class="tooltip-text">In {{PlayerAAA.nuke_time}} you will be able to use Nukes</span> </div></figcaption>
+                </div>
                 {% endif %}
+                </div>
+
             </form>
                       <br> <br>
             </div>   
@@ -368,6 +446,7 @@
                       <img src="/static/AWSDefcon1App/Airplane.png" alt="Air" 
                            style="height: 50px; border: 2px solid #ffffff; border-radius: 5px;">
                   </button>
+                  <label for = "air">Total Planes: {{PlayerAAA.planes}}</label>
                         <span class="info-icon" style="margin-right: 5px;">🛈</span>
                         <span class="tooltip-text" style="font-size: 14px;">Buy 1000 planes for 1 point</span>
                     </div>
@@ -380,6 +459,7 @@
                       <img src="/static/AWSDefcon1App/Gun.png" alt="Army" 
                            style="height: 50px; border: 2px solid #ffffff; border-radius: 5px;">
                   </button>
+                  <label for = "army">Total Armies: {{PlayerAAA.divisions}}</label>
                         <span class="info-icon" style="margin-right: 5px;">🛈</span>
                         <span class="tooltip-text" style="font-size: 14px;">Buy 80 divisions for 1 point</span>
                     </div>
@@ -392,20 +472,9 @@
                       <img src="/static/AWSDefcon1App/Boat.png"alt="Navy" 
                            style="height: 50px; border: 2px solid #ffffff; border-radius: 5px;">
                   </button>
+                  <label for = "navy">Total Boats: {{PlayerAAA.boats}}</label>
                         <span class="info-icon" style="margin-right: 5px;">🛈</span>
                         <span class="tooltip-text" style="font-size: 14px;">Buy 60 boats for 1 point</span>
-                    </div>
-                    </div>
-
-                    <div style="display: flex; flex-direction: column; align-items: flex-start;">
-                    <div class="info-bubble" style="display: flex; align-items: center;">
-                    <button type="submit" name="nuke" value="1" 
-                          style="flex: 1; background: none; border: none; padding: 0; cursor: pointer;">
-                      <img src="/static/AWSDefcon1App/Nukes.png" alt="Nukes" 
-                           style="height: 50px; border: 2px solid #ffffff; border-radius: 5px;">
-                  </button>
-                        <span class="info-icon" style="margin-right: 5px;">🛈</span>
-                        <span class="tooltip-text" style="font-size: 14px;">Lowers Nuke Time/Build Nuke for 1 point</span>
                     </div>
                     </div>
 
@@ -416,8 +485,22 @@
                 <img src="/static/AWSDefcon1App/Spies.png" alt="Air" 
                      style="height: 50px; border: 2px solid #ffffff; border-radius: 5px;">
                 </button>
+                        <label for = "spies">Total Spies: {{PlayerAAA.spies}}</label>
                         <span class="info-icon" style="margin-right: 5px;">🛈</span>
-                        <span class="tooltip-text" style="font-size: 14px;">Buys 1 spy for 1 point</span>
+                        <span class="tooltip-text" style="font-size: 14px;">Buys 1 new Spy</span>
+                    </div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                    <div class="info-bubble" style="display: flex; align-items: center;">
+                    <button type="submit" name="nuke" value="1" 
+                          style="flex: 1; background: none; border: none; padding: 0; cursor: pointer;">
+                      <img src="/static/AWSDefcon1App/Nukes.png" alt="Nukes" 
+                           style="height: 50px; border: 2px solid #ffffff; border-radius: 5px;">
+                  </button>
+                  <label for = "nuke">Total Nukes: {{PlayerAAA.nukes}}</label>
+                        <span class="info-icon" style="margin-right: 5px;">🛈</span>
+                        <span class="tooltip-text" style="font-size: 14px;">Lowers Nuke Time/Build Nuke for 2 points</span>
                     </div>
                     </div>
 
@@ -428,6 +511,7 @@
                       <img src="/static/AWSDefcon1App/Chains.png" alt="Revolt" 
                            style="height: 50px; border: 2px solid #ffffff; border-radius: 5px;">
                   </button>
+                    <label for = "spies">Total Allies: {{num_allies}}</label>
                         <span class="info-icon" style="margin-right: 5px;">🛈</span>
                         <span class="tooltip-text" style="font-size: 14px;">Disband your alliance for 2 points (This is the only way to break an alliance, hence why they can be trusted)</span>
                     </div>
@@ -645,6 +729,7 @@
                 }
                 if(playerA == country || "Ocean" == country){
                     document.getElementById('peace-form').style.display = "none";
+                    offerHostility.textContent = `No Hostility`;
                 }
                 
             } else {
@@ -671,12 +756,13 @@
 
             // Loop through each row in the table
             for (const row of rows) {
-                const name = row.cells[1].textContent.toLowerCase(); // Get text content from the 2nd column (index 1) and convert to lowercase
+                const name = row.cells[0].textContent.toLowerCase(); // Get text content from the 2nd column (index 1) and convert to lowercase
                 console.log(filter); // Debugging: Log the filter value
                 console.log(name); // Debugging: Log the nation name from the table
 
                 if (name === filter) {
                     row.style.display = "table-row"; // Show matching row
+                    offerHostility.textContent = `Hostility: ${row.cells[5].textContent.toLowerCase()}`;
                 } else {
                     row.style.display = "none"; // Hide non-matching rows
                 }
@@ -719,6 +805,7 @@
                 }
                 if(playerA == country || "Ocean" == country){
                     document.getElementById('peace-form').style.display = "none";
+                    offerHostility.textContent = `No Hostility`;
                 }
                 
             } else {
@@ -741,16 +828,17 @@
             
             const filter = country.toLowerCase(); // Convert country to lowercase for case-insensitive comparison
             const nationsTable = document.getElementById('nationsTable'); // Reference the table element
+            const offerHostility = document.getElementById('offerHostility');
             const rows = nationsTable.getElementsByTagName('tbody')[0].getElementsByTagName('tr'); // Get all rows from the table body
-
             // Loop through each row in the table
             for (const row of rows) {
-                const name = row.cells[1].textContent.toLowerCase(); // Get text content from the 2nd column (index 1) and convert to lowercase
+                const name = row.cells[0].textContent.toLowerCase(); // Get text content from the 2nd column (index 1) and convert to lowercase
                 console.log(filter); // Debugging: Log the filter value
                 console.log(name); // Debugging: Log the nation name from the table
 
                 if (name === filter) {
                     row.style.display = "table-row"; // Show matching row
+                    offerHostility.textContent = `Hostility: ${row.cells[5].textContent.toLowerCase()}`;
                 } else {
                     row.style.display = "none"; // Hide non-matching rows
                 }
@@ -820,6 +908,7 @@
             }
             if(playerA == country || "Ocean" == country){
                 document.getElementById('peace-form').style.display = "none";
+                offerHostility.textContent = `No Hostility`;
             }
             
         } else {
@@ -846,12 +935,13 @@
 
         // Loop through each row in the table
         for (const row of rows) {
-            const name = row.cells[1].textContent.toLowerCase(); // Get text content from the 2nd column (index 1) and convert to lowercase
-            console.log(filter); // Debugging: Log the filter value
-            console.log(name); // Debugging: Log the nation name from the table
+            const name = row.cells[0].textContent.toLowerCase(); // Get text content from the 2nd column (index 1) and convert to lowercase
+            console.log("filter:" + filter); // Debugging: Log the filter value
+            console.log("name:" + name); // Debugging: Log the nation name from the table
 
             if (name === filter) {
                 row.style.display = "table-row"; // Show matching row
+                offerHostility.textContent = `Hostility: ${row.cells[5].textContent.toLowerCase()}`;
             } else {
                 row.style.display = "none"; // Hide non-matching rows
             }
@@ -867,31 +957,30 @@
 
 <table id="nationsTable" class="table table-striped table-sm" style="display: none;">
     <thead>
-        <tr>
-            {% if single_player %}
-            <th scope="col"><div class="info-bubble">Player<span class="info-icon">🛈</span> <span class="tooltip-text">Username</span> </div></th>
-            {% endif %}            
+        <tr>         
             <th scope="col"><div class="info-bubble">Name<span class="info-icon">🛈</span> <span class="tooltip-text">Name of Country</span> </div> </th>
             <th scope="col"><div class="info-bubble">States<span class="info-icon">🛈</span> <span class="tooltip-text">Amount of Land</span> </div> </th>
             <th scope="col"><div class="info-bubble">Alliance Name<span class="info-icon">🛈</span> <span class="tooltip-text">Name of Alliance (None indicates no alliance)</span> </div> </th>
             <th scope="col"><div class="info-bubble">Times Nuked<span class="info-icon">🛈</span> <span class="tooltip-text">Number of times they have been nuked</span> </div> </th>
             <th scope="col"><div class="info-bubble">Attacks Left<span class="info-icon">🛈</span> <span class="tooltip-text">Ammount of attacks left in the turn</span> </div> </th>
             <th scope="col"><div class="info-bubble">Hostility<span class="info-icon">🛈</span> <span class="tooltip-text">Determined by How much aid you've given them, and determines things like "ask for aid" and "ask to be allies"</span> </div> </th>
+            {% if single_player %}
+            <th scope="col"><div class="info-bubble">Player<span class="info-icon">🛈</span> <span class="tooltip-text">Username</span> </div></th>
+            {% endif %}   
         </tr>
     </thead>
     <tbody>
         {% for nation in nations %}
         <tr>
-            {% if single_player %}
-            <td scope="row">{{ nation.user.username }}</td>
-            {% endif %}
-
             <td scope="row">{{ nation.name }}</td>
             <td scope="row">{{ nation.states }}</td>
             <td scope="row">{{ nation.alliance_name }}</td>
             <td scope="row">{{ nation.nuked }}</td>
             <td scope="row">{{ nation.attacks }}</td>
             <td scope="row">{{ nation.friendlyness }}</td>
+            {% if single_player %}
+            <td scope="row">{{ nation.user.username }}</td>
+            {% endif %}
         </tr>
         {% endfor %}
     </tbody>
