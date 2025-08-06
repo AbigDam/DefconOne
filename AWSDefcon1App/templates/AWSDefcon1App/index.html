@@ -52,7 +52,7 @@
 
   </div>
   {% if not games %}
-<p style="text-align:center; color: grey; font-size: 1.2em; margin-top: 2rem;">No lobbies open right now.</p>
+<p style="text-align:center; color: grey; font-size: 1.2em; margin-top: 2rem;">No lobbies open right now. <a href="{% url 'game_maker_redirrect' %}">Make a new lobby here</a></p>
 {% endif%}
 <h2 style="text-align: center;">Leaderboards</h2>
         <style>
