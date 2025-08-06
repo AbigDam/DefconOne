@@ -117,10 +117,11 @@
             <div style=" text-align: center;">
                 
                 <div id="loading">
-                    <img src="/static/AWSDefcon1App/Loading.gif" alt="Loading..." style="width: 1120px; height: 480px;">
-                    <canvas style="width: 1120px; height: 480px; background-color: rgba(255,255,255,);"> <img src="/static/AWSDefcon1App/Loading.gif" alt="Loading..." style="width: 1120px; height: 480px;"></canvas>
+                    <img src="/static/AWSDefcon1App/Loading.gif" alt="Loading..." style="width: 1024px; height: 439px;">
+                    <canvas style="width: 1024px; height: 439px; background-color: rgba(255,255,255,);"> <img src="/static/AWSDefcon1App/Loading.gif" alt="Loading..." style="width: 1024px; height: 439px;"></canvas>
                 </div>
-                
+                <h3> <a href="{% url 'loader' game_id=game_id reload=1%}" class="reload-map-button">↻ Reload Map</a></h3>
+
                 <div style="display: none;" id="canvasContainer">
                     <canvas id="canvas" style="background-color:#87ceeb;"></canvas> 
                         
@@ -140,7 +141,7 @@
                             <br>
                         </div>
                         <h3> 
-                        <div style="text-align: center;" id="colorDisplay"> <a href="{% url 'loader' game_id=game_id reload=1%}" class="reload-map-button">↻ Reload Map</a> </div>
+                        <div style="text-align: center;" id="colorDisplay">  </div>
                         </h3>
                         </div>
                         <style>
@@ -571,8 +572,8 @@
         <script> 
             const canvas = document.getElementById('canvas');
             const ctx = canvas.getContext('2d');
-            canvas.width = 1120;
-            canvas.height = 480;
+            canvas.width = 1024;
+            canvas.height = 439;
             const colorDisplay = document.getElementById('colorDisplay');
         
         
