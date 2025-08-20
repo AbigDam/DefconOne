@@ -78,7 +78,7 @@
                             <input type="hidden" name="send_type" id="send_type" value="">
                         
                             <label for="amount" style="font-weight: bold;">Enter Percent:</label><br>
-                            <input type="range" id="amount" name="amount" value="1"  min="1" max="100" style="width: 80%; margin-bottom: 10px;">
+                            <input type="range" id="amount" name="amount" value="1"  min="0" max="100" style="width: 80%; margin-bottom: 10px;">
                             <br>
                             <span id="amount_label">Amount: 1</span><br><br>
                         
@@ -267,7 +267,7 @@
                 <div style="display: inline-block;">
 
                 <label for="div_attack" style="font-weight: bold;">Active Armies</label><br>
-                <input type="range" id="div_attack" name="div_attack" value="1" min="1" max="{{PlayerAAA.act_divisions}}" style="width: 80%; margin-bottom: 10px;">
+                <input type="range" id="div_attack" name="div_attack" value="1" min="0" max="{{PlayerAAA.act_divisions}}" style="width: 80%; margin-bottom: 10px;">
                 <br>
                 <span id="div_attack_label">Amount: 1</span><br><br>
 
@@ -306,7 +306,7 @@
                 <div style="display: inline-block;">
 
                 <label for="boat_attack" style="font-weight: bold;">Active Boats</label><br>
-                <input type="range" id="boat_attack" name="boat_attack" value="1" min="1" max="{{PlayerAAA.act_boats}}" style="width: 80%; margin-bottom: 10px;">
+                <input type="range" id="boat_attack" name="boat_attack" value="1" min="0" max="{{PlayerAAA.act_boats}}" style="width: 80%; margin-bottom: 10px;">
                 <br>
                 <span id="boat_attack_label">Amount: 1</span><br><br>
 
@@ -344,7 +344,7 @@
                 <div style="display: inline-block;">
 
                 <label for="planes_attack" style="font-weight: bold;">Active Planes</label><br>
-                <input type="range" id="planes_attack" name="planes_attack" value="1" min="1" max="{{PlayerAAA.act_planes}}" style="width: 80%; margin-bottom: 10px;">
+                <input type="range" id="planes_attack" name="planes_attack" value="1" min="0" max="{{PlayerAAA.act_planes}}" style="width: 80%; margin-bottom: 10px;">
                 <br>
                 <span id="planes_attack_label">Amount: 1</span><br><br>
 
