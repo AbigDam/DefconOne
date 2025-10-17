@@ -1805,9 +1805,10 @@ def battle(request, game_id):
                 elif states < 200:
                     mult = 1.4
                 elif states < 250:
-                    mult = 1
+                    mult = 1 
                 else:
-                    mult = 0.8  # You may want to penalize huge nations? Optional.
+                    mult = 1
+                    states = 250
 
                 # Apply production values
                 nation.divisions += int(states * mult)
@@ -2146,7 +2147,6 @@ def map(request, game_id):
     allowed_list = [request.user.username, 'loser', 'closed', 'empty']
     single_player = Nations.objects.filter(game=game_id).exclude(user__username__in=allowed_list).exists()
 
-
     # Get active nations
     kill_list = list(
         Nations.objects.filter(
@@ -2249,6 +2249,14 @@ def map(request, game_id):
     announce = Announcements.objects.filter(game=game_id).order_by('-start_time').first()
     alliances = MakeAlliance.objects.filter(nation2__user=request.user)
 
+    loser_user = User.objects.get(username="loser")
+    empty_user = User.objects.get(username="empty")
+    closed_user = User.objects.get(username="closed")
+
+    active_nations = list(Nations.objects.filter(game=game_id).exclude(attacks=0).exclude(user__in=[loser_user, empty_user, closed_user]).exclude(user=None).values_list("name", flat=True))
+    if owner.name in active_nations:
+        active_nations = []
+
     non_loser_nation = Nations.objects.get(game = game_id, user = request.user)
     if non_loser_nation.nukes == 200 or non_loser_nation.nukes > 200 and non_loser_nation.user.id not in Achievements.objects.get(name = "Defcon1").users:
         achievement = Achievements.objects.get(name="Defcon1")
@@ -2287,7 +2295,7 @@ def map(request, game_id):
 
     path = f"/media/AWSDefcon1App/MapChart_Game_{game_id}.png?v={version}"
 
-    return render(request, "AWSDefcon1App/JSMap.html",{"game_id":game_id,'num_allies':num_allies,'path':path,'single_player':single_player, 'kill_list':kill_list, 'nation_list':nation_list, 'PlayerAAA':PlayerAAA,'alliances':alliances, 'nation_name_at_war':nation_name_at_war, 'nations_at_war':nations_at_war,'attacks_left':attacks_left, 'owner':owner, "requesters":requesters, "knownnations":knownnations, 'announce':announce, 'nations':nations})
+    return render(request, "AWSDefcon1App/JSMap.html",{"game_id":game_id, 'active_nations':active_nations, 'num_allies':num_allies,'path':path,'single_player':single_player, 'kill_list':kill_list, 'nation_list':nation_list, 'PlayerAAA':PlayerAAA,'alliances':alliances, 'nation_name_at_war':nation_name_at_war, 'nations_at_war':nations_at_war,'attacks_left':attacks_left, 'owner':owner, "requesters":requesters, "knownnations":knownnations, 'announce':announce, 'nations':nations})
 
     
 def makegame(request,game_id):
