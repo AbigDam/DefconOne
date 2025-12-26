@@ -46,11 +46,11 @@ CHANNEL_LAYERS = {
         "CONFIG": {
             "hosts": [
                 (
-                    os.environ.get("REDIS_HOST"),       # host from Railway env
-                    int(os.environ.get("REDIS_PORT"))   # port from Railway env
+                    os.environ.get("REDISHOST"),       # host from Railway env
+                    int(os.environ.get("REDISPORT"))   # port from Railway env
                 )
             ],
-            "password": os.environ.get("REDIS_PASSWORD"), # password from Railway env
+            "password": os.environ.get("REDISPASSWORD"), # password from Railway env
         },
     },
 }
