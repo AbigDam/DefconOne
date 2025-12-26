@@ -181,17 +181,6 @@ document.addEventListener('DOMContentLoaded', function() {
     <li class="{% if request.path|slice:':5' == '/map/' %}active{% else %}nav-item{% endif %}">
       <a class="nav-link" href="{% url 'map' game_id=game_id %}">Map</a>
         </li>
-      <li class="{% if request.path|slice:':6' == '/game/' %}active{% else %}nav-item{% endif %}">
-        <a class="nav-link" href="{% url 'game' game_id=game_id %}">Statistics</a>
-      </li>
-      <li class="{% if request.path|slice:':14' == '/announcement/' %}active{% else %}nav-item{% endif %}">
-        <a class="nav-link" href="{% url 'announcement' game_id=game_id %}">History</a>
-      </li>
-        {% if single_player %}
-      <li class="{% if request.path|slice:':7' == '/users/' %}active{% else %}nav-item{% endif %}">
-        <a class="nav-link" href="{% url 'user_list' game_id=game_id %}">Message</a>
-      </li>
-      {% endif %}
   </ul>
 {% endif %}
 

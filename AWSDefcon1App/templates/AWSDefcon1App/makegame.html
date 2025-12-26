@@ -1,7 +1,7 @@
 {% extends "AWSDefcon1App/layout.html" %}
 
 {% block title %}
-Select Countries
+Configure Player Slots
 {% endblock %}
 
 {% block body %}
@@ -15,7 +15,7 @@ Select Countries
     }
 
     .form-container {
-        max-width: 700px;
+        max-width: 760px;
         margin: 50px auto;
         padding: 30px;
         background-color: #1e1e1e;
@@ -25,53 +25,73 @@ Select Countries
 
     h2 {
         text-align: center;
-        font-size: 1.8em;
-        margin-bottom: 30px;
+        font-size: 1.9em;
+        margin-bottom: 10px;
         color: #90caf9;
     }
 
+    .subtitle {
+        text-align: center;
+        font-size: 1.05em;
+        color: #bbbbbb;
+        margin-bottom: 25px;
+    }
+
     .section-title {
-        margin-top: 30px;
+        margin-top: 35px;
         font-size: 1.3em;
         color: #ffffff;
         border-bottom: 1px solid #444;
-        padding-bottom: 5px;
+        padding-bottom: 6px;
+    }
+
+    .section-description {
+        margin-top: 10px;
+        font-size: 0.95em;
+        color: #aaaaaa;
     }
 
     .checkbox-group {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-around;
-        margin-top: 20px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 18px;
+        margin-top: 25px;
     }
 
     .checkbox-item {
-        flex: 0 0 48%;
-        margin-bottom: 20px;
-        font-size: 1.2em;
+        font-size: 1.15em;
         display: flex;
         align-items: center;
         color: #dddddd;
+        background-color: #252525;
+        padding: 12px 14px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+    .checkbox-item:hover {
+        background-color: #2e2e2e;
     }
 
     .checkbox-item input[type="checkbox"] {
-        transform: scale(1.5);
-        margin-right: 10px;
+        transform: scale(1.4);
+        margin-right: 12px;
         cursor: pointer;
     }
 
     .submit-section {
         text-align: center;
-        margin-top: 30px;
+        margin-top: 40px;
     }
 
     button.attacker {
         background-color: #2196f3;
         color: white;
-        padding: 12px 30px;
-        font-size: 1.2em;
+        padding: 14px 36px;
+        font-size: 1.25em;
         border: none;
-        border-radius: 8px;
+        border-radius: 10px;
         cursor: pointer;
         transition: background-color 0.3s ease, transform 0.2s ease;
     }
@@ -81,51 +101,110 @@ Select Countries
         transform: scale(1.05);
     }
 
-    .info-bubble {
-        margin-top: 15px;
-        font-size: 0.95em;
-        color: #aaaaaa;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .info-icon {
-        margin-right: 8px;
-        font-size: 1.2em;
-    }
-
-    p {
+    .legend {
+        margin-top: 20px;
+        font-size: 0.9em;
+        color: #9e9e9e;
         text-align: center;
-        color: #bbb;
-        margin-bottom: 10px;
     }
-
 </style>
 
 <div class="form-container">
-    <h2>Select Your Countries</h2>
-    <p>{{ Message }}</p>
+    <h2>Nation Configuration</h2>
+    <div class="subtitle">
+        Choose which nations are <strong>open for human players</strong>.<br>
+        Any nation <strong>not selected</strong> will be controlled by the <strong>AI</strong>.<br>
+        Select <strong>one nation</strong> for single player
+    </div>
+
+    <p style="text-align:center;">{{ Message }}</p>
 
     <form method="POST" action="{% url 'makegame' game_id=game_id %}">
         {% csrf_token %}
 
-        <div class="section-title">Playable Nations (Unselected nations will be bots)</div>
-        <div class="checkbox-group">
-            <label class="checkbox-item"><input type="checkbox" name="countries" value="UK"> 🇬🇧 UK</label>
-            <label class="checkbox-item"><input type="checkbox" name="countries" value="USA"> 🇺🇸 USA</label>
-            <label class="checkbox-item"><input type="checkbox" name="countries" value="France"> 🇫🇷 France</label>
-            <label class="checkbox-item"><input type="checkbox" name="countries" value="USSR"> ☭ USSR</label>
-            <label class="checkbox-item"><input type="checkbox" name="countries" value="Germany"> 🇩🇪 Germany</label>
-            <label class="checkbox-item"><input type="checkbox" name="countries" value="Italy"> 🇮🇹 Italy</label>
-            <label class="checkbox-item"><input type="checkbox" name="countries" value="Japan"> 🇯🇵 Japan</label>
-            <label class="checkbox-item"><input type="checkbox" name="countries" value="Cuba"> 🗺️ All Other Nations</label>
+        <div class="section-description">
+            Each checked nation becomes an available slot that a real player can join.
+            Leaving a nation unchecked assigns it an AI controller.
+        </div>
+
+<div class="checkbox-group">
+    <label class="checkbox-item">
+        <input type="checkbox" name="countries" value="UK">
+        🇬🇧 United Kingdom
+    </label>
+
+    <label class="checkbox-item">
+        <input type="checkbox" name="countries" value="USA">
+        🇺🇸 United States
+    </label>
+
+    <label class="checkbox-item">
+        <input type="checkbox" name="countries" value="France">
+        🇫🇷 France
+    </label>
+
+    <label class="checkbox-item">
+        <input type="checkbox" name="countries" value="Germany">
+        🇩🇪 Germany
+    </label>
+
+    <label class="checkbox-item">
+        <input type="checkbox" name="countries" value="USSR">
+        ☭ Soviet Union (USSR)
+    </label>
+
+    <label class="checkbox-item">
+        <input type="checkbox" name="countries" value="Italy">
+        🇮🇹 Italy
+    </label>
+
+    <label class="checkbox-item">
+        <input type="checkbox" name="countries" value="Japan">
+        🇯🇵 Japan
+    </label>
+
+    <label class="checkbox-item">
+        <input type="checkbox" name="countries" value="China">
+        🇹🇼 China
+    </label>
+
+    <label class="checkbox-item">
+        <input type="checkbox" name="countries" value="PRC">
+        🇨🇳 Communist China
+    </label>
+
+    <label class="checkbox-item">
+        <input type="checkbox" name="countries" value="Brazil">
+        🇧🇷 Brazil
+    </label>
+
+    <label class="checkbox-item">
+        <input type="checkbox" name="countries" value="Cuba">
+        🇨🇺 Cuba
+    </label>
+
+    <label class="checkbox-item">
+        <input type="checkbox" name="countries" value="Other">
+        🌍 All Other Minor Nations (AI if unchecked)
+    </label>
+</div>
+
+        <div class="legend">
+            ✔ Checked = Open for players &nbsp;&nbsp;|&nbsp;&nbsp; ▫️ Unchecked = AI-controlled
         </div>
 
         <div class="submit-section">
-            <button class="attacker" type="submit">Submit</button>
+            <button class="attacker" type="submit">
+                Create Lobby
+            </button>
         </div>
     </form>
+
+    <div class="subtitle">
+        <br> Not looking to make a new lobby? <br>
+        Search for open lobies <a href = "{% url 'full_index' %}">here</a>
+    </div>
+
 </div>
 
 <script>
@@ -153,36 +232,28 @@ Select Countries
         document.body.appendChild(gifContainer);
 
         document.addEventListener('click', (event) => {
-            const target = event.target;
-            if (target.classList.contains('attacker') || target.closest('button.attacker')) {
+            if (event.target.closest('button.attacker')) {
                 gifContainer.style.display = 'flex';
                 setTimeout(() => {
                     gifContainer.style.display = 'none';
                 }, 20000);
             }
         });
-
-        document.addEventListener('submit', (event) => {
-            const target = event.target;
-            if (target.classList.contains('attacker')) {
-                gifContainer.style.display = 'flex';
-            }
-        });
     });
 </script>
 
 <div class="tutorial-widget">
-  <input type="checkbox" id="tutorial-toggle" hidden>
-  <label for="tutorial-toggle" class="tutorial-button">❔</label>
-  <div class="tutorial-content">
-    <h4>How to Play</h4>
-    <p>
-      Making You're Lobby<br><br>
-      • If this is you're first lobby, I suggest only selecting Japan for a single-player tutorial experience<br>
-      • If you want to play with friends, make sure you ask them what countries they want to play as so you can unlock them here<br>
-      • If you just want to play online, unlock every country, and only disable overpower ones like USSR<br>
-      Enjoy!
-    </p>
-  </div>
+    <input type="checkbox" id="tutorial-toggle" hidden>
+    <label for="tutorial-toggle" class="tutorial-button">❔</label>
+    <div class="tutorial-content">
+        <h4>Lobby Setup Tips</h4>
+        <p>
+            • You are deciding which nations are controlled by humans.<br><br>
+            • For a solo tutorial, open only one nation (Japan is recommended).<br><br>
+            • For multiplayer, coordinate with friends before opening slots.<br><br>
+            • Leaving powerful nations unchecked (e.g. USSR) can help balance games.<br><br>
+            Unselected nations will always be AI-controlled.
+        </p>
+    </div>
 </div>
 {% endblock %}

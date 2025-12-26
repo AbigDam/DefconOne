@@ -1,7 +1,7 @@
 from django.contrib.auth import authenticate, login, logout
 from django.conf import settings
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect,HttpResponseBadRequest,FileResponse, Http404
+from django.http import HttpResponse, HttpResponseRedirect,HttpResponseBadRequest,FileResponse, Http404, JsonResponse
 from django.urls import reverse
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
@@ -24,6 +24,8 @@ import base64
 import io
 import re
 import mimetypes
+from .utils import refresh_all
+from collections import deque
 
 
 
@@ -211,6 +213,7 @@ def passer(request, game_id):
             nation.attacks = 5
             nation.requests = 10
             nation.save()
+    refresh_all()
     return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
 
 
@@ -336,6 +339,7 @@ def announcemnts(request, game_id):
 
 @login_required  
 def beg(request, game_id):
+  refresh_all()
   PlayerAAA = Nations.objects.get(game=game_id, user=request.user)
   user = request.user
   alliance = Nations.objects.get(game = game_id, user = user).alliance_name
@@ -348,7 +352,7 @@ def beg(request, game_id):
         PlayerAAA.requests -= 1
         PlayerAAA.save()
         announcements = Announcements.objects.create(text =f"No nation has given aid to {PlayerAAA.name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
-        return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
+    return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
   else:
     allies = Nations.objects.filter(game = game_id, alliance_name = alliance, player_number__gt=7).filter( Q(user__username='empty') | Q(user__username='closed'))
   ally_num = len(allies)
@@ -422,6 +426,7 @@ def beg(request, game_id):
     # Get the player's nation
     playernation = Nations.objects.filter(game=game_id, user=request.user).first()
     knownnations = Nations.objects.filter(game=game_id, alliance_name=playernation.alliance_name)
+    refresh_all()
     return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
   player = Nations.objects.get(game = game_id, user = user)
   user = request.user
@@ -822,7 +827,7 @@ def register(request):
                 "message": "Username already taken."
             })
         login(request, user)
-        return HttpResponseRedirect(reverse("full_index"))
+        return HttpResponseRedirect(reverse("game_maker_redirrect"))
     else:
         return render(request, "AWSDefcon1App/register.html")
     
@@ -910,9 +915,11 @@ def focus(request, game_id):
           player.save()
     player = Nations.objects.get(game = game_id, user = request.user)
     points = player.points
+    refresh_all()
     return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
 
 def spies(request, game_id):
+    refresh_all()
     PlayerAAA = Nations.objects.get(game=game_id, user=request.user)
     if request.method == 'POST':
         get = request.POST.get("get")
@@ -933,6 +940,7 @@ def spies(request, game_id):
         if enemy.spies < 1:
             nations = Nations.objects.filter(game = game_id).exclude(user = User.objects.get(username = "loser")).exclude(user = request.user)
             requesters = player.requests
+            refresh_all()
             return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
         if get:
             chance = player.spies/((enemy.spies * 1) + 1)
@@ -1104,6 +1112,7 @@ def spies(request, game_id):
             print(f"Error processing {filename}: {e}")
             continue
     final_image.save(output_path, optimize=True)
+    refresh_all()
     return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
 
 @login_required(login_url='login')
@@ -1116,13 +1125,16 @@ def join(request, game_id, player_number):
         nation, created = Nations.objects.get_or_create(game=game, player_number=player_number)
         nation.user = request.user
         nation.save()
-        return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
+    refresh_all()
+    return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
     
     make_game = True
     return render(request, 'AWSDefcon1App/join.html', {'game_id': game_id, 'player_number': player_number, 'make_game':make_game})
 
 @login_required(login_url='login')
 def battle(request, game_id):
+    refresh_all()
+
     # Prefetch related objects early to avoid redundant queries
     game = Games.objects.select_related().get(id=game_id)
     map_instance = Map.objects.select_related().get(game=game)
@@ -1167,13 +1179,16 @@ def battle(request, game_id):
         })
 
     elif request.method == 'POST':
+
+
         if attacks_left <= 0:
             return bad_request(request, title="User Error", message= "You have already fought all your battles for the day. Please click the back button to return to the game")
             
         changed_squares = []
         owner.attacks -= 1
         owner.save()
-        
+
+        singleFront = request.POST.get('front_name').replace(" front", "")
         boat_defender = request.POST.get('defender')
         planes_defender = request.POST.get('defender')
         division_defender = request.POST.get('defender')
@@ -1275,21 +1290,32 @@ def battle(request, game_id):
             if boat_attack_type == "amphibious":
                 owner = owner.name
                 if ogab > ogdb:
-                    announcements = Announcements.objects.create(text =f"{owner} has landed on the beaches of {boat_defender}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
                     O_border_squares = Square.objects.filter(map = Map.objects.get(game=game_id), coastal = True, owner = Nations.objects.get(game = game_id, name = boat_defender))
                     length  = len(O_border_squares) - 1
-                    try:
-                        fallen_state = O_border_squares[random.randint(1, length)]
-                    except:
-                        try:
-                            fallen_state = O_border_squares[0]
-                        except:
+
+                    if singleFront != "":
+                        fallen_state =  Square.objects.get(map = Map.objects.get(game=game_id), name= singleFront)
+                        if fallen_state.coastal == False:
+                            announcements = Announcements.objects.create(text =f"{owner} has failed to land on the beaches of {boat_defender} due to pathing issues", start_time = datetime.now(), game = Games.objects.get(id = game_id))
                             owners = Nations.objects.get(game=game_id, user = request.user)
                             owners.attacks += 1
+                            owner.act_boats += int(request.POST.get("boat_attack"))
                             owners.save()
-                            return bad_request(request, title="User Error", message= "Boats can't reach! There doesn't seem to be a way for your boats to reach you're enemy.  A battle wasn't used as you didn't know! Please click the back button to return to the game")
+                            return bad_request(request, title="User Error", message= "Boats can't reach! There doesn't seem to be a way for your boats to reach the selected tile.  A battle wasn't used! Please click the back button to return to the game")                            
+                    else:
+                        try:
+                            fallen_state = O_border_squares[random.randint(1, length)]
+                        except:
+                            try:
+                                fallen_state = O_border_squares[0]
+                            except:
+                                owners = Nations.objects.get(game=game_id, user = request.user)
+                                owners.attacks += 1
+                                owner.act_boats += int(request.POST.get("boat_attack"))
+                                owners.save()
+                                return bad_request(request, title="User Error", message= "Boats can't reach! There doesn't seem to be a way for your boats to reach your enemy.  A battle wasn't used as you didn't know! Please click the back button to return to the game")
 
-                            
+                    announcements = Announcements.objects.create(text =f"{owner} has landed on the beaches of {boat_defender}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
                     fallen_state.owner = Nations.objects.get(game=game_id, user=request.user)
                     owner = Nations.objects.get(game=game_id, user=request.user)
                     color = colors.get(owner.name)
@@ -1328,7 +1354,6 @@ def battle(request, game_id):
                         boat_attack_amount = int(boat_attack_amount) - int(boat_defend_amount)*0.1
 
 
-        
         if planes_attack_amount:
             owner = owner.name
             if int(planes_attack_amount) > Nations.objects.get(game=game_id, user=request.user).planes:
@@ -1464,6 +1489,8 @@ def battle(request, game_id):
                     War.objects.filter(Q(nation1=enemy) | Q(nation2=enemy)).delete()
             else:
                 announcements = Announcements.objects.create(text =f"{owner} has failed to use nuclear weapons against {planes_defender}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
+        
+        
         if division_attack_amount:
             # Fetch attacker and defender nations only once
             attacker_nation = Nations.objects.get(game=game_id, user=request.user)
@@ -1511,147 +1538,202 @@ def battle(request, game_id):
             state_changeA = (oga - division_attack_amount) // 10
             state_changeD = (ogd - division_attack_amount) // 10
 
-            
             ## Offensive Wins 
             if state_changeD < state_changeA:
-                print("Offesnive Wins")
-                state_change = min(state_changeA - state_changeD, 15)
-
                 owner = Nations.objects.select_related("game").get(game=game_id, user=request.user)
                 defender = Nations.objects.get(game=game_id, name=division_defender)
-                game = Games.objects.only("id").get(id=game_id)
-                map_obj = Map.objects.only("id").get(game=game)
+                map_obj = Map.objects.only("id").get(game__id=game_id)
 
-                owner_alliance = owner.alliance_name
-
-                # If the defender is in an alliance, get all nations in the same alliance (excluding empty/closed/loser if needed)
-                if owner_alliance:
-                    allies = Nations.objects.filter(game=game_id, alliance_name=owner_alliance)
+                # Allies
+                if owner.alliance_name:
+                    allies = list(Nations.objects.filter(game=game_id, alliance_name=owner.alliance_name))
                 else:
-                    # Defender is not in an alliance — only they count as their own ally
-                    allies = Nations.objects.filter(pk=owner.pk)
+                    allies = [owner]
 
-                # Now fetch all squares owned by these allies
-                owned_squares = Square.objects.filter(owner__in=allies, map=map_obj).only("number") 
-                controlled_numbers = set(sq.number for sq in owned_squares)
-
-                # Pre-fetch all neighbor squares to reduce queries
-                all_squares = Square.objects.filter(map=map_obj).only("number", "owner", "color", "neighbors")
+                all_squares = Square.objects.filter(map=map_obj).only("id", "number", "owner", "color", "neighbors")
                 square_dict = {sq.number: sq for sq in all_squares}
 
-                captured = 0
-                max_iterations = len(controlled_numbers) * 2  # Same logic as stater = states * 2
-                iterations = 0
-                attacker_color = colors.get(owner.name)
+                # Controlled squares
+                controlled_squares = [sq for sq in square_dict.values() if sq.owner_id in [ally.id for ally in allies]]
+                controlled_numbers = set(sq.number for sq in controlled_squares)
 
-                for num in controlled_numbers:
-                    if iterations > max_iterations or captured >= state_change:
-                        break
-
-                    square = square_dict.get(num)
-                    if not square or not square.neighbors:
+                # Identify border squares: controlled by allies and bordering at least one defender square
+                border_squares = []
+                for sq in controlled_squares:
+                    if not sq.neighbors:
                         continue
-
-                    for neighbor_num in square.neighbors:
+                    for neighbor_num in sq.neighbors:
                         neighbor = square_dict.get(neighbor_num)
-                        if not neighbor or neighbor.owner_id != defender.id:
+                        if neighbor and neighbor.owner_id == defender.id:
+                            border_squares.append(sq)
+                            break  # stop at first defender neighbor
+
+                # Determine start square
+                # Ensure singleFront is a non-empty string after stripping whitespace
+                if singleFront and singleFront.strip():
+                    try:
+                        front_square = Square.objects.get(map=map_obj, name=singleFront.strip())
+
+                        # Only include neighbors that are actually controlled
+                        controlled_neighbors = [
+                            square_dict[n] for n in getattr(front_square, 'neighbors', []) 
+                            if n in controlled_numbers
+                        ]
+
+                        if controlled_neighbors:
+                            start_square = random.choice(controlled_neighbors)
+                        elif border_squares:
+                            start_square = random.choice(border_squares)
+                        else:
+                            # Fallback: pick any controlled square
+                            start_square = random.choice(list(square_dict.values()))
+
+                    except Square.DoesNotExist:
+                        start_square = random.choice(border_squares)
+                else:           
+                    start_square = random.choice(border_squares)
+   
+                # Expansion parameters
+                state_change = min(state_changeA - state_changeD, 15)
+                attacker_color = colors.get(owner.name)
+                captured = 0
+                max_attempts = 1000  # hard cap to prevent infinite loops
+                attempts = 0
+                changed_squares = []
+
+                # Use a simple queue for expansion, but cap iterations
+                queue = [start_square]
+                visited = set([start_square.number])
+
+                while queue and captured < state_change and attempts < max_attempts:
+                    sq = queue.pop(0)
+                    for neighbor_num in sq.neighbors:
+                        if neighbor_num in visited:
                             continue
+                        neighbor = square_dict.get(neighbor_num)
+                        if neighbor and neighbor.owner_id == defender.id:
+                            # Capture
+                            neighbor.owner = owner
+                            neighbor.color = attacker_color
+                            changed_squares.append(neighbor)
+                            owner.states += 1
+                            defender.states -= 1
+                            captured += 1
+                            queue.append(neighbor)
+                        visited.add(neighbor_num)
+                    attempts += 1
 
-                        # Capture square
-                        neighbor.owner = owner
-                        neighbor.color = attacker_color
-                        changed_squares.append(neighbor)
-                        neighbor.save()
-
-                        # Adjust nation stats
-                        owner.states += 1
-                        defender.states -= 1
-                        captured += 1
-
-                        if captured >= state_change:
-                            break
-                    
-                    iterations += 1
-                
+                # Bulk save squares
+                Square.objects.bulk_update(changed_squares, ["owner", "color"])
                 owner.save()
                 defender.save()
 
             ## Defensive Wins
             elif state_changeD >= state_changeA:
                 print("Defensive Wins")
-                game = Games.objects.only("id").get(id=game_id)
-                map_obj = Map.objects.only("id").get(game=game)
 
                 defender = Nations.objects.select_related("game").get(game=game_id, name=division_defender)
                 attacker = Nations.objects.get(game=game_id, user=request.user)
-                # Precompute state-change attempts
+                map_obj = Map.objects.only("id").get(game__id=game_id)
+
                 max_swaps = 10
-                stater = defender.states * 3
+                stater = defender.states * 3  # iteration limit
 
-                # Squares owned by defender
-                defender_alliance = defender.alliance_name
-
-                # If the defender is in an alliance, get all nations in the same alliance (excluding empty/closed/loser if needed)
-                if defender_alliance:
-                    allies = Nations.objects.filter(game=game_id, alliance_name=defender_alliance)
+                # Determine defender's allies
+                if defender.alliance_name:
+                    allies = list(Nations.objects.filter(game=game_id, alliance_name=defender.alliance_name))
                 else:
-                    # Defender is not in an alliance — only they count as their own ally
-                    allies = Nations.objects.filter(pk=defender.pk)
+                    allies = [defender]
 
-                # Now fetch all squares owned by these allies
-                owned_squares = Square.objects.filter(owner__in=allies, map=map_obj).only("number")                
-                controlled_numbers = set(sq.number for sq in owned_squares)
+                # Controlled squares
+                controlled_squares = list(Square.objects.filter(owner__in=allies, map=map_obj).only(
+                    "id", "number", "owner", "color", "neighbors"
+                ))
+                controlled_numbers = set(sq.number for sq in controlled_squares)
 
-                # Pre-fetch all relevant squares
-                all_squares = Square.objects.filter(map=map_obj).only("number", "owner", "color", "neighbors")
+                # Pre-fetch all squares
+                all_squares = list(Square.objects.filter(map=map_obj).only(
+                    "id", "number", "owner", "color", "neighbors"
+                ))
                 square_dict = {sq.number: sq for sq in all_squares}
 
-                attacker_name = attacker.name
                 defender_color = colors.get(defender.name)
-
                 swapped = 0
                 iterations = 0
+                changed_squares = []
+                visited = set()
 
-                for num in controlled_numbers:
-                    if iterations > stater or swapped >= max_swaps:
-                        break
+                # Start from a random border square
 
-                    square = square_dict.get(num)
-                    if not square or not square.neighbors:
+                all_squares = Square.objects.filter(map=map_obj).only("id", "number", "owner", "color", "neighbors")
+                square_dict = {sq.number: sq for sq in all_squares}
+
+                # Controlled squares
+                controlled_squares = [sq for sq in square_dict.values() if sq.owner_id in [ally.id for ally in allies]]
+                controlled_numbers = set(sq.number for sq in controlled_squares)
+
+                # Identify border squares: controlled by allies and bordering at least one defender square
+                border_squares = []
+                for sq in controlled_squares:
+                    if not sq.neighbors:
                         continue
-
-                    for neighbor_num in square.neighbors:
+                    for neighbor_num in sq.neighbors:
                         neighbor = square_dict.get(neighbor_num)
-                        if not neighbor or neighbor.owner_id != attacker.id:
-                            continue
+                        if neighbor and neighbor.owner_id == defender.id:
+                            border_squares.append(sq)
+                            break  # stop at first defender neighbor
+                        
+                while swapped < max_swaps and iterations < stater:
+                    if not border_squares:
+                        # No available border squares: pick any controlled square
+                        border_squares = [square_dict[num] for num in controlled_numbers if num not in visited and square_dict[num].neighbors]
+                        if not border_squares:
+                            break  # nothing left to expand
 
-                        # Flip control
-                        neighbor.owner = defender
-                        neighbor.color = defender_color
-                        changed_squares.append(neighbor)
-                        neighbor.save()
+                    if singleFront != "":
+                        front_square = Square.objects.get(map=map_obj, name=singleFront)
+                        if front_square in border_squares:
+                            start_square = front_square
+                        else:
+                            start_square = random.choice(border_squares)
+                    
+                    queue = deque([start_square])
+                    visited.add(start_square.number)
 
+                    while queue and swapped < max_swaps:
+                        sq = queue.popleft()
 
-                        attacker.states -= 1
-                        defender.states += 1
-                        swapped += 1
+                        for neighbor_num in sq.neighbors:
+                            neighbor = square_dict.get(neighbor_num)
+                            if not neighbor or neighbor.owner_id != attacker.id or neighbor.number in visited:
+                                continue
 
-                        if swapped >= max_swaps:
-                            break
+                            # Flip control
+                            neighbor.owner = defender
+                            neighbor.color = defender_color
+                            changed_squares.append(neighbor)
+                            neighbor.save()
 
+                            attacker.states -= 1
+                            defender.states += 1
+                            swapped += 1
+                            visited.add(neighbor.number)
+
+                            # Add to queue to expand further
+                            queue.append(neighbor)
+
+                    # Remove the start square from border list
+                    border_squares = [sq for sq in border_squares if sq.number not in visited]
                     iterations += 1
 
-                    # Save nations once
-                    attacker.save()
-                    defender.save()
+                attacker.save()
+                defender.save()
 
             print(changed_squares)
 
             div_attackers_lost = oga - int(division_attack_amount)
 
             div_defenders_lost = ogd - int(division_defend_amount)
-            print("defenders died: " + str(div_defenders_lost))
-            print("attackers died: " + str(div_attackers_lost))
 
             # Pre-fetch once
             game = Games.objects.only("id").get(id=game_id)
@@ -1860,6 +1942,7 @@ def battle(request, game_id):
                 print(f"Error processing {filename}: {e}")
                 continue
         final_image.save(output_path, optimize=True)
+    refresh_all()
     return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
 
 @login_required(login_url='login')
@@ -1896,6 +1979,7 @@ def loader(request, game_id, reload):
         final_image.save(output_path, optimize=True)
         
         if reload == 1:
+            refresh_all()
             return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
         else:  
             return HttpResponseRedirect(reverse('full_index'))
@@ -1987,7 +2071,8 @@ def makealliance(request,game_id):
                     knownnations = Nations.objects.filter(game=game_id, alliance_name=playernation.alliance_name)
                 else:
                     knownnations = [playernation] if playernation else []
-                return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
+    refresh_all()
+    return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
 
   
     playernation = Nations.objects.filter(game=game_id, user=request.user).first()
@@ -2000,6 +2085,7 @@ def makealliance(request,game_id):
     user = request.user
     player = Nations.objects.get(game = game_id, user = user)
     requesters = player.requests
+    refresh_all()
     return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
 
 @login_required(login_url='login')
@@ -2023,7 +2109,8 @@ def war(request,game_id):
         playernation = Nations.objects.get(user=request.user, game=game_id)
         wars = War.objects.filter(nation1__game=game_id) | War.objects.filter(nation2__game=game_id)
         announcements = Announcements.objects.create(text =f"{playernation.name} has declared war on {request.POST.get('selected_nation')}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
-        return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
+    refresh_all()
+    return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
     # Get the player's nation
     playernation = Nations.objects.filter(game=game_id, user=request.user).first()
     playernationt = playernation.alliance_name
@@ -2088,6 +2175,7 @@ def send(request,game_id):
     playernation = Nations.objects.filter(game=game_id, user=request.user).first()
     allies = Nations.objects.filter(game=game_id, alliance_name=playernation.alliance_name)
 
+    refresh_all()
     return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
 
 
@@ -2099,17 +2187,17 @@ def current_wars(request,game_id):
     wars = War.objects.filter(nation1__game=game_id) | War.objects.filter(nation2__game=game_id)
     if request.method == 'POST':
         winner = request.POST.get('winner')
+        loser = request.POST.get('loser')
         if winner:
-            loser = Nations.objects.get(user=request.user,game_id = game_id)
-            war = War.objects.get(nation1__name = winner, nation2 = loser)
+            loser = Nations.objects.get(name = loser,game_id = game_id)
             winner = Nations.objects.get(name = winner ,game_id = game_id)
             winner.states += loser.states
             winner.boats += loser.boats
             winner.planes += loser.planes
             winner.points += loser.points
             winner.nukes += loser.nukes
-
-
+            war = War.objects.filter( (Q(nation1=winner) & Q(nation2=loser)) | (Q(nation1=loser) & Q(nation2=winner)))    
+            war.delete()
 
             # Save the changes to the winner
             winner.save()
@@ -2144,6 +2232,12 @@ def current_wars(request,game_id):
 
 @login_required(login_url='login')
 def map(request, game_id):
+
+    playernation = Nations.objects.get(user=request.user, game=game_id)
+    playernationt = playernation.alliance_name
+    allies = Nations.objects.filter(game = game_id , alliance_name = playernationt)
+    wars = War.objects.filter(nation1__game=game_id) | War.objects.filter(nation2__game=game_id)
+    
     allowed_list = [request.user.username, 'loser', 'closed', 'empty']
     single_player = Nations.objects.filter(game=game_id).exclude(user__username__in=allowed_list).exists()
 
@@ -2295,7 +2389,7 @@ def map(request, game_id):
 
     path = f"/media/AWSDefcon1App/MapChart_Game_{game_id}.png?v={version}"
 
-    return render(request, "AWSDefcon1App/JSMap.html",{"game_id":game_id, 'active_nations':active_nations, 'num_allies':num_allies,'path':path,'single_player':single_player, 'kill_list':kill_list, 'nation_list':nation_list, 'PlayerAAA':PlayerAAA,'alliances':alliances, 'nation_name_at_war':nation_name_at_war, 'nations_at_war':nations_at_war,'attacks_left':attacks_left, 'owner':owner, "requesters":requesters, "knownnations":knownnations, 'announce':announce, 'nations':nations})
+    return render(request, "AWSDefcon1App/JSMap.html",{"game_id":game_id,'allies':allies,'wars':wars,'playernation':playernation, 'active_nations':active_nations, 'num_allies':num_allies,'path':path,'single_player':single_player, 'kill_list':kill_list, 'nation_list':nation_list, 'PlayerAAA':PlayerAAA,'alliances':alliances, 'nation_name_at_war':nation_name_at_war, 'nations_at_war':nations_at_war,'attacks_left':attacks_left, 'owner':owner, "requesters":requesters, "knownnations":knownnations, 'announce':announce, 'nations':nations})
 
     
 def makegame(request,game_id):
@@ -2314,7 +2408,7 @@ def makegame(request,game_id):
         elif(not Games.objects.get(id = 6).exsits()):
             next_id = 6
         return render(request, "AWSDefcon1App/makegame.html", {"game_id":next_id})
-        
+     
     if not User.objects.filter(username='empty').exists():
         user = User.objects.create_user("empty", "emtpyman289666880990@gmail.com", "jkoor8ut09rugho9u069ft-gyyh0j9")
         user = User.objects.create_user("loser", "loserman289666880990@gmail.com", "jkoor8ut09ghy5ho9u069ft-gyyh0j9")
@@ -2324,139 +2418,140 @@ def makegame(request,game_id):
 
     selected_countries = request.POST.getlist('countries')
     
-    hard = 1
-
     empty =  User.objects.get(username='empty')
     closed =  User.objects.get(username='closed')
-    if 'UK' in selected_countries:
-      user_uk = empty
-    else:
-      user_uk = closed
-    
-    if 'USA' in selected_countries:
-      user_usa = empty
-    else:
-      user_usa = closed
-      
-    if 'France' in selected_countries:
-      user_france = empty
-    else:
-      user_france = closed
-    
-    if 'USSR' in selected_countries:
-      user_ussr = empty
-    else:
-      user_ussr = closed
-   
-    if 'Germany' in selected_countries:
-        user_germany = empty
-    else:
-      user_germany = closed
 
-    if 'Italy' in selected_countries:
-        user_italy = empty
-    else:
-        user_italy = closed
-
-    if 'Japan' in selected_countries:
-      user_japan = empty
-    else:
-      user_japan = closed
-
-    if 'Cuba' in selected_countries:
-      minor_user = empty
-    else:
-      minor_user = closed
 
     game_obj = Games.objects.get_or_create(id=game_id)
     game_obj = Games.objects.get(id = game_id)
 
+    SINGLE_SELECT = False
+
     nations_data = [
-    { "game": game_obj, "name": "United Kingdom", "user": user_uk, "player_number": 1, "states": 67, "divisions": 170, "boats": 300, "planes": 2000, "alliance_name": "Allies", "points": 1, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 10, "act_divisions": 170, "act_boats": 300, "act_planes": 2000 },
-    { "game": game_obj, "name": "United States", "user": user_usa, "player_number": 2, "states": 45, "divisions": 70, "boats": 250, "planes": 3000, "alliance_name": "Neutrality Pact", "points": 1, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 10, "act_divisions": 70, "act_boats": 250, "act_planes": 3000 },
-    { "game": game_obj, "name": "France", "user": user_france, "player_number": 3, "states": 68, "divisions": 70, "boats": 100, "planes": 5000, "alliance_name": "Allies", "points": 1, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 10, "act_divisions": 70, "act_boats": 100, "act_planes": 5000 },
-    { "game": game_obj, "name": "Soviet Union", "user": user_ussr, "player_number": 4, "states": 152, "divisions": 30, "boats": 100, "planes": 7000, "alliance_name": "Comintern", "points": 1, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 10, "act_divisions": 30, "act_boats": 100, "act_planes": 7000 },
-    { "game": game_obj, "name": "German Reich", "user": user_germany, "player_number": 5, "states": 23, "divisions": 570, "boats": 200, "planes": 5000, "alliance_name": "Axis", "points": 1, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 10, "act_divisions": 570, "act_boats": 200, "act_planes": 5000 },
-    { "game": game_obj, "name": "Italy", "user": user_italy, "player_number": 6, "states": 28, "divisions": 320, "boats": 150, "planes": 4500, "alliance_name": "Axis", "points": 1, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 10, "act_divisions": 320, "act_boats": 150, "act_planes": 4500 },
-    { "game": game_obj, "name": "Japan", "user": user_japan, "player_number": 7, "states": 18, "divisions": 340, "boats": 300, "planes": 6500, "alliance_name": "GEACPS", "points": 1, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 10, "act_divisions": 340, "act_boats": 300, "act_planes": 6500 },
-    { "game": game_obj, "name": "Afghanistan", "user": minor_user, "player_number": 60, "states": 2, "divisions": 38, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 38, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Austria", "user": minor_user, "player_number": 24, "states": 4, "divisions": 36, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 36, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Australia", "user": minor_user, "player_number": 18, "states": 15, "divisions": 25, "boats": 50, "planes": 5000, "alliance_name": "Allies", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 25, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Argentina", "user": minor_user, "player_number": 53, "states": 14, "divisions": 34, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 34, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Albania", "user": minor_user, "player_number": 52, "states": 3, "divisions": 37, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 37, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Belgium", "user": minor_user, "player_number": 21, "states": 10, "divisions": 30, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 30, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Bulgaria", "user": minor_user, "player_number": 32, "states": 4, "divisions": 36, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 36, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Bhutan", "user": minor_user, "player_number": 86, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 10, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Bolivian Republic", "user": minor_user, "player_number": 70, "states": 2, "divisions": 38, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 38, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Brazil", "user": minor_user, "player_number": 33, "states": 31, "divisions": 28, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 28, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "British Malaya", "user": minor_user, "player_number": 54, "states": 2, "divisions": 38, "boats": 50, "planes": 5000, "alliance_name": "Allies", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 38, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "British Raj", "user": minor_user, "player_number": 26, "states": 26, "divisions": 14, "boats": 50, "planes": 5000, "alliance_name": "Allies", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 14, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Canada", "user": minor_user, "player_number": 23, "states": 23, "divisions": 17, "boats": 50, "planes": 5000, "alliance_name": "Allies", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 17, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "China", "user": minor_user, "player_number": 19, "states": 22, "divisions": 37, "boats": 50, "planes": 5000, "alliance_name": "Second United Front", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 37, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Chile", "user": minor_user, "player_number": 57, "states": 8, "divisions": 37, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 37, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Colombia", "user": minor_user, "player_number": 49, "states": 3, "divisions": 37, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 37, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Communist China", "user": minor_user, "player_number": 77, "states": 1, "divisions": 86, "boats": 50, "planes": 5000, "alliance_name": "Second United Front", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 2, "requests": 4, "act_divisions": 86, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Costa Rica", "user": minor_user, "player_number": 85, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 10, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Cuba", "user": minor_user, "player_number": 91, "states": 1, "divisions": 80, "boats": 200, "planes": 4000, "alliance_name": "", "points": 1, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 10, "act_divisions": 80, "act_boats": 200, "act_planes": 4000 },
-    { "game": game_obj, "name": "Czechoslovakia", "user": minor_user, "player_number": 20, "states": 9, "divisions": 31, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 31, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Denmark", "user": minor_user, "player_number": 36, "states": 7, "divisions": 33, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 33, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Dutch East Indies", "user": minor_user, "player_number": 50, "states": 8, "divisions": 32, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 32, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Dominican Republic", "user": minor_user, "player_number": 66, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 10, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Ecuador", "user": minor_user, "player_number": 65, "states": 2, "divisions": 38, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 38, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "El Salvador", "user": minor_user, "player_number": 81, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Estonia", "user": minor_user, "player_number": 58, "states": 5, "divisions": 35, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 35, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Ethiopia", "user": minor_user, "player_number": 38, "states": 10, "divisions": 30, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 30, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Finland", "user": minor_user, "player_number": 28, "states": 12, "divisions": 27, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 27, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Guangxi Clique", "user": minor_user, "player_number": 44, "states": 5, "divisions": 35, "boats": 50, "planes": 5000, "alliance_name": "Second United Front", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 35, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Guatemala", "user": minor_user, "player_number": 80, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 10, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Haiti", "user": minor_user, "player_number": 71, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 10, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Honduras", "user": minor_user, "player_number": 82, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 10, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Iceland", "user": minor_user, "player_number": 90, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 10, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Iran", "user": minor_user, "player_number": 31, "states": 12, "divisions": 28, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 28, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Iraq", "user": minor_user, "player_number": 39, "states": 3, "divisions": 37, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 37, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Ireland", "user": minor_user, "player_number": 43, "states": 3, "divisions": 37, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 37, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Kingdom of Greece", "user": minor_user, "player_number": 30, "states": 5, "divisions": 33, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 33, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Kingdom of Hungary", "user": minor_user, "player_number": 40, "states": 3, "divisions": 37, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 37, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Latvia", "user": minor_user, "player_number": 45, "states": 5, "divisions": 35, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 35, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Liberia", "user": minor_user, "player_number": 83, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Lithuania", "user": minor_user, "player_number": 51, "states": 5, "divisions": 35, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 35, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Luxembourg", "user": minor_user, "player_number": 74, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Manchukuo", "user": minor_user, "player_number": 68, "states": 7, "divisions": 33, "boats": 50, "planes": 5000, "alliance_name": "GEACPS", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 33, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Mexico", "user": minor_user, "player_number": 15, "states": 13, "divisions": 27, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 27, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Mongolia", "user": minor_user, "player_number": 47, "states": 5, "divisions": 35, "boats": 50, "planes": 5000, "alliance_name": "Comintern", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 35, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Mengkukuo", "user": minor_user, "player_number": 75, "states": 2, "divisions": 38, "boats": 50, "planes": 5000, "alliance_name": "GEACPS", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 38, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Nepal", "user": minor_user, "player_number": 78, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 10, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Netherlands", "user": minor_user, "player_number": 22, "states": 4, "divisions": 35, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 35, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "New Zealand", "user": minor_user, "player_number": 46, "states": 3, "divisions": 37, "boats": 50, "planes": 5000, "alliance_name": "Allies", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 37, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Nicaragua", "user": minor_user, "player_number": 84, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 10, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Norway", "user": minor_user, "player_number": 35, "states": 11, "divisions": 29, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 29, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Oman", "user": minor_user, "player_number": 87, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 10, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Panama", "user": minor_user, "player_number": 67, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 10, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Peru", "user": minor_user, "player_number": 63, "states": 5, "divisions": 35, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 35, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Philippines", "user": minor_user, "player_number": 42, "states": 7, "divisions": 33, "boats": 50, "planes": 5000, "alliance_name": "Neutrality Pact", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 33, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Portugal", "user": minor_user, "player_number": 29, "states": 20, "divisions": 20, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 20, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Poland", "user": minor_user, "player_number": 17, "states": 18, "divisions": 22, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 22, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Romania", "user": minor_user, "player_number": 34, "states": 11, "divisions": 29, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 29, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Republic of Paraguay", "user": minor_user, "player_number": 73, "states": 2, "divisions": 38, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 38, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Siam", "user": minor_user, "player_number": 55, "states": 4, "divisions": 36, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 36, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Sinkiang", "user": minor_user, "player_number": 59, "states": 6, "divisions": 34, "boats": 50, "planes": 5000, "alliance_name": "Second United Front", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 34, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Saudi Arabia", "user": minor_user, "player_number": 62, "states": 9, "divisions": 31, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 31, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Shanxi", "user": minor_user, "player_number": 76, "states": 3, "divisions": 37, "boats": 50, "planes": 5000, "alliance_name": "Second United Front", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 37, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "South Africa", "user": minor_user, "player_number": 41, "states": 7, "divisions": 33, "boats": 50, "planes": 5000, "alliance_name": "Allies", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 33, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Spain", "user": minor_user, "player_number": 16, "states": 24, "divisions": 14, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 14, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Sweden", "user": minor_user, "player_number": 25, "states": 13, "divisions": 27, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 27, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Switzerland", "user": minor_user, "player_number": 37, "states": 5, "divisions": 35, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 35, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Sultanate of Aussa", "user": minor_user, "player_number": 89, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 10, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Tannu Tuva", "user": minor_user, "player_number": 88, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "Comintern", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 10, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Turkey", "user": minor_user, "player_number": 13, "states": 21, "divisions": 19, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 19, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Tibet", "user": minor_user, "player_number": 69, "states": 3, "divisions": 37, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 37, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Uruguay", "user": minor_user, "player_number": 72, "states": 3, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Venezuela", "user": minor_user, "player_number": 61, "states": 3, "divisions": 37, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 37, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Xibei San Ma", "user": minor_user, "player_number": 48, "states": 7, "divisions": 33, "boats": 50, "planes": 5000, "alliance_name": "Second United Front", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 33, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Yugoslavia", "user": minor_user, "player_number": 27, "states": 14, "divisions": 26, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 26, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Yunnan", "user": minor_user, "player_number": 56, "states": 2, "divisions": 38, "boats": 50, "planes": 5000, "alliance_name": "Second United Front", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 38, "act_boats": 50, "act_planes": 5000 },
-    { "game": game_obj, "name": "Yemen", "user": minor_user, "player_number": 79, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 10, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "United Kingdom", "user": closed, "player_number": 1, "states": 67, "divisions": 170, "boats": 300, "planes": 2000, "alliance_name": "Allies", "points": 1, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 10, "act_divisions": 170, "act_boats": 300, "act_planes": 2000 },
+    { "game": game_obj, "name": "United States", "user": closed, "player_number": 2, "states": 45, "divisions": 70, "boats": 250, "planes": 3000, "alliance_name": "Neutrality Pact", "points": 1, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 10, "act_divisions": 70, "act_boats": 250, "act_planes": 3000 },
+    { "game": game_obj, "name": "France", "user": closed, "player_number": 3, "states": 68, "divisions": 70, "boats": 100, "planes": 5000, "alliance_name": "Allies", "points": 1, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 10, "act_divisions": 70, "act_boats": 100, "act_planes": 5000 },
+    { "game": game_obj, "name": "Soviet Union", "user": closed, "player_number": 4, "states": 152, "divisions": 30, "boats": 100, "planes": 7000, "alliance_name": "Comintern", "points": 1, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 10, "act_divisions": 30, "act_boats": 100, "act_planes": 7000 },
+    { "game": game_obj, "name": "German Reich", "user": closed, "player_number": 5, "states": 23, "divisions": 570, "boats": 200, "planes": 5000, "alliance_name": "Axis", "points": 1, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 10, "act_divisions": 570, "act_boats": 200, "act_planes": 5000 },
+    { "game": game_obj, "name": "Italy", "user": closed, "player_number": 6, "states": 28, "divisions": 320, "boats": 150, "planes": 4500, "alliance_name": "Axis", "points": 1, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 10, "act_divisions": 320, "act_boats": 150, "act_planes": 4500 },
+    { "game": game_obj, "name": "Japan", "user": closed, "player_number": 7, "states": 18, "divisions": 340, "boats": 300, "planes": 6500, "alliance_name": "GEACPS", "points": 1, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 10, "act_divisions": 340, "act_boats": 300, "act_planes": 6500 },
+    { "game": game_obj, "name": "Afghanistan", "user": closed, "player_number": 60, "states": 2, "divisions": 38, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 38, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Austria", "user": closed, "player_number": 24, "states": 4, "divisions": 36, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 36, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Australia", "user": closed, "player_number": 18, "states": 15, "divisions": 25, "boats": 50, "planes": 5000, "alliance_name": "Allies", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 25, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Argentina", "user": closed, "player_number": 53, "states": 14, "divisions": 34, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 34, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Albania", "user": closed, "player_number": 52, "states": 3, "divisions": 37, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 37, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Belgium", "user": closed, "player_number": 21, "states": 10, "divisions": 30, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 30, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Bulgaria", "user": closed, "player_number": 32, "states": 4, "divisions": 36, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 36, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Bhutan", "user": closed, "player_number": 86, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 10, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Bolivian Republic", "user": closed, "player_number": 70, "states": 2, "divisions": 38, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 38, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Brazil", "user": closed, "player_number": 33, "states": 31, "divisions": 28, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 28, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "British Malaya", "user": closed, "player_number": 54, "states": 2, "divisions": 38, "boats": 50, "planes": 5000, "alliance_name": "Allies", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 38, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "British Raj", "user": closed, "player_number": 26, "states": 26, "divisions": 14, "boats": 50, "planes": 5000, "alliance_name": "Allies", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 14, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Canada", "user": closed, "player_number": 23, "states": 23, "divisions": 17, "boats": 50, "planes": 5000, "alliance_name": "Allies", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 17, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "China", "user": closed, "player_number": 19, "states": 22, "divisions": 37, "boats": 50, "planes": 5000, "alliance_name": "Second United Front", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 37, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Chile", "user": closed, "player_number": 57, "states": 8, "divisions": 37, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 37, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Colombia", "user": closed, "player_number": 49, "states": 3, "divisions": 37, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 37, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Communist China", "user": closed, "player_number": 77, "states": 1, "divisions": 86, "boats": 50, "planes": 5000, "alliance_name": "Second United Front", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 2, "requests": 4, "act_divisions": 86, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Costa Rica", "user": closed, "player_number": 85, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 10, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Cuba", "user": closed, "player_number": 91, "states": 1, "divisions": 80, "boats": 200, "planes": 4000, "alliance_name": "", "points": 1, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 10, "act_divisions": 80, "act_boats": 200, "act_planes": 4000 },
+    { "game": game_obj, "name": "Czechoslovakia", "user": closed, "player_number": 20, "states": 9, "divisions": 31, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 31, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Denmark", "user": closed, "player_number": 36, "states": 7, "divisions": 33, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 33, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Dutch East Indies", "user": closed, "player_number": 50, "states": 8, "divisions": 32, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 32, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Dominican Republic", "user": closed, "player_number": 66, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 10, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Ecuador", "user": closed, "player_number": 65, "states": 2, "divisions": 38, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 38, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "El Salvador", "user": closed, "player_number": 81, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Estonia", "user": closed, "player_number": 58, "states": 5, "divisions": 35, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 35, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Ethiopia", "user": closed, "player_number": 38, "states": 10, "divisions": 30, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 30, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Finland", "user": closed, "player_number": 28, "states": 12, "divisions": 27, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 27, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Guangxi Clique", "user": closed, "player_number": 44, "states": 5, "divisions": 35, "boats": 50, "planes": 5000, "alliance_name": "Second United Front", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 35, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Guatemala", "user": closed, "player_number": 80, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 10, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Haiti", "user": closed, "player_number": 71, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 10, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Honduras", "user": closed, "player_number": 82, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 10, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Iceland", "user": closed, "player_number": 90, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 10, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Iran", "user": closed, "player_number": 31, "states": 12, "divisions": 28, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 28, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Iraq", "user": closed, "player_number": 39, "states": 3, "divisions": 37, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 37, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Ireland", "user": closed, "player_number": 43, "states": 3, "divisions": 37, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 37, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Kingdom of Greece", "user": closed, "player_number": 30, "states": 5, "divisions": 33, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 33, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Kingdom of Hungary", "user": closed, "player_number": 40, "states": 3, "divisions": 37, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 37, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Latvia", "user": closed, "player_number": 45, "states": 5, "divisions": 35, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 35, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Liberia", "user": closed, "player_number": 83, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Lithuania", "user": closed, "player_number": 51, "states": 5, "divisions": 35, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 35, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Luxembourg", "user": closed, "player_number": 74, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Manchukuo", "user": closed, "player_number": 68, "states": 7, "divisions": 33, "boats": 50, "planes": 5000, "alliance_name": "GEACPS", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 33, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Mexico", "user": closed, "player_number": 15, "states": 13, "divisions": 27, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 27, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Mongolia", "user": closed, "player_number": 47, "states": 5, "divisions": 35, "boats": 50, "planes": 5000, "alliance_name": "Comintern", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 35, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Mengkukuo", "user": closed, "player_number": 75, "states": 2, "divisions": 38, "boats": 50, "planes": 5000, "alliance_name": "GEACPS", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 38, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Nepal", "user": closed, "player_number": 78, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 10, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Netherlands", "user": closed, "player_number": 22, "states": 4, "divisions": 35, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 35, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "New Zealand", "user": closed, "player_number": 46, "states": 3, "divisions": 37, "boats": 50, "planes": 5000, "alliance_name": "Allies", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 37, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Nicaragua", "user": closed, "player_number": 84, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 10, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Norway", "user": closed, "player_number": 35, "states": 11, "divisions": 29, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 29, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Oman", "user": closed, "player_number": 87, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 10, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Panama", "user": closed, "player_number": 67, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 10, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Peru", "user": closed, "player_number": 63, "states": 5, "divisions": 35, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 35, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Philippines", "user": closed, "player_number": 42, "states": 7, "divisions": 33, "boats": 50, "planes": 5000, "alliance_name": "Neutrality Pact", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 33, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Portugal", "user": closed, "player_number": 29, "states": 20, "divisions": 20, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 20, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Poland", "user": closed, "player_number": 17, "states": 18, "divisions": 22, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 22, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Romania", "user": closed, "player_number": 34, "states": 11, "divisions": 29, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 29, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Republic of Paraguay", "user": closed, "player_number": 73, "states": 2, "divisions": 38, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 38, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Siam", "user": closed, "player_number": 55, "states": 4, "divisions": 36, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 36, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Sinkiang", "user": closed, "player_number": 59, "states": 6, "divisions": 34, "boats": 50, "planes": 5000, "alliance_name": "Second United Front", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 34, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Saudi Arabia", "user": closed, "player_number": 62, "states": 9, "divisions": 31, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 31, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Shanxi", "user": closed, "player_number": 76, "states": 3, "divisions": 37, "boats": 50, "planes": 5000, "alliance_name": "Second United Front", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 37, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "South Africa", "user": closed, "player_number": 41, "states": 7, "divisions": 33, "boats": 50, "planes": 5000, "alliance_name": "Allies", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 33, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Spain", "user": closed, "player_number": 16, "states": 24, "divisions": 14, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 14, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Sweden", "user": closed, "player_number": 25, "states": 13, "divisions": 27, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 27, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Switzerland", "user": closed, "player_number": 37, "states": 5, "divisions": 35, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 35, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Sultanate of Aussa", "user": closed, "player_number": 89, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 10, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Tannu Tuva", "user": closed, "player_number": 88, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "Comintern", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 10, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Turkey", "user": closed, "player_number": 13, "states": 21, "divisions": 19, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 19, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Tibet", "user": closed, "player_number": 69, "states": 3, "divisions": 37, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 37, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Uruguay", "user": closed, "player_number": 72, "states": 3, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Venezuela", "user": closed, "player_number": 61, "states": 3, "divisions": 37, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 37, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Xibei San Ma", "user": closed, "player_number": 48, "states": 7, "divisions": 33, "boats": 50, "planes": 5000, "alliance_name": "Second United Front", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 33, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Yugoslavia", "user": closed, "player_number": 27, "states": 14, "divisions": 26, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 26, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Yunnan", "user": closed, "player_number": 56, "states": 2, "divisions": 38, "boats": 50, "planes": 5000, "alliance_name": "Second United Front", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 5, "requests": 4, "act_divisions": 38, "act_boats": 50, "act_planes": 5000 },
+    { "game": game_obj, "name": "Yemen", "user": closed, "player_number": 79, "states": 1, "divisions": 39, "boats": 50, "planes": 5000, "alliance_name": "", "points": 0, "nuke_time": 8, "nukes": 0, "attacks": 10, "requests": 4, "act_divisions": 39, "act_boats": 50, "act_planes": 5000 },
     ]
+
+    FORM_TO_NATION = {
+        "UK": "United Kingdom",
+        "USA": "United States",
+        "France": "France",
+        "USSR": "Soviet Union",
+        "Germany": "German Reich",
+        "Japan": "Japan",
+        "Italy": "Italy",
+        "China": "China",
+        "PRC": "Communist China",
+        "Brazil": "Brazil",
+        "Cuba": "Cuba",
+        "Other": "Other",  # keep as "Other" for logic
+    }
+
+    # Determine which buttons were selected
+    selected_buttons = set(selected_countries)
+
+    # Flag if single selection and it is NOT "Other"
+    single_selection = len(selected_buttons) == 1 and "Other" not in selected_buttons
+
+    for nation in nations_data:
+        nation["user"] = closed  # default everyone to closed
+
+        # Case 1: Minor nations selected via "Other"
+        if "Other" in selected_buttons and nation["name"] not in FORM_TO_NATION.values():
+            nation["user"] = empty
+
+        # Case 2: Normal selected nation
+        elif nation["name"] in [FORM_TO_NATION[b] for b in selected_buttons if b != "Other"]:
+            nation["user"] = empty
+
+        # Case 3: Single selection special logic
+        if single_selection and nation["user"] == empty:
+           nation["user"] = request.user
+           SINGLE_SELECT = True
+
+
 
     nation_objs = [Nations(**data) for data in nations_data]
 
@@ -4336,4 +4431,7 @@ def makegame(request,game_id):
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     final_image.save(output_path, optimize=True)
 
-    return HttpResponseRedirect(reverse('full_index'))
+    if(SINGLE_SELECT):
+        return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
+    else:
+        return HttpResponseRedirect(reverse('full_index'))

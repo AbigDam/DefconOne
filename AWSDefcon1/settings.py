@@ -11,7 +11,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '6ps8j!crjgrxt34cqbqn7x&b3y%(fny8k8nh21+qa)%ws3fh!q'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['defcon1.pythonanywhere.com','https://defcon1.pythonanywhere.com', '127.0.0.1',"defcon1.glitch.me",'defconone.glitch.me','defconone.onrender.com','defconone-production.up.railway.app']
 
@@ -41,13 +41,11 @@ INSTALLED_APPS = [
 ASGI_APPLICATION = 'AWSDefcon1.asgi.application'
 
 CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],
-        },
-    },
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    }
 }
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

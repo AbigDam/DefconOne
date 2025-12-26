@@ -1,16 +1,11 @@
      {% extends "AWSDefcon1App/layout.html" %}
      {% block body %}
+        <script src="/static/AWSDefcon1App/tiles.js"></script>
+        <link rel="stylesheet" href="/static/AWSDefcon1App/style.css" crossorigin="anonymous">
 
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>State Images with Colors</title>
-        <style>
-            canvas {
-                display: block;
-                margin: auto;
-                border: 1px solid #000;
-            }
-        </style>
     </head>
     <body>
         <div style="display: flex; justify-content: center; align-items: flex-start; margin-bottom: 20px;">
@@ -24,7 +19,7 @@
 
                     <div style="text-align: center;" class = "info-bubble">
                         <span class="info-icon">🛈</span> 
-                        <input type="image" src="/static/AWSDefcon1App/RequestAid.png" 
+                        <input class="image-button" type="image" src="/static/AWSDefcon1App/RequestAid.png" 
                             alt="Submit" class="submit-button"
                             style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;">
                         <span class="tooltip-text">
@@ -41,7 +36,7 @@
                     <h3 id="offerDisplay" style="text-align: center;">No Nation Selected </h3>
                     <h4 id="offerHostility" style="text-align: center;">Test Hostility</h4> 
                     <div style = "text-align: center;" class="info-bubble"> <span class="info-icon">🛈</span> 
-                    <button type="submit" style="display: block; width: 100%; padding: 10px; color: black;  background-color: #000000; border: none; border-radius: 5px; cursor: pointer;"><img src="/static/AWSDefcon1App/Alliance_Offer.png" alt="Offer" style = "height: 100px;"> </button>
+                    <button type="submit" style="display: block; width: 100%; padding: 10px; color: black;  background-color: #000000; border: none; border-radius: 5px; cursor: pointer;"><img class="image-button" src="/static/AWSDefcon1App/Alliance_Offer.png" alt="Offer" style = "height: 100px;"> </button>
                     <span class="tooltip-text">Asks a nation to join your alliance, their chance to join is based on hostility</span> 
                 </div>
                 </form>
@@ -56,62 +51,222 @@
                         <!-- Accepting nation -->
                         <input type="hidden" name="accepting_nation" value="{{ alliance.nation1.name }}">
                         <button type="submit" name="action" value="accept" style="background: none; border: none; padding: 0; cursor: pointer;">
-                            <img style = "width: 100px;" src="/static/AWSDefcon1App/Alliance.png" alt="Accept">
+                            <img class="image-button" style = "width: 100px;" src="/static/AWSDefcon1App/Alliance.png" alt="Accept">
                         </button>
                         
                         <!-- Rejecting nation -->
                         <input type="hidden" name="rejected_nation" value="{{ alliance.nation1.name }}">
                         <button type="submit" name="action" value="reject" style="background: none; border: none; padding: 0; cursor: pointer;">
-                            <img style = "width: 100px;" src="/static/AWSDefcon1App/Alliance_Reject.png" alt="Reject">
+                            <img class="image-button" style = "width: 100px;" src="/static/AWSDefcon1App/Alliance_Reject.png" alt="Reject">
                         </button>
                         </div>
                     </form>            
                     {% endfor %}
                     </div>
 
-                    <div style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2);">
-                        <h3 id = "sendText" style = "text-align: center;">Send Supplies </h3>
-                        <form method="post" action="{% url 'send' game_id=game_id %}" style="text-align: center;">
-                            {% csrf_token %}
-                        
-                            <input type="hidden" name="selected_nation" id="send-input" value="">
-                            <input type="hidden" name="send_type" id="send_type" value="">
-                        
-                            <label for="amount" style="font-weight: bold;">Enter Percent:</label><br>
-                            <input type="range" id="amount" name="amount" value="1"  min="0" max="100" style="width: 80%; margin-bottom: 10px;">
-                            <br>
-                            <span id="amount_label">Amount: 1</span><br><br>
-                        
-                            <!-- Image buttons -->
-                            <div style = "text-align: center;"  class="info-bubble"><span class="info-icon">🛈</span> 
-                            <div>
-                                <button type="submit" onclick="document.getElementById('send_type').value = '1'" style="background: none; border: none; cursor: pointer;">
-                                <img src="/static/AWSDefcon1App/Gun.png" alt="Send Divisions" style="width: 100px; height: auto;">
-                            </button>
-                        
-                            <button type="submit" onclick="document.getElementById('send_type').value = '2'" style="background: none; border: none; cursor: pointer;">
-                                <img src="/static/AWSDefcon1App/Airplane.png" alt="Send Planes" style="width: 100px; height: auto;">
-                            </button>
-                        
-                            <button type="submit" onclick="document.getElementById('send_type').value = '3'" style="background: none; border: none; cursor: pointer;">
-                                <img src="/static/AWSDefcon1App/Boat.png" alt="Send Boats" style="width: 100px; height: auto;">
-                            </button>
-                        </form>
+                    <button id="openWarsBtn"
+                            style="margin-top:15px; padding:10px 16px; font-size:16px; cursor:pointer;">
+                        Diplomacy
+                    </button>
+                    
+                    <!-- Current Wars Overlay -->
+                    <div id="warsOverlay" style="
+                        display:none;
+                        position:fixed;
+                        inset:0;
+                        background:rgba(0,0,0,0.6);
+                        z-index:1000;
+                        align-items:center;
+                        justify-content:center;
+                    ">
+
+                        <!-- Current Wars Modal -->
+                        <div style="
+                            background:#1e1e1e;
+                            color:white;
+                            width:700px;
+                            max-height:85vh;
+                            overflow-y:auto;
+                            padding:20px;
+                            border-radius:10px;
+                            position:relative;
+                        ">
+
+                            <!-- Close Button -->
+                            <button id="closeWarsBtn" style="
+                                position:absolute;
+                                top:10px;
+                                right:10px;
+                                background:none;
+                                border:none;
+                                color:white;
+                                font-size:20px;
+                                cursor:pointer;
+                            ">✕</button>
+
+                            <h2 style="text-align:center;">Current Wars</h2>
+
+                            <table style="width:100%; border-collapse: collapse; margin-top:15px;">
+                                <thead>
+                                    <tr>
+                                        <th style="font-size: 20px; text-align:left;">Attacker</th>
+                                        <th style="font-size: 20px; text-align:right;">Defender</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for war in wars %}
+                                    <tr>
+                                        <!-- Attacker Column -->
+                                        <td style="color: {% if war.nation1 == playernation %}red; font-weight:bold{% else %}#fff{% endif %}; font-size:18px;'">
+                                            {{ war.nation1.name }}
+                                            {% if war.nation1 == playernation %}
+                                                <form method="post" action="{% url 'current_wars' game_id=game_id %}" style="display:inline;">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="winner" value="{{ war.nation2.name }}">
+                                                    <input type="hidden" name="loser" value="{{ war.nation1.name }}">
+                                                    <button type="submit" style="
+                                                        padding:5px 10px;
+                                                        margin-left:8px;
+                                                        background:#d53f3f;
+                                                        color:white;
+                                                        border:none;
+                                                        border-radius:5px;
+                                                        cursor:pointer;
+                                                        font-size:14px;
+                                                        transition: background 0.2s ease;
+                                                    " 
+                                                    onmouseover="this.style.background='#f56565';" 
+                                                    onmouseout="this.style.background='#d53f3f';">
+                                                        Surrender
+                                                    </button>
+                                                </form>
+                                            {% endif %}
+                                        </td>
+
+                                        <!-- Defender Column -->
+                                        <td style="text-align:right; vertical-align:top; font-size:18px; color: {% if war.nation2 == playernation %}red; font-weight:bold{% else %}white{% endif %};">
+                                            {{ war.nation2.name }}
+                                            {% if war.nation2 == playernation %}
+                                                <form method="post" action="{% url 'current_wars' game_id=game_id %}" style="display:inline;">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="winner" value="{{ war.nation1.name }}">
+                                                    <input type="hidden" name="loser" value="{{ war.nation2.name }}">
+                                                    <button type="submit" style="
+                                                        padding:5px 10px;
+                                                        margin-left:8px;
+                                                        background:#d53f3f;
+                                                        color:white;
+                                                        border:none;
+                                                        border-radius:5px;
+                                                        cursor:pointer;
+                                                        font-size:14px;
+                                                        transition: background 0.2s ease;
+                                                    " 
+                                                    onmouseover="this.style.background='#f56565';" 
+                                                    onmouseout="this.style.background='#d53f3f';">
+                                                        Surrender
+                                                    </button>
+                                                </form>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+
+                            {% if allies %}
+                            <div style="margin-top:20px;">
+                                <h3 style="text-align:center; margin-bottom:10px;">Current Allies</h3>
+                                <table style="width:100%; border-collapse: collapse; text-align:left;">
+                                    <thead>
+                                        <tr>
+                                            <th style="font-size:16px; padding:6px 8px; border-bottom:2px solid #ccc;">Ally</th>
+                                            <th style="font-size:16px; padding:6px 8px; border-bottom:2px solid #ccc;">States</th>
+                                            <th style="font-size:16px; padding:6px 8px; border-bottom:2px solid #ccc;">Points</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for ally in allies %}
+                                        <tr style="border-bottom:1px solid #444;">
+                                            <td style="padding:6px 8px; font-size:14px; color:white;">{{ ally.name }}</td>
+                                            <td style="padding:6px 8px; font-size:14px; color:white;">{{ ally.states }}</td>
+                                            <td style="padding:6px 8px; font-size:14px; color:white;">{{ ally.points }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% endif %}
                         </div>
-                        <span class="tooltip-text">Send a percent of your boats, planes, or divisions to a nation in order to decrease hostility!</span> </div>
+                    </div>
+
+
+            <button id="openHistoryBtn"
+                    style="margin-top:15px; padding:10px 16px; font-size:16px; cursor:pointer;">
+                History Log
+            </button>
+
+            <!-- History Overlay -->
+            <div id="historyOverlay" style="
+                display:none;
+                position:fixed;
+                inset:0;
+                background:rgba(0,0,0,0.6);
+                z-index:1000;
+                align-items:center;
+                justify-content:center;
+            ">
+
+                <!-- History Modal -->
+                <div style="
+                    background:#1e1e1e;
+                    color:white;
+                    width:700px;
+                    max-height:85vh;
+                    overflow-y:auto;
+                    padding:20px;
+                    border-radius:10px;
+                    position:relative;
+                ">
+
+                    <!-- Close Button -->
+                    <button id="closeHistoryBtn" style="
+                        position:absolute;
+                        top:10px;
+                        right:10px;
+                        background:none;
+                        border:none;
+                        color:white;
+                        font-size:20px;
+                        cursor:pointer;
+                    ">✕</button>
+
+                    <h2 style="text-align:center;">History</h2>
+
+                    <div class="game-container">
+                        {% if announces %}
+                            {% for announce in announces %}
+                                <div class="game">
+                                    <hr>  
+                                    <div class="boxed-list" style="padding:10px; border-radius:5px; border:1px solid #444; box-shadow:1px 1px 5px rgba(0,0,0,0.3); margin-bottom:5px;">
+                                        <p class="boxed-list-instance" style="font-size:14px;">{{ announce.text }}</p>
+                                        <p style="color:#A9A9A9; font-family:'Hoefler Text', serif; font-style:italic; font-size:10px; margin-top:4px;">
+                                            Sent on {{ announce.start_time }}
+                                        </p>
+                                    </div>
+                                    <hr>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="boxed-list" style="padding:10px; border-radius:5px; border:1px solid #444; box-shadow:1px 1px 5px rgba(0,0,0,0.3); text-align:center;">
+                                <p class="boxed-list-instance" style="font-size:14px;">No Announcements Yet</p>
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
-            <script>
-                var slider = document.getElementById("amount");
-                var output = document.getElementById("amount_label");
-                output.innerHTML = "Amount: " + slider.value;
-        
-                slider.oninput = function() {
-                    output.innerHTML = "Amount: " + slider.value;
-                }
-            </script>
 
-
+            </div>
             <!-- Canvas in the center -->
                 
             <div style=" text-align: center;">
@@ -120,12 +275,32 @@
                     <img src="/static/AWSDefcon1App/Loading.gif" alt="Loading..." style="width: 1120px; height: 480px;">
                     <canvas style="width: 1120px; height: 480px; background-color: rgba(255,255,255,);"> <img src="/static/AWSDefcon1App/Loading.gif" alt="Loading..." style="width: 1120px; height: 480px;"></canvas>
                 </div>
-                <h3> <a href="{% url 'loader' game_id=game_id reload=1%}" class="reload-map-button">↻ Reload Map</a></h3>
+               
+               <div style = "align-items: center;">
+                <h3 style="text-align:center; align-items: center; gap: 12px;">
+                <a href="{% url 'loader' game_id=game_id reload=1 %}"
+                    class="reload-map-button">
+                    ↻ Reload Map
+                </a>
+                <label style="font-size: 0.9em;">
+                    <input type="checkbox" id="stateToggle">
+                    Specific state <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Chose which state in the nation you will attack from</span> </div>
+                </label>
+                </h3>
+        </div>
 
-                <div style="display: none;" id="canvasContainer">
-                    <canvas id="canvas" style="background-color:#87ceeb;"></canvas> 
-                        
-                        <div style="text-align: center;">
+                <div> 
+                <div id="canvasContainer" style="display: none; position: relative; width: 1120px; height: 480px;">
+                    
+                    <canvas id="canvas" width="1120" height="480" 
+                            style="background-color:#87ceeb; position: absolute; top: 0; left: 0; z-index: 1;">
+                    </canvas> 
+
+                    <canvas id="overlayCanvas" width="1120" height="480" 
+                            style="position: absolute; top: 0; left: 0; z-index: 10; cursor: crosshair;">
+                    </canvas>
+                </div>
+                    <div style="text-align: center;">
                             Click on the map to interact with a nation
                                 <div style="display: inline-block; position: relative;">
                                 <form  style="display: inline-block; position: relative;" id="nationForm">
@@ -140,32 +315,15 @@
                                 </div>
                             <br>
                         </div>
-                        <h3> 
-
-                        <div style="display:inline-flex; align-items:center; white-space:nowrap;">
-                        <p style="text-align: center;" id="colorDisplay">  </p>
-                        <p id = "stateCount">Select a nation via the map or dropdown</p>
+                        
+                        <h3> <div class="status-bar">
+                        <p id="colorDisplay"></p>
+                        <p id="stateCount">Select a nation via the map or dropdown</p>
+                        <p id="frontName">No front selected</p>
                         </div>
-
-                        </h3>
-                        </div>
-                        <style>
-                        .reload-map-button {
-                            display: inline-block;
-                            margin-top: 10px;
-                            padding: 6px 12px;
-                            background-color: #2c3e50;
-                            color: white;
-                            text-decoration: none;
-                            font-size: 14px;
-                            border-radius: 6px;
-                            transition: background-color 0.3s;
-                        }
-
-                        .reload-map-button:hover {
-                            background-color: #1a252f;
-                        }
-                        </style>           
+                              </h3>              
+                    </div>
+           
                 <div id = "peace-form" style="text-align: center; display: none;">
                     <form method="post" action="{% url 'war' game_id=game_id %}">
                         {% csrf_token %}
@@ -173,7 +331,7 @@
                         <input type="hidden" name="selected_nation" id="war-input" value=""> 
                         <h4  style="text-align: center;">At peace for now, Declare War?</h4>
                         <button type="submit" style="margin-top: 20px; text-align: center;">
-                            <img src = "/static/AWSDefcon1App/DeclareWar.png" alt="Declare Fight" style="width: 100px; height: 100px; text-align: center;">
+                            <img class="image-button" src = "/static/AWSDefcon1App/DeclareWar.png" alt="Declare Fight" style="width: 100px; height: 100px; border:2px solid #fff; border-radius:5px;"">
                         </button>
                     </form>
                 </div>
@@ -195,7 +353,7 @@
                         <div style="display: inline-block;">
                         <div class="info-bubble">
                         <button type="submit" name="get" value="1" style="background: none; border: none; cursor: pointer; margin-bottom: 10px;">
-                            <img src="/static/AWSDefcon1App/Recruit_Double_Agent.gif" alt="Recruit Double Agent" style="border: 2px solid white; border-radius: 10px; width: 100px; display: block; margin: 0 auto;">
+                            <img class="image-button" src="/static/AWSDefcon1App/Recruit_Double_Agent.gif" alt="Recruit Double Agent" style="border: 2px solid white; border-radius: 10px; width: 100px; display: block; margin: 0 auto;">
                             <figcaption style = "color:#ccc;" >Kidnap Their Spy<span class="info-icon">🛈</span> <span class="tooltip-text">Try to take 1 spy from your enemy, risk losing 1 spy (Chance of sucess increased by having more spies)</span> </div> </figcaption>
                         </button>
                         </div>
@@ -203,7 +361,7 @@
                         <div style="display: inline-block;">
                         <div class="info-bubble">
                         <button type="submit" name="kill" value="1" style="background: none; border: none; cursor: pointer; margin-bottom: 10px;">
-                            <img src="/static/AWSDefcon1App/Assassinate_Spy.gif" alt="Assassinate Spy" style="border: 2px solid white; border-radius: 10px; width: 100px; display: block; margin: 0 auto;">
+                            <img class="image-button" src="/static/AWSDefcon1App/Assassinate_Spy.gif" alt="Assassinate Spy" style="border: 2px solid white; border-radius: 10px; width: 100px; display: block; margin: 0 auto;">
                             <figcaption style = "color:#ccc;">Assassinate Spy<span class="info-icon">🛈</span> <span class="tooltip-text">Try to kill an enemy spy, risk losing 1 spy (Chance of sucess increased by having more spies)</span> </div></figcaption>
                         </button>
                         </div>
@@ -211,7 +369,7 @@
                         <div style="display: inline-block;">
                         <div class="info-bubble">
                         <button type="submit" name="army" value="1" style="background: none; border: none; cursor: pointer; margin-bottom: 10px;">
-                            <img src="/static/AWSDefcon1App/Sabotage_Army.gif" alt="Sabotage Army" style="border: 2px solid white; border-radius: 10px; width: 100px; display: block; margin: 0 auto;">
+                            <img class="image-button" src="/static/AWSDefcon1App/Sabotage_Army.gif" alt="Sabotage Army" style="border: 2px solid white; border-radius: 10px; width: 100px; display: block; margin: 0 auto;">
                             <figcaption style = "color:#ccc;">Sabotage Army<span class="info-icon">🛈</span> <span class="tooltip-text">Try to destroy some of your enemy's divisions, risk losing 1 spy (Chance of sucess increased by having more spies)</span> </div></figcaption>
                         </button>
                         </div>
@@ -219,7 +377,7 @@
                         <div style="display: inline-block;">
                         <div class="info-bubble">
                         <button type="submit" name="air" value="1" style="background: none; border: none; cursor: pointer; margin-bottom: 10px;">
-                            <img src="/static/AWSDefcon1App/Sabotage_Air_Force.gif" alt="Sabotage Air Force" style="border: 2px solid white; border-radius: 10px; width: 100px; display: block; margin: 0 auto;">
+                            <img class="image-button" src="/static/AWSDefcon1App/Sabotage_Air_Force.gif" alt="Sabotage Air Force" style="border: 2px solid white; border-radius: 10px; width: 100px; display: block; margin: 0 auto;">
                             <figcaption style = "color:#ccc;">Sabotage Planes<span class="info-icon">🛈</span> <span class="tooltip-text">Try to destroy some of your enemy's airplanes, risk losing 1 spy (Chance of sucess increased by having more spies)</span> </div></figcaption>
                         </button>
                         </div>
@@ -227,7 +385,7 @@
                         <div style="display: inline-block;">
                         <div class="info-bubble">
                         <button type="submit" name="navy" value="1" style="background: none; border: none; cursor: pointer; margin-bottom: 10px;">
-                            <img src="/static/AWSDefcon1App/Sabotage_Navy.gif" alt="Sabotage Navy" style="border: 2px solid white; border-radius: 10px; width: 100px; display: block; margin: 0 auto;">
+                            <img class="image-button" src="/static/AWSDefcon1App/Sabotage_Navy.gif" alt="Sabotage Navy" style="border: 2px solid white; border-radius: 10px; width: 100px; display: block; margin: 0 auto;">
                             <figcaption style = "color:#ccc;">Sabotage Navy<span class="info-icon">🛈</span> <span class="tooltip-text">Try to destroy some of your enemy's boats, risk losing 1 spy (Chance of sucess increased by having more spies)</span> </div></figcaption>
                         </button>
                         </div>
@@ -235,7 +393,7 @@
                         <div style="display: inline-block;">
                         <div class="info-bubble">
                         <button type="submit" name="nuke" value="1" style="background: none; border: none; cursor: pointer; margin-bottom: 10px;">
-                            <img src="/static/AWSDefcon1App/Steal_Nuclear_Technology.gif" alt="Steal Nuclear Technology" style="border: 2px solid white; border-radius: 10px; width: 100px; display: block; margin: 0 auto;">
+                            <img class="image-button" src="/static/AWSDefcon1App/Steal_Nuclear_Technology.gif" alt="Steal Nuclear Technology" style="border: 2px solid white; border-radius: 10px; width: 100px; display: block; margin: 0 auto;">
                             <figcaption style = "color:#ccc;">Steal Nuke Tech<span class="info-icon">🛈</span> <span class="tooltip-text">Try to decrease your nuke time, risk losing 1 spy (Chance of sucess increased by having more spies)</span> </div></figcaption>
                         </button>
                         </div>
@@ -243,7 +401,7 @@
                         <div style="display: inline-block;">
                         <div class="info-bubble">
                         <button type="submit" name="coup" value="1" style="background: none; border: none; cursor: pointer; margin-bottom: 10px;">
-                            <img src="/static/AWSDefcon1App/Fund_Revolt.gif" alt="Fund Revolt in a Single State" style="border: 2px solid white; border-radius: 10px; width: 100px; display: block; margin: 0 auto;">
+                            <img class="image-button" src="/static/AWSDefcon1App/Fund_Revolt.gif" alt="Fund Revolt in a Single State" style="border: 2px solid white; border-radius: 10px; width: 100px; display: block; margin: 0 auto;">
                             <figcaption style = "color:#ccc;">Start Revolt<span class="info-icon">🛈</span> <span class="tooltip-text">Try to capture a random state, risk losing half your spies (Chance of sucess increased by having more spies)</span> </div></figcaption>
                         </button>
                         </div>
@@ -251,7 +409,7 @@
                         <div style="display: inline-block;">
                         <div class="info-bubble">
                         <button type="submit" name="civil" value="1" style="background: none; border: none; cursor: pointer; margin-bottom: 10px;">
-                            <img src="/static/AWSDefcon1App/Start_Civil_War.gif" alt="Start Civil War" style="border: 2px solid white; border-radius: 10px; width: 100px; display: block; margin: 0 auto;">
+                            <img class="image-button" src="/static/AWSDefcon1App/Start_Civil_War.gif" alt="Start Civil War" style="border: 2px solid white; border-radius: 10px; width: 100px; display: block; margin: 0 auto;">
                             <figcaption style = "color:#ccc;">Start Uprising<span class="info-icon">🛈</span> <span class="tooltip-text">Try to capture half your enemies states instantly, risk losing all your spies (Chance of sucess increased by having more spies)</span> </div></figcaption>
                         </button>
                         </div>
@@ -272,7 +430,8 @@
                 {% csrf_token %}
                 
                 <input type="hidden" name="defender" id="defender-input" value="">
-                
+                <input type="hidden" name="front_name" id="frontNameInput">
+
                 <div style="display: inline-block;">
 
                 <label for="div_attack" style="font-weight: bold;">Active Armies</label><br>
@@ -280,23 +439,12 @@
                 <br>
                 <span id="div_attack_label">Amount: 1</span><br><br>
 
-                <script>
-                    var div_attack_slider = document.getElementById("div_attack");
-                    var div_attack_output = document.getElementById("div_attack_label");
-
-                    div_attack_output.innerHTML = "Amount: " + div_attack_slider.value;
-
-                    div_attack_slider.oninput = function () {
-                        div_attack_output.innerHTML = "Amount: " + this.value;
-                    };
-                </script>
-
 
                 <div style="display: inline-block;">
 
                 <div class="info-bubble">
                     <button class = "attacker" type="submit" name="action" value="Ndivision">
-                        <img src="/static/AWSDefcon1App/Army_man.gif" alt="Normal Ground Attack" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
+                        <img class="image-button" src="/static/AWSDefcon1App/Army_man.gif" alt="Normal Ground Attack" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
                     </button>
                     <figcaption> Ground Attack<span class="info-icon">🛈</span> <span class="tooltip-text">Attempt to take some of your enemies land, make sure you have a land border</span> </div> </figcaption>
                 </div>
@@ -304,7 +452,7 @@
                 <div style="display: inline-block;">
                 <div class="info-bubble">
                     <button class = "attacker" class = "attacker" type="submit" name="action" value="division">
-                        <img src="/static/AWSDefcon1App/Encirclement_1.gif" alt="Attempt an Encirclement" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
+                        <img class="image-button" src="/static/AWSDefcon1App/Encirclement_1.gif" alt="Attempt an Encirclement" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
                     </button>
                     <figcaption> Encirclement<span class="info-icon">🛈</span> <span class="tooltip-text">Risky attack that could lead to major losses on either side (not both)</span> </div> </figcaption>
                 </div>
@@ -319,21 +467,10 @@
                 <br>
                 <span id="boat_attack_label">Amount: 1</span><br><br>
 
-                <script>
-                    var boat_attack_slider = document.getElementById("boat_attack");
-                    var boat_attack_output = document.getElementById("boat_attack_label");
-
-                    boat_attack_output.innerHTML = "Amount: " + boat_attack_slider.value;
-
-                    boat_attack_slider.oninput = function () {
-                        boat_attack_output.innerHTML = "Amount: " + this.value;
-                    };
-                </script>
-
                 <div style="display: inline-block;">
                 <div class="info-bubble">
                     <button class = "attacker"  type="submit" name="action" value="Nboat">
-                        <img src="/static/AWSDefcon1App/Boat.gif" alt="Attack Their Boats" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
+                        <img class="image-button" src="/static/AWSDefcon1App/Boat.gif" alt="Attack Their Boats" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
                     </button>
                     <figcaption>Naval Attack<span class="info-icon">🛈</span> <span class="tooltip-text">Destroys some of your enemies boats, risking your own planes</span> </div> </figcaption>
                 </div>
@@ -341,7 +478,7 @@
                 <div style="display: inline-block;">
                 <div class="info-bubble">
                     <button class = "attacker"  type="submit" name="action" value="boat">
-                        <img src="/static/AWSDefcon1App/Naval_invasion.gif" alt="Naval Invasion" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;">
+                        <img class="image-button" src="/static/AWSDefcon1App/Naval_invasion.gif" alt="Naval Invasion" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;">
                     </button>
                     <figcaption> Naval Landing<span class="info-icon">🛈</span> <span class="tooltip-text">Attempts to take a state bordering the water, a good way to establish a border with someone!</span> </div></figcaption>
                 </div>
@@ -357,21 +494,10 @@
                 <br>
                 <span id="planes_attack_label">Amount: 1</span><br><br>
 
-                <script>
-                    var planes_attack_slider = document.getElementById("planes_attack");
-                    var planes_attack_output = document.getElementById("planes_attack_label");
-
-                    planes_attack_output.innerHTML = "Amount: " + planes_attack_slider.value;
-
-                    planes_attack_slider.oninput = function () {
-                        planes_attack_output.innerHTML = "Amount: " + this.value;
-                    };
-                </script>
-
                 <div style="display: inline-block;">
                 <div class="info-bubble">
                     <button class = "attacker" type="submit" name="action" value="Nplanes">
-                        <img src="/static/AWSDefcon1App/Plane.gif" alt="Attack Their Planes" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" > 
+                        <img class="image-button" src="/static/AWSDefcon1App/Plane.gif" alt="Attack Their Planes" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" > 
                     </button>
                     <figcaption> Planes  Attack<span class="info-icon">🛈</span> <span class="tooltip-text">Destroys some of your enemies planes, risking your own planes</span> </div>  </figcaption>
                 </div>
@@ -379,7 +505,7 @@
                 <div style="display: inline-block;">
                 <div class="info-bubble">
                     <button class = "attacker" type="submit" name="action" value="planes">
-                        <img src="/static/AWSDefcon1App/Bombing.gif" alt="Bomb Their Soldiers" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
+                        <img class="image-button" src="/static/AWSDefcon1App/Bombing.gif" alt="Bomb Their Soldiers" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
                     </button>
                     <figcaption>Bomb Army<span class="info-icon">🛈</span> <span class="tooltip-text">Destroys some of your enemy's soldeirs based on how many planes you have</span> </div> </figcaption>
                 </div>
@@ -387,7 +513,7 @@
                 <div style="display: inline-block;">
                 <div class="info-bubble">
                     <button class = "attacker" type="submit" name="action" value="Bplanes">
-                        <img src="/static/AWSDefcon1App/Plane_bombing_boat_gif.gif" alt="Bomb Their Boats" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
+                        <img class="image-button" src="/static/AWSDefcon1App/Plane_bombing_boat_gif.gif" alt="Bomb Their Boats" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
                     </button>
                     <figcaption> Bomb Boats<span class="info-icon">🛈</span> <span class="tooltip-text">Destroy some of your enemy's boats based on how many planes you have</span> </div> </figcaption>
                 </div>
@@ -397,7 +523,7 @@
                 <div style="display: inline-block;">
                 <div class="info-bubble">
                     <button class = "attacker" type="submit" name="action" value="nuke">
-                        <img src="/static/AWSDefcon1App/Nuke.gif" alt="Nuclear Attack" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" > 
+                        <img class="image-button" src="/static/AWSDefcon1App/Nuke.gif" alt="Nuclear Attack" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" > 
                     </button>
                     <figcaption> Drop Nukes<span class="info-icon">🛈</span> <span class="tooltip-text">If you have more than 150% of your enemies planes, then this will nuke them.  If you drop enough nukes they will automatically lose!</span> </div></figcaption>
                 </div>
@@ -406,9 +532,9 @@
                 <div style="display: inline-block;">
                 <div class="info-bubble">
                     <button class = "attacker" style="pointer-events: none;">
-                        <img src="/static/AWSDefcon1App/Nuke.gif" alt="Nuclear Attack" style="filter: grayscale(100%); border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" > 
+                        <img class="image-button" src="/static/AWSDefcon1App/Nuke.gif" alt="Nuclear Attack" style="filter: grayscale(100%); border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" > 
                     </button>
-                    <figcaption>Nukes in {{PlayerAAA.nuke_time}} turns<span class="info-icon">🛈</span> <span class="tooltip-text">In {{PlayerAAA.nuke_time}} you will be able to use Nukes</span> </div></figcaption>
+                    <figcaption>Nukes in {{PlayerAAA.nuke_time}} turns<span class="info-icon">🛈</span> <span class="tooltip-text">In {{PlayerAAA.nuke_time}} turns you will be able to use Nukes</span> </div></figcaption>
                 </div>
                 {% endif %}
                 </div>
@@ -417,18 +543,25 @@
                       <br> <br>
             </div>   
              <br> <br>     
-            <div style="display: flex; justify-content: center; align-items: center;">
-                <a class="linker" 
-                   style="display: inline-block; width: 50px; height: 50px; background-color: #007bff; color: white; text-align: center; line-height: 50px; border-radius: 50%; text-decoration: none; font-size: 14px; transition: background-color 0.3s ease;" 
-                   href="{% url 'passer' game_id=game_id %}">
-                <div class="info-bubble">Pass<span class="info-icon">🛈</span> <span sytle = "text-decoration: none;" class="tooltip-text">This will skip your turn, preventing you from fighting until every other player has completed their turn</span> </div>
+            <div style="display: flex; justify-content: center; align-items: center; margin-top: 10px;">
+                <a class="pass-button" href="{% url 'passer' game_id=game_id %}">
+                    End Turn!
+                    <div class="info-bubble">
+                        <span class="info-icon">🛈</span>
+                        <span class="tooltip-text">
+                            End Current Turn
+                        </span>
+                    </div>
                 </a>
-            
             </div>
+
+
+            
             </div>
 
             <!-- Boxed list on the right -->
             <div style="width: 20%; margin-left: 20px;">
+                
                 <div class="game">
                     <hr>
                     <div class="boxed-list" style="border: 1px solid #ccc; padding: 10px; border-radius: 5px; box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2);">
@@ -464,540 +597,222 @@
                     <span>250</span>
                 </div>
                 </div>
-
-                <script>
-                document.addEventListener("DOMContentLoaded", function() {
-                    const states = parseInt("{{ PlayerAAA.states }}") || 0;
-                    const maxTier = 250;
-                    const bar = document.getElementById("dev-bar");
-
-                    // Clamp states to a max of 250 for the visual bar
-                    const progress = Math.min(states, maxTier) / maxTier * 100;
-                    bar.style.width = progress + "%";
-                });
-                </script>
-
-
-                <form method="post" action="{% url 'focus' game_id=game_id %}" 
-                style="border: 1px solid #ccc; padding: 15px; border-radius: 5px; box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2); margin-top: 20px;">
-              {% csrf_token %}
-              <h3 style="text-align: center;">Buy Supplies</h3>
-              <p style="text-align: center;">Focus Points: {{PlayerAAA.points}}</p>
-              <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-                    
-                 <div style="display: flex; flex-direction: column; align-items: flex-start;">
-                    <div class="info-bubble" style="display: flex; align-items: center;">
-                    <button type="submit" name="air" value="1" 
-                          style="flex: 1; background: none; border: none; padding: 0; cursor: pointer;">
-                      <img src="/static/AWSDefcon1App/Airplane.png" alt="Air" 
-                           style="height: 50px; border: 2px solid #ffffff; border-radius: 5px;">
-                  </button>
-                  <label for = "air">Total Planes: {{PlayerAAA.planes}}</label>
-                        <span class="info-icon" style="margin-right: 5px;">🛈</span>
-                        <span class="tooltip-text" style="font-size: 14px;">Buy 1000 planes for 1 point</span>
-                    </div>
-                    </div>
-
-                  <div style="display: flex; flex-direction: column; align-items: flex-start;">
-                <div class="info-bubble" style="display: flex; align-items: center;">
-                  <button type="submit" name="army" value="1" 
-                          style="flex: 1; background: none; border: none; padding: 0; cursor: pointer;">
-                      <img src="/static/AWSDefcon1App/Gun.png" alt="Army" 
-                           style="height: 50px; border: 2px solid #ffffff; border-radius: 5px;">
-                  </button>
-                  <label for = "army">Total Armies: {{PlayerAAA.divisions}}</label>
-                        <span class="info-icon" style="margin-right: 5px;">🛈</span>
-                        <span class="tooltip-text" style="font-size: 14px;">Buy 80 divisions for 1 point</span>
-                    </div>
-                    </div>
-
-                    <div style="display: flex; flex-direction: column; align-items: flex-start;">
-                    <div class="info-bubble" style="display: flex; align-items: center;">
-                    <button type="submit" name="navy" value="1" 
-                          style="flex: 1; background: none; border: none; padding: 0; cursor: pointer;">
-                      <img src="/static/AWSDefcon1App/Boat.png"alt="Navy" 
-                           style="height: 50px; border: 2px solid #ffffff; border-radius: 5px;">
-                  </button>
-                  <label for = "navy">Total Boats: {{PlayerAAA.boats}}</label>
-                        <span class="info-icon" style="margin-right: 5px;">🛈</span>
-                        <span class="tooltip-text" style="font-size: 14px;">Buy 60 boats for 1 point</span>
-                    </div>
-                    </div>
-
-                    <div style="display: flex; flex-direction: column; align-items: flex-start;">
-                    <div class="info-bubble" style="display: flex; align-items: center;">
-                    <button type="submit" name="spies" value="1" 
-                    style="flex: 1; background: none; border: none; padding: 0; cursor: pointer;">
-                <img src="/static/AWSDefcon1App/Spies.png" alt="Air" 
-                     style="height: 50px; border: 2px solid #ffffff; border-radius: 5px;">
+                <!-- Open Shop Button -->
+                <button id="openShopBtn"
+                        style="margin-top:20px; padding:10px 16px; font-size:16px; cursor:pointer;">
+                    Supply Market
                 </button>
-                        <label for = "spies">Total Spies: {{PlayerAAA.spies}}</label>
-                        <span class="info-icon" style="margin-right: 5px;">🛈</span>
-                        <span class="tooltip-text" style="font-size: 14px;">Buys 1 new Spy</span>
-                    </div>
-                    </div>
+<!-- Shop Overlay -->
+<div id="shopOverlay" style="
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.6);
+    z-index:1000;
+    align-items:center;
+    justify-content:center;
+">
 
-                    <div style="display: flex; flex-direction: column; align-items: flex-start;">
-                    <div class="info-bubble" style="display: flex; align-items: center;">
-                    <button type="submit" name="nuke" value="1" 
-                          style="flex: 1; background: none; border: none; padding: 0; cursor: pointer;">
-                      <img src="/static/AWSDefcon1App/Nukes.png" alt="Nukes" 
-                           style="height: 50px; border: 2px solid #ffffff; border-radius: 5px;">
-                  </button>
-                  <label for = "nuke">Total Nukes: {{PlayerAAA.nukes}}</label>
-                        <span class="info-icon" style="margin-right: 5px;">🛈</span>
-                        <span class="tooltip-text" style="font-size: 14px;">Lowers Nuke Time/Build Nuke for 2 points</span>
-                    </div>
-                    </div>
+    <!-- Shop Modal -->
+    <div style="
+        background:#1e1e1e;
+        color:white;
+        width:750px;
+        max-height:85vh;
+        overflow-y:auto;
+        padding:20px;
+        border-radius:10px;
+        position:relative;
+    ">
 
-                    <div style="display: flex; flex-direction: column; align-items: flex-start;">
-                    <div class="info-bubble" style="display: flex; align-items: center;">
-                  <button type="submit" name="policy" value="1" 
-                          style="flex: 1; background: none; border: none; padding: 0; cursor: pointer;">
-                      <img src="/static/AWSDefcon1App/Chains.png" alt="Revolt" 
-                           style="height: 50px; border: 2px solid #ffffff; border-radius: 5px;">
-                  </button>
-                    <label for = "spies">Total Allies: {{num_allies}}</label>
-                        <span class="info-icon" style="margin-right: 5px;">🛈</span>
-                        <span class="tooltip-text" style="font-size: 14px;">Disband your alliance for 2 points (This is the only way to break an alliance, hence why they can be trusted)</span>
-                    </div>
-                    </div>
+        <!-- Close Button -->
+        <button id="closeShopBtn" style="
+            position:absolute;
+            top:10px;
+            right:10px;
+            background:none;
+            border:none;
+            color:white;
+            font-size:20px;
+            cursor:pointer;
+        ">✕</button>
 
-              </div>
-          </form>
-                                  <div class="game">
-                    <hr>
-                    <div class="boxed-list" style="border: 1px solid #ccc; padding: 10px; border-radius: 5px; box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2);">
-                        <p class="boxed-list-instance"> Defeat these nations to win the game:</p>
-                        <p class="boxed-list-instance">{{kill_list}}</p>
-                    </div>
-                    <hr>
+        <!-- ================= BUY SUPPLIES ================= -->
+        <form method="post" action="{% url 'focus' game_id=game_id %}">
+            {% csrf_token %}
+
+            <h3 style="text-align:center;">Buy Supplies</h3>
+            <p style="text-align:center;">Focus Points: {{ PlayerAAA.points }}</p>
+
+            <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:15px;">
+
+                <!-- AIR -->
+                <div class="info-bubble" style="display:flex; align-items:center;">
+                    <button type="submit" name="air" value="1" style="background:none; border:none; padding:0; cursor:pointer;">
+                        <img class="image-button" src="/static/AWSDefcon1App/Airplane.png" style="height:50px; border:2px solid #fff; border-radius:5px;">
+                    </button>
+                    <label style="margin-left:8px;">Planes: {{ PlayerAAA.planes }}</label>
+                    <span class="info-icon" style="margin-left:6px;">🛈</span>
+                    <span class="tooltip-text">Buy 1000 planes for 1 point</span>
+                </div>
+
+                <!-- ARMY -->
+                <div class="info-bubble" style="display:flex; align-items:center;">
+                    <button type="submit" name="army" value="1" style="background:none; border:none; padding:0; cursor:pointer;">
+                        <img class="image-button" src="/static/AWSDefcon1App/Gun.png" style="height:50px; border:2px solid #fff; border-radius:5px;">
+                    </button>
+                    <label style="margin-left:8px;">Armies: {{ PlayerAAA.divisions }}</label>
+                    <span class="info-icon" style="margin-left:6px;">🛈</span>
+                    <span class="tooltip-text">Buy 80 divisions for 1 point</span>
+                </div>
+
+                <!-- NAVY -->
+                <div class="info-bubble" style="display:flex; align-items:center;">
+                    <button type="submit" name="navy" value="1" style="background:none; border:none; padding:0; cursor:pointer;">
+                        <img class="image-button" src="/static/AWSDefcon1App/Boat.png" style="height:50px; border:2px solid #fff; border-radius:5px;">
+                    </button>
+                    <label style="margin-left:8px;">Boats: {{ PlayerAAA.boats }}</label>
+                    <span class="info-icon" style="margin-left:6px;">🛈</span>
+                    <span class="tooltip-text">Buy 60 boats for 1 point</span>
+                </div>
+
+                <!-- SPIES -->
+                <div class="info-bubble" style="display:flex; align-items:center;">
+                    <button type="submit" name="spies" value="1" style="background:none; border:none; padding:0; cursor:pointer;">
+                        <img class="image-button" src="/static/AWSDefcon1App/Spies.png" style="height:50px; border:2px solid #fff; border-radius:5px;">
+                    </button>
+                    <label style="margin-left:8px;">Spies: {{ PlayerAAA.spies }}</label>
+                    <span class="info-icon" style="margin-left:6px;">🛈</span>
+                    <span class="tooltip-text">Buy 1 new spy</span>
+                </div>
+
+                <!-- NUKES -->
+                <div class="info-bubble" style="display:flex; align-items:center;">
+                    <button type="submit" name="nuke" value="1" style="background:none; border:none; padding:0; cursor:pointer;">
+                        <img class="image-button" src="/static/AWSDefcon1App/Nukes.png" style="height:50px; border:2px solid #fff; border-radius:5px;">
+                    </button>
+                    <label style="margin-left:8px;">Nukes: {{ PlayerAAA.nukes }}</label>
+                    <span class="info-icon" style="margin-left:6px;">🛈</span>
+                    <span class="tooltip-text">Build nuke / reduce timer for 2 points</span>
+                </div>
+
+                <!-- POLICY -->
+                <div class="info-bubble" style="display:flex; align-items:center;">
+                    <button type="submit" name="policy" value="1" style="background:none; border:none; padding:0; cursor:pointer;">
+                        <img class="image-button" src="/static/AWSDefcon1App/Chains.png" style="height:50px; border:2px solid #fff; border-radius:5px;">
+                    </button>
+                    <label style="margin-left:8px;">Allies: {{ num_allies }}</label>
+                    <span class="info-icon" style="margin-left:6px;">🛈</span>
+                    <span class="tooltip-text">Disband alliance for 2 points</span>
                 </div>
             </div>
+        </form>
+
+        <!-- Divider -->
+        <hr style="margin:25px 0; border:1px solid #444;">
+
+        <!-- ================= SEND SUPPLIES ================= -->
+        <form method="post" action="{% url 'send' game_id=game_id %}" style="text-align:center;">
+            {% csrf_token %}
+
+            <h3 id="sendText">Donate Supplies</h3>
+
+            <input type="hidden" name="selected_nation" id="send-input" value="">
+            <input type="hidden" name="send_type" id="send_type" value="">
+
+            <label style="font-weight:bold;">Enter Percent</label><br>
+            <input type="range" id="amount" name="amount" value="1" min="0" max="100"
+                   style="width:80%; margin:10px 0;">
+            <br>
+            <span id="amount_label">Amount: 1</span>
+            <br><br>
+
+            <div class="info-bubble">
+                <span class="info-icon">🛈</span>
+
+                <button type="submit" onclick="send_type.value='1'" style="background:none; border:none; cursor:pointer;">
+                     <img class="image-button" src="/static/AWSDefcon1App/Gun.png" style="height:50px; border:2px solid #fff; border-radius:5px;">
+                </button>
+
+                <button type="submit" onclick="send_type.value='2'" style="background:none; border:none; cursor:pointer;">
+                    <img class="image-button" src="/static/AWSDefcon1App/Airplane.png" style="height:50px; border:2px solid #fff; border-radius:5px;">
+                </button>
+
+                <button type="submit" onclick="send_type.value='3'" style="background:none; border:none; cursor:pointer;">
+                    <img class="image-button" src="/static/AWSDefcon1App/Boat.png" style="height:50px; border:2px solid #fff; border-radius:5px;">
+                </button>
+
+                <span class="tooltip-text">
+                    Send a percent of units to reduce hostility
+                </span>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Open Objectives Button -->
+<button id="openObjectivesBtn"
+        style="margin-top:15px; padding:10px 16px; font-size:16px; cursor:pointer;">
+    Objectives
+</button>
+
+<!-- Objectives Overlay -->
+<div id="objectivesOverlay" style="
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.6);
+    z-index:1000;
+    align-items:center;
+    justify-content:center;
+">
+
+    <!-- Objectives Modal -->
+    <div style="
+        background:#1e1e1e;
+        color:white;
+        width:600px;
+        max-height:80vh;
+        overflow-y:auto;
+        padding:20px;
+        border-radius:10px;
+        position:relative;
+    ">
+
+        <!-- Close Button -->
+        <button id="closeObjectivesBtn" style="
+            position:absolute;
+            top:10px;
+            right:10px;
+            background:none;
+            border:none;
+            color:white;
+            font-size:20px;
+            cursor:pointer;
+        ">✕</button>
+
+        <h3 style="text-align:center;">Objectives</h3>
+
+        <hr>
+
+        <div class="boxed-list" style="
+            border:1px solid #ccc;
+            padding:10px;
+            border-radius:5px;
+            box-shadow:1px 1px 5px rgba(0,0,0,0.2);
+        ">
+            <p class="boxed-list-instance">
+                Defeat these nations to win the game:
+            </p>
+            <p class="boxed-list-instance">
+                {{ kill_list }}
+            </p>
         </div>
-            <style>
-            #nationForm {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                gap: 0.5rem;
-                margin: 1rem auto;
-                font-family: sans-serif;
-            }
 
-            #nationSelect {
-                padding: 0.4rem 0.6rem;
-                font-size: 1rem;
-                border: 1px solid #ccc;
-                border-radius: 8px;
-                background-color: #f9f9f9;
-                cursor: pointer;
-                min-width: 200px;
-            }
-
-            #nationSelect:hover {
-                border-color: #888;
-            }
-
-            #nationForm button {
-                padding: 0.4rem 0.8rem;
-                font-size: 1rem;
-                background-color: #007BFF;
-                color: white;
-                border: none;
-                border-radius: 8px;
-                cursor: pointer;
-                transition: background-color 0.2s ease-in-out;
-            }
-
-            #nationForm button:hover {
-                background-color: #0056b3;
-            }
-            </style>            
-        <script> 
-            const canvas = document.getElementById('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 1120;
-            canvas.height = 480;
-            const colorDisplay = document.getElementById('colorDisplay');
-        
-        
-            const img = new Image();
-            img.onload = () => {{
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('canvasContainer').style.display = 'block';
-            }};
-            img.crossOrigin = "anonymous"; 
-            const gameId = '{{ game_id }}';
-            img.src = `{{path}}`;
-        </script>    
-     <script>
-
-
-
-            const colors = {
-                'Ocean': '#000000',
-                'United Kingdom': '#ff4879',
-                'Soviet Union': '#a3101f',
-                'Italy': '#56a552',
-                'Brazil': '#62bd52',
-                'Sultanate of Aussa': '#08c237',
-                'Turkey': '#c7e9b4',
-                'Norway': '#623c3c',
-                'Iraq': '#e79481',
-                'Saudi Arabia': '#def7c6',
-                'United States': '#57a1ff',
-                'Albania': '#c23b85',
-                'Canada': '#9b3e33',
-                'France': '#4892FF',
-                'Kingdom of Hungary': '#ffa47f',
-                'China': '#dfe5a0',
-                'Chile': '#ca828b',
-                'Peru': '#fff6ff',
-                'British Raj': '#c80a0a',
-                'Spain': '#ffff79',
-                'Kingdom of Greece': '#79ebff',
-                'Lithuania': '#ffff9b',
-                'Mexico': '#86c66c',
-                'Ethiopia': '#c3a5f5',
-                'Romania': "#9e9e00", 
-                'Portugal': '#33965b',
-                'Bhutan': '#ac7a58',
-                'Poland': '#ff7789',
-                'Australia': '#49bb7e',
-                'Czechoslovakia': '#46d8cb',
-                'Sweden': '#2eadff',
-                'Venezuela': "#70b626", 
-                'Yugoslavia': '#5e5ea4',
-                'Netherlands': '#ffb35f',
-                'German Reich': '#525252',
-                'Bulgaria': '#329a00',
-                'Belgium': '#fbdf0a',
-                'South Africa': '#be96fa',
-                'Philippines': '#b496e6',
-                'Uruguay': '#abbe99',
-                'Argentina': '#bdccff',
-                'Republic of Paraguay': '#4696fa',
-                'Mengkukuo': '#a5e684',
-                'Japan': '#fee8c8',
-                'Ireland': '#68cf75',
-                'Costa Rica': '#927a30',
-                'Cuba': '#8b40a6',
-                'Colombia': '#fff375',
-                'Sinkiang': '#3fb08d',
-                'Yunnan': '#698948',
-                'Dominican Republic': '#bea0f0',
-                'Mongolia': '#5a771d',
-                'Switzerland': '#c15151',
-                'Ecuador': '#ffbe7f',
-                'El Salvador': '#fabe78',
-                'Iran': '#5c927e',
-                'Xibei San Ma': '#685b84',
-                'Denmark': "#e25c0e", 
-                'Guangxi Clique': '#8a9a74',
-                'Guatemala': '#473070',
-                'Haiti': '#ab6f72',
-                'Finland': '#ffffff',
-                'Estonia': '#63cdfe',
-                'Manchukuo': '#ff7847',
-                'Afghanistan': '#53d0d9',
-                'Honduras': "#B6E01F", 
-                'Iceland': '#c79779',
-                'Siam': '#d7f0c8',
-                'Dutch East Indies': "#5b21e2", 
-                'Latvia': '#7b7cb8',
-                'Bolivian Republic': '#ffeab1',
-                'Liberia': '#cdafff',
-                'Austria': "#a999f0", 
-                'Luxembourg': '#8adba2',
-                'Tibet': '#456722',
-                'Nepal': '#c8aafa',
-                'Nicaragua': '#92b2bf',
-                'British Malaya': "#e623d5", 
-                'New Zealand': '#b99beb',
-                'Oman': '#905c5c', 
-                'Shanxi': '#651e29',
-                'Panama': '#9e8add',
-                'Communist China': '#b2233b',
-                'Tannu Tuva': "#e94a4a",
-                'Yemen': '#905d5d',
-            }
-        const hexToRgb = (hex) => {
-            const bigint = parseInt(hex.slice(1), 16);
-            const r = (bigint >> 16) & 255;
-            const g = (bigint >> 8) & 255;
-            const b = bigint & 255;
-            return `rgb(${r}, ${g}, ${b})`;
-        };
-        const rgbToCountry = {};
-        for (const country in colors) {
-            const rgbColor = hexToRgb(colors[country]);
-            rgbToCountry[rgbColor] = country;
-        }
-
-    window.addEventListener('DOMContentLoaded', () => {
-        const country = localStorage.getItem('selectedCountry');
-        const nationSelect = document.getElementById('nationSelect');
-        // Check if the country is still a valid option
-        const isCountryValid = [...nationSelect.options].some(
-            option => option.value === country
-        );
-
-        if (country && isCountryValid) {
-            console.log(`Closest color name: ${country}`);
-            
-            colorDisplay.textContent = `${country}`;
-            offerDisplay.textContent = `Offer Alliance to ${country}`;
-            sendText.textContent = `Send Supplies to ${country}`; 
-
-            var some_var = "{{ nation_name_at_war }}";
-            nationsAtWar = some_var.replaceAll("&#x27;", "");
-            var playerA = "{{PlayerAAA.name}}"
-            console.log(playerA);
-            if (!nationsAtWar.includes(country)) {
-                document.getElementById("battle-form").style.display = "none";
-                document.getElementById('div1').style.display = "none";
-                document.getElementById('div2').style.display = "none";
-                document.getElementById('showDiv1').style.display = "none";
-                document.getElementById('showDiv2').style.display = "none";
-                if(playerA != country && "Ocean" != country){
-                    document.getElementById('peace-form').style.display = "block";
-                    const warInput = document.getElementById('war-input');
-                    const allianceInput = document.getElementById('alliance-input');
-                    const sendInput = document.getElementById('send-input');
-                    warInput.value = country;
-                    sendInput.value = country;
-                    allianceInput.value = country;
-                }
-                if(playerA == country || "Ocean" == country){
-                    document.getElementById('peace-form').style.display = "none";
-                    offerHostility.textContent = `No Hostility`;
-                    stateCount.textContent = `(not divided into states)`;
-                }
-                
-            } else {
-                document.getElementById("battle-form").style.display = "block";
-                document.getElementById('showDiv1').style.display = "inline-block";
-                document.getElementById('showDiv2').style.display = "inline-block";
-                document.getElementById('atWar').style.display = "inline-block";
-                document.getElementById('peace-form').style.display = "none";
-                const victimInput = document.getElementById('victim-input');
-                const defenderInput = document.getElementById('defender-input');
-                defenderInput.value = country;
-                victimInput.value = country;
-            }
-
-            console.log("Starting Next Part");
-            // Get the table element
-            // JavaScript variable 'country' (set this value dynamically)
-
-            // Get the table element and its rows
-            const stateCount = document.getElementById('stateCount');
-            const filter = country.toLowerCase(); // Convert country to lowercase for case-insensitive comparison
-            const nationsTable = document.getElementById('nationsTable'); // Reference the table element
-            const rows = nationsTable.getElementsByTagName('tbody')[0].getElementsByTagName('tr'); // Get all rows from the table body
-            // Loop through each row in the table
-            for (const row of rows) {
-                const name = row.cells[0].textContent.toLowerCase(); // Get text content from the 2nd column (index 1) and convert to lowercase
-                console.log(filter); // Debugging: Log the filter value
-                console.log(name); // Debugging: Log the nation name from the table
-
-                if (name === filter) {
-                    offerHostility.textContent = `Hostility: ${row.cells[5].textContent.toLowerCase()}`;
-                    stateCount.textContent = `(States: ${row.cells[1].textContent.toLowerCase()})`;
-
-                } else {
-                    row.style.display = "none"; // Hide non-matching rows
-                }
-            }
-
-            // Make the table visible if at least one row matches
-            nationsTable.style.display = "table";
-        }
-    });
-
-    document.getElementById('nationForm').addEventListener('submit', function(event) {
-            event.preventDefault();  
-            const country = document.getElementById('nationSelect').value;
-            localStorage.setItem('selectedCountry', country);
-            console.log(`Closest color name: ${country}`);
-            
-            colorDisplay.textContent = `${country}`;
-            offerDisplay.textContent = `Offer Alliance to ${country}`;
-            sendText.textContent = `Send Supplies to ${country}`; 
-
-            var some_var = "{{ nation_name_at_war }}";
-            nationsAtWar = some_var.replaceAll("&#x27;", "");
-            var playerA = "{{PlayerAAA.name}}"
-            console.log(playerA);
-            if (!nationsAtWar.includes(country)) {
-                document.getElementById("battle-form").style.display = "none";
-                document.getElementById('div1').style.display = "none";
-                document.getElementById('div2').style.display = "none";
-                document.getElementById('showDiv1').style.display = "none";
-                document.getElementById('showDiv2').style.display = "none";
-                if(playerA != country && "Ocean" != country){
-                    document.getElementById('peace-form').style.display = "block";
-                    const warInput = document.getElementById('war-input');
-                    const allianceInput = document.getElementById('alliance-input');
-                    const sendInput = document.getElementById('send-input');
-                    warInput.value = country;
-                    sendInput.value = country;
-                    allianceInput.value = country;
-                }
-                if(playerA == country || "Ocean" == country){
-                    document.getElementById('peace-form').style.display = "none";
-                    offerHostility.textContent = `No Hostility`;
-                    stateCount.textContent = `(not divided into states)`;
-                }
-                
-            } else {
-                document.getElementById("battle-form").style.display = "block";
-                document.getElementById('showDiv1').style.display = "inline-block";
-                document.getElementById('showDiv2').style.display = "inline-block";
-                document.getElementById('atWar').style.display = "inline-block";
-                document.getElementById('peace-form').style.display = "none";
-                const victimInput = document.getElementById('victim-input');
-                const defenderInput = document.getElementById('defender-input');
-                defenderInput.value = country;
-                victimInput.value = country;
-            }
-
-            console.log("Starting Next Part");
-            // Get the table element
-            // JavaScript variable 'country' (set this value dynamically)
-
-            // Get the table element and its rows
-            
-            const filter = country.toLowerCase(); // Convert country to lowercase for case-insensitive comparison
-            const nationsTable = document.getElementById('nationsTable'); // Reference the table element
-            const offerHostility = document.getElementById('offerHostility');
-            const rows = nationsTable.getElementsByTagName('tbody')[0].getElementsByTagName('tr'); // Get all rows from the table body
-            // Loop through each row in the table
-            for (const row of rows) {
-                const name = row.cells[0].textContent.toLowerCase(); // Get text content from the 2nd column (index 1) and convert to lowercase
-                console.log(filter); // Debugging: Log the filter value
-                console.log(name); // Debugging: Log the nation name from the table
-
-                if (name === filter) {
-                    offerHostility.textContent = `Hostility: ${row.cells[5].textContent.toLowerCase()}`;
-                    stateCount.textContent = `(States: ${row.cells[1].textContent.toLowerCase()})`;
-                } else {
-                    row.style.display = "none"; // Hide non-matching rows
-                }
-            }
-
-            nationsTable.style.display = "none";
-
-        });
-
-        canvas.addEventListener('click', (event) => {
-            const { offsetX, offsetY } = event;
-            const imageData = ctx.getImageData(offsetX, offsetY, 1, 1).data;
-            const rgb = [imageData[0], imageData[1], imageData[2]]; // Convert to array for distance calculation
-
-            // Initialize variables for tracking the closest color
-            var closestColorName = null;
-            var smallestDistance = Infinity;
-
-            // Iterate over the dictionary to find the closest color
-            for (const [colorRgb, colorName] of Object.entries(rgbToCountry)) {
-
-                const colorRgbArray = colorRgb
-                .replace("rgb(", "")  // Remove "rgb("
-                .replace(")", "")    // Remove ")"
-                .split(",")          // Split on commas
-                .map(Number);        // Convert to numbers
-                const distance = Math.sqrt(
-                    Math.pow(rgb[0] - colorRgbArray[0], 2) +
-                    Math.pow(rgb[1] - colorRgbArray[1], 2) +
-                    Math.pow(rgb[2] - colorRgbArray[2], 2)
-                );
-
-
-                if (distance < smallestDistance) {
-                    smallestDistance = distance;
-                    closestColorName = colorName;
-                }
-            }
-            console.log(rgb);
-            const country = closestColorName;
-            localStorage.setItem('selectedCountry', country);
-            console.log(`Closest color name: ${country}`);
-            colorDisplay.textContent = `${country}`;
-            offerDisplay.textContent = `Offer Alliance to ${country}`;
-            sendText.textContent = `Send Supplies to ${country}`; 
-
-        var some_var = "{{ nation_name_at_war }}";
-        nationsAtWar = some_var.replaceAll("&#x27;", "");
-        var playerA = "{{PlayerAAA.name}}"
-        console.log(playerA);
-        if (!nationsAtWar.includes(country)) {
-            document.getElementById("battle-form").style.display = "none";
-            document.getElementById('div1').style.display = "none";
-            document.getElementById('div2').style.display = "none";
-            document.getElementById('showDiv1').style.display = "none";
-            document.getElementById('showDiv2').style.display = "none";
-            if(playerA != country && "Ocean" != country){
-                document.getElementById('peace-form').style.display = "block";
-                const warInput = document.getElementById('war-input');
-                const allianceInput = document.getElementById('alliance-input');
-                const sendInput = document.getElementById('send-input');
-                warInput.value = country;
-                sendInput.value = country;
-                allianceInput.value = country;
-            }
-            if(playerA == country || "Ocean" == country){
-                document.getElementById('peace-form').style.display = "none";
-                offerHostility.textContent = `No Hostility`;
-                stateCount.textContent = `(not divided into states)`;
-            }
-            
-        } else {
-            document.getElementById("battle-form").style.display = "block";
-            document.getElementById('showDiv1').style.display = "inline-block";
-            document.getElementById('showDiv2').style.display = "inline-block";
-            document.getElementById('atWar').style.display = "inline-block";
-            document.getElementById('peace-form').style.display = "none";
-            const victimInput = document.getElementById('victim-input');
-            const defenderInput = document.getElementById('defender-input');
-            defenderInput.value = country;
-            victimInput.value = country;
-        }
-
-        console.log("Starting Next Part");
-        // Get the table element
-        // JavaScript variable 'country' (set this value dynamically)
-
-        // Get the table element and its rows
-        
-        const filter = country.toLowerCase(); // Convert country to lowercase for case-insensitive comparison
-        const nationsTable = document.getElementById('nationsTable'); // Reference the table element
-        const rows = nationsTable.getElementsByTagName('tbody')[0].getElementsByTagName('tr'); // Get all rows from the table body
-
-        // Loop through each row in the table
-        for (const row of rows) {
-            const name = row.cells[0].textContent.toLowerCase(); // Get text content from the 2nd column (index 1) and convert to lowercase
-            console.log("filter:" + filter); // Debugging: Log the filter value
-            console.log("name:" + name); // Debugging: Log the nation name from the table
-
-            if (name === filter) {
-                offerHostility.textContent = `Hostility: ${row.cells[5].textContent.toLowerCase()}`;
-                stateCount.textContent = `(States: ${row.cells[1].textContent.toLowerCase()})`;
-            } else {
-                row.style.display = "none"; // Hide non-matching rows
-            }
-        }
-
-        // Make the table visible if at least one row matches
-        nationsTable.style.display = "table";
-
-        });
-</script>
-
+        <hr>
+    </div>
+</div>
+       
 <table id="nationsTable" class="table table-striped table-sm" style="display: none;">
     <thead  style="display: none;">
         <tr>         
@@ -1027,93 +842,7 @@
         </tr>
         {% endfor %}
     </tbody>
-</table>
-
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Get buttons and divs
-            const button1 = document.getElementById('showDiv1');
-            const button2 = document.getElementById('showDiv2');
-            const div1 = document.getElementById('div1');
-            const div2 = document.getElementById('div2');
-            const battleForm = document.getElementById('battle-form');
-
-            // Ensure battle form is visible
-            battleForm.style.display = 'block';
-
-            // Show Div 1 and hide Div 2
-            button1.addEventListener('click', () => {
-                div1.style.display = 'block';
-                div2.style.display = 'none';
-                console.log("Button Clicked: Show Div 1");
-            });
-
-            // Show Div 2 and hide Div 1
-            button2.addEventListener('click', () => {
-                div2.style.display = 'block';
-                div1.style.display = 'none';
-                console.log("Button Clicked: Show Div 2");
-            });
-        });
-    </script>
-
-        <script>
-            document.addEventListener('DOMContentLoaded', () => {
-                console.log('Script loaded');
-        
-                const gifPath = '/static/AWSDefcon1App/Loading_Battle.gif';
-                const gifContainer = document.createElement('div');
-                const gifImage = document.createElement('img');
-        
-                // Styling for the gif container
-                gifContainer.style.position = 'fixed';
-                gifContainer.style.top = '0';
-                gifContainer.style.left = '0';
-                gifContainer.style.width = '100%';
-                gifContainer.style.height = '100%';
-                gifContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';  // Semi-transparent black background
-                gifContainer.style.display = 'none';  // Hidden initially
-                gifContainer.style.justifyContent = 'center';
-                gifContainer.style.alignItems = 'center';
-                gifContainer.style.zIndex = '9999';  // Ensure it appears above all content
-        
-                // Setting up the gif image
-                gifImage.src = gifPath;
-                gifImage.style.maxWidth = '90%';
-                gifImage.style.maxHeight = '90%';
-        
-                gifContainer.appendChild(gifImage);
-                document.body.appendChild(gifContainer);
-        
-                // Event listener for clicks and form submissions
-                document.addEventListener('click', (event) => {
-                    const target = event.target;
-                    if (target.classList.contains('attacker') || target.closest('button.attacker')) {
-                        console.log('Attacker class element clicked');
-                        gifContainer.style.display = 'flex';
-                        
-                        // Automatically hide the gif after a certain duration
-                        setTimeout(() => {
-                            gifContainer.style.display = 'none';
-                        }, 2000000);  
-                    }
-                });
-        
-                // Event listener specifically for form submissions
-                document.addEventListener('submit', (event) => {
-                    const target = event.target;
-                    if (target.classList.contains('attacker')) {
-                        console.log('Attacker class form submitted');
-                        gifContainer.style.display = 'flex';
-    
-                    }
-                });
-        
-
-            });
-        </script>
-
+</table>   
 
   <div class="qa-widget">
   <button class="qa-toggle-button">❔ How to Play </button>
@@ -1211,91 +940,634 @@
 
   </div>
 </div>
-<style>
-.qa-widget {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  max-height: 720px;
-  font-family: sans-serif;
-  z-index: 999;
-}
-
-.qa-toggle-button {
-  background-color: #444;
-  color: white;
-  border: none;
-  padding: 10px 14px;
-  border-radius: 50px;
-  cursor: pointer;
-  font-size: 18px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-}
-
-.qa-container {
-  background-color: #222;
-  color: white;
-  padding: 15px;
-  border-radius: 10px;
-  margin-top: 10px;
-  box-shadow: 0 0 10px rgba(255,255,255,0.1);
-}
-
-.qa-close {
-  background: none;
-  border: none;
-  color: #ccc;
-  font-size: 16px;
-  float: right;
-  cursor: pointer;
-  margin-bottom: 10px;
-}
-
-.qa-question {
-  background-color: #333;
-  color: white;
-  border: none;
-  padding: 10px;
-  margin-top: 5px;
-  border-radius: 5px;
-  text-align: left;
-  cursor: pointer;
-  width: 100%;
-}
-
-.qa-answer {
-  display: none;
-  background-color: #111;
-  padding: 10px;
-  margin-top: 5px;
-  border-left: 3px solid #007BFF;
-  border-radius: 5px;
-}
-</style>
 
 
 <script>
-document.querySelector('.qa-toggle-button').addEventListener('click', function() {
-  const container = document.querySelector('.qa-container');
-  container.style.display = (container.style.display === 'none' || container.style.display === '') ? 'block' : 'none';
+//Sliders Set up
+var slider = document.getElementById("amount");
+var output = document.getElementById("amount_label");
+output.innerHTML = "Amount: " + slider.value;
+
+slider.oninput = function() {
+    output.innerHTML = "Amount: " + slider.value;
+}
+
+//Battle Sliders
+var div_attack_slider = document.getElementById("div_attack");
+var div_attack_output = document.getElementById("div_attack_label");
+div_attack_output.innerHTML = "Amount: " + div_attack_slider.value;
+div_attack_slider.oninput = function () {
+    div_attack_output.innerHTML = "Amount: " + this.value;
+};
+
+var boat_attack_slider = document.getElementById("boat_attack");
+var boat_attack_output = document.getElementById("boat_attack_label");
+boat_attack_output.innerHTML = "Amount: " + boat_attack_slider.value;
+boat_attack_slider.oninput = function () {
+    boat_attack_output.innerHTML = "Amount: " + this.value;
+};
+
+var planes_attack_slider = document.getElementById("planes_attack");
+var planes_attack_output = document.getElementById("planes_attack_label");
+planes_attack_output.innerHTML = "Amount: " + planes_attack_slider.value;
+planes_attack_slider.oninput = function () {
+    planes_attack_output.innerHTML = "Amount: " + this.value;
+};
+
+//States Bar
+document.addEventListener("DOMContentLoaded", function() {
+    const states = parseInt("{{ PlayerAAA.states }}") || 0;
+    const maxTier = 250;
+    const bar = document.getElementById("dev-bar");
+
+    // Clamp states to a max of 250 for the visual bar
+    const progress = Math.min(states, maxTier) / maxTier * 100;
+    bar.style.width = progress + "%";
 });
 
-document.querySelector('.qa-close').addEventListener('click', function() {
-  document.querySelector('.qa-container').style.display = 'none';
+//Shop logic
+const openShopBtn = document.getElementById("openShopBtn");
+const closeShopBtn = document.getElementById("closeShopBtn");
+const shopOverlay = document.getElementById("shopOverlay");
+
+openShopBtn.addEventListener("click", () => {
+    shopOverlay.style.display = "flex";
 });
 
-const questions = document.querySelectorAll('.qa-question');
-questions.forEach(q => {
-  q.addEventListener('click', function() {
-    const answer = this.nextElementSibling;
-
-    // Hide all answers
-    document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
-
-    // Toggle this one
-    answer.style.display = 'block';
-  });
+closeShopBtn.addEventListener("click", () => {
+    shopOverlay.style.display = "none";
 });
+
+// Close when clicking the dark background
+shopOverlay.addEventListener("click", (e) => {
+    if (e.target === shopOverlay) {
+        shopOverlay.style.display = "none";
+    }
+});
+
+//Onkectoves Logic
+const openObjectivesBtn = document.getElementById("openObjectivesBtn");
+const closeObjectivesBtn = document.getElementById("closeObjectivesBtn");
+const objectivesOverlay = document.getElementById("objectivesOverlay");
+
+openObjectivesBtn.addEventListener("click", () => {
+    objectivesOverlay.style.display = "flex";
+});
+
+closeObjectivesBtn.addEventListener("click", () => {
+    objectivesOverlay.style.display = "none";
+});
+
+objectivesOverlay.addEventListener("click", (e) => {
+    if (e.target === objectivesOverlay) {
+        objectivesOverlay.style.display = "none";
+    }
+});
+
+
+const openWarsBtn = document.getElementById("openWarsBtn");
+const closeWarsBtn = document.getElementById("closeWarsBtn");
+const warsOverlay = document.getElementById("warsOverlay");
+
+openWarsBtn.addEventListener("click", () => {
+    warsOverlay.style.display = "flex";
+});
+
+closeWarsBtn.addEventListener("click", () => {
+    warsOverlay.style.display = "none";
+});
+
+// Close when clicking the background
+warsOverlay.addEventListener("click", (e) => {
+    if (e.target === warsOverlay) {
+        warsOverlay.style.display = "none";
+    }
+});
+
+
+const openHistoryBtn = document.getElementById("openHistoryBtn");
+const closeHistoryBtn = document.getElementById("closeHistoryBtn");
+const historyOverlay = document.getElementById("historyOverlay");
+
+openHistoryBtn.addEventListener("click", () => {
+    historyOverlay.style.display = "flex";
+});
+
+closeHistoryBtn.addEventListener("click", () => {
+    historyOverlay.style.display = "none";
+});
+
+// Close when clicking the background
+historyOverlay.addEventListener("click", (e) => {
+    if (e.target === historyOverlay) {
+        historyOverlay.style.display = "none";
+    }
+});
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+canvas.width = 1120;
+canvas.height = 480;
+const colorDisplay = document.getElementById('colorDisplay');
+
+const overlay = document.getElementById('overlayCanvas');
+const ctxO = overlay.getContext('2d');
+
+overlay.addEventListener('click', function(event) {
+
+    const rect = overlay.getBoundingClientRect();
+    
+    // Correct for any scaling
+    const scaleX = overlay.width / rect.width;
+    const scaleY = overlay.height / rect.height;
+    
+    const x = (event.clientX - rect.left) * scaleX;
+    const y = (event.clientY - rect.top) * scaleY;
+
+    // Wipe ONLY the overlay canvas (keeps tiles visible underneath)
+    ctxO.clearRect(0, 0, overlay.width, overlay.height);
+    if (stateToggle.checked) {
+        // Draw the new circle
+        ctxO.beginPath();
+        ctxO.arc(x, y, 10, 0, Math.PI * 2);
+        ctxO.fillStyle = "rgba(255, 0, 0, 0.6)";
+        ctxO.fill();
+        ctxO.strokeStyle = "red";
+        ctxO.lineWidth = 2;
+        ctxO.stroke();
+    }
+});
+
+const bottom = document.getElementById('canvas');
+const stateToggle = document.getElementById("stateToggle");
+
+overlay.addEventListener('click', function(event) {
+    // 1. Draw the circle on top
+    const rect = overlay.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    
+    // (Circle drawing code here...)
+
+    // 2. Manually trigger the click on the bottom canvas
+    const simulatedClick = new MouseEvent('click', {
+        clientX: event.clientX,
+        clientY: event.clientY,
+        bubbles: true,
+        cancelable: true
+    });
+    
+    bottom.dispatchEvent(simulatedClick);
+});
+
+const img = new Image();
+img.onload = () => {{
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('canvasContainer').style.display = 'block';
+}};
+img.crossOrigin = "anonymous"; 
+const gameId = '{{ game_id }}';
+img.src = `{{path}}`;
+
+
+let refreshed = false;
+
+const ws = new WebSocket(
+  "ws://" + window.location.host + "/ws/refresh/"
+);
+
+ws.onmessage = () => {
+  if (refreshed) return;
+  refreshed = true;
+  location.reload();
+};
+
+
+const tileCanvases = [];
+
+async function loadTiles() {
+  await Promise.all(
+    window.TILES.map((relPath) => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.src = `/static/${relPath}`;
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0);
+          tileCanvases.push({ name: relPath, ctx });
+          resolve();
+        };
+      });
+    })
+  );
+}
+
+loadTiles();
+
+const map = document.getElementById("canvas");
+const frontName = document.getElementById('frontName');
+const frontNameInput = document.getElementById('frontNameInput');
+
+
+map.addEventListener("click", (e) => {
+    
+  if (!stateToggle.checked) {
+    frontName.textContent = "";
+    frontNameInput.value = "";
+    return
+  }
+  const rect = map.getBoundingClientRect();
+  const x = Math.floor(e.clientX - rect.left);
+  const y = Math.floor(e.clientY - rect.top);
+
+  for (const tile of tileCanvases) {
+    const alpha = tile.ctx.getImageData(x, y, 1, 1).data[3];
+    if (alpha > 0) {
+      var clean =  tile.name.replace("AWSDefcon1App/white_image/MapChart_Map.", "").replace(/\.png$/, "");
+      frontName.textContent = clean + " front";
+      break;
+    }
+  }
+
+  frontNameInput.value = frontName.textContent
+
+});
+        const hexToRgb = (hex) => {
+            const bigint = parseInt(hex.slice(1), 16);
+            const r = (bigint >> 16) & 255;
+            const g = (bigint >> 8) & 255;
+            const b = bigint & 255;
+            return `rgb(${r}, ${g}, ${b})`;
+        };
+        const rgbToCountry = {};
+        for (const country in colors) {
+            const rgbColor = hexToRgb(colors[country]);
+            rgbToCountry[rgbColor] = country;
+        }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const country = localStorage.getItem('selectedCountry');
+        const nationSelect = document.getElementById('nationSelect');
+        // Check if the country is still a valid option
+        const isCountryValid = [...nationSelect.options].some(
+            option => option.value === country
+        );
+
+        if (country && isCountryValid) {
+            const frontName = document.getElementById('frontName');
+            const frontNameInput = document.getElementById('frontNameInput');
+            frontName.textContent = "";
+            frontNameInput.value = "";
+            
+            const sendText = document.getElementById('sendText');
+
+            colorDisplay.textContent = `${country}`;
+            offerDisplay.textContent = `Offer Alliance to ${country}`;
+            sendText.textContent = `Donate Supplies to ${country}`; 
+
+            var some_var = "{{ nation_name_at_war }}";
+            nationsAtWar = some_var.replaceAll("&#x27;", "");
+            var playerA = "{{PlayerAAA.name}}"
+            console.log(playerA);
+            if (!nationsAtWar.includes(country)) {
+                document.getElementById("battle-form").style.display = "none";
+                document.getElementById('div1').style.display = "none";
+                document.getElementById('div2').style.display = "none";
+                document.getElementById('showDiv1').style.display = "none";
+                document.getElementById('showDiv2').style.display = "none";
+                if(playerA != country && "Ocean" != country){
+                    document.getElementById('peace-form').style.display = "block";
+                    const warInput = document.getElementById('war-input');
+                    const allianceInput = document.getElementById('alliance-input');
+                    const sendInput = document.getElementById('send-input');
+                    warInput.value = country;
+                    sendInput.value = country;
+                    allianceInput.value = country;
+                }
+                if(playerA == country || "Ocean" == country){
+                    document.getElementById('peace-form').style.display = "none";
+                    offerHostility.textContent = `No Hostility`;
+                    stateCount.textContent = `(not divided into states)`;
+                }
+                
+            } else {
+                document.getElementById("battle-form").style.display = "block";
+                document.getElementById('showDiv1').style.display = "inline-block";
+                document.getElementById('showDiv2').style.display = "inline-block";
+                document.getElementById('atWar').style.display = "inline-block";
+                document.getElementById('peace-form').style.display = "none";
+                const victimInput = document.getElementById('victim-input');
+                const defenderInput = document.getElementById('defender-input');
+                defenderInput.value = country;
+                victimInput.value = country;
+            }
+
+            console.log("Starting Next Part");
+            // Get the table element
+            // JavaScript variable 'country' (set this value dynamically)
+
+            // Get the table element and its rows
+            const stateCount = document.getElementById('stateCount');
+            const filter = country.toLowerCase(); // Convert country to lowercase for case-insensitive comparison
+            const nationsTable = document.getElementById('nationsTable'); // Reference the table element
+            const rows = nationsTable.getElementsByTagName('tbody')[0].getElementsByTagName('tr'); // Get all rows from the table body
+            // Loop through each row in the table
+            for (const row of rows) {
+                const name = row.cells[0].textContent.toLowerCase(); // Get text content from the 2nd column (index 1) and convert to lowercase
+
+                if (name === filter) {
+                    offerHostility.textContent = `Hostility: ${row.cells[5].textContent.toLowerCase()}`;
+                    stateCount.textContent = `(States: ${row.cells[1].textContent.toLowerCase()})`;
+
+                } else {
+                    row.style.display = "none"; // Hide non-matching rows
+                }
+            }
+
+
+        }
+    });
+
+    document.getElementById('nationForm').addEventListener('submit', function(event) {
+            const frontName = document.getElementById('frontName');
+            const frontNameInput = document.getElementById('frontNameInput');
+            const sendText = document.getElementById('sendText');
+
+            frontName.textContent = "";
+            frontNameInput.value = "";
+
+            event.preventDefault();  
+            const country = document.getElementById('nationSelect').value;
+            localStorage.setItem('selectedCountry', country);
+            console.log(`Closest color name: ${country}`);
+            
+            colorDisplay.textContent = `${country}`;
+            offerDisplay.textContent = `Offer Alliance to ${country}`;
+            sendText.textContent = `Donate Supplies to ${country}`; 
+
+            var some_var = "{{ nation_name_at_war }}";
+            nationsAtWar = some_var.replaceAll("&#x27;", "");
+            var playerA = "{{PlayerAAA.name}}"
+            console.log(playerA);
+            if (!nationsAtWar.includes(country)) {
+                document.getElementById("battle-form").style.display = "none";
+                document.getElementById('div1').style.display = "none";
+                document.getElementById('div2').style.display = "none";
+                document.getElementById('showDiv1').style.display = "none";
+                document.getElementById('showDiv2').style.display = "none";
+                if(playerA != country && "Ocean" != country){
+                    document.getElementById('peace-form').style.display = "block";
+                    const warInput = document.getElementById('war-input');
+                    const allianceInput = document.getElementById('alliance-input');
+                    const sendInput = document.getElementById('send-input');
+                    warInput.value = country;
+                    sendInput.value = country;
+                    allianceInput.value = country;
+                }
+                if(playerA == country || "Ocean" == country){
+                    document.getElementById('peace-form').style.display = "none";
+                    offerHostility.textContent = `No Hostility`;
+                    stateCount.textContent = `(not divided into states)`;
+                }
+                
+            } else {
+                document.getElementById("battle-form").style.display = "block";
+                document.getElementById('showDiv1').style.display = "inline-block";
+                document.getElementById('showDiv2').style.display = "inline-block";
+                document.getElementById('atWar').style.display = "inline-block";
+                document.getElementById('peace-form').style.display = "none";
+                const victimInput = document.getElementById('victim-input');
+                const defenderInput = document.getElementById('defender-input');
+                defenderInput.value = country;
+                victimInput.value = country;
+            }
+
+            console.log("Starting Next Part");
+            // Get the table element
+            // JavaScript variable 'country' (set this value dynamically)
+
+            // Get the table element and its rows
+            
+            const filter = country.toLowerCase(); // Convert country to lowercase for case-insensitive comparison
+            const nationsTable = document.getElementById('nationsTable'); // Reference the table element
+            const offerHostility = document.getElementById('offerHostility');
+            const rows = nationsTable.getElementsByTagName('tbody')[0].getElementsByTagName('tr'); // Get all rows from the table body
+            // Loop through each row in the table
+            for (const row of rows) {
+                const name = row.cells[0].textContent.toLowerCase(); // Get text content from the 2nd column (index 1) and convert to lowercase
+
+
+                if (name === filter) {
+                    offerHostility.textContent = `Hostility: ${row.cells[5].textContent.toLowerCase()}`;
+                    stateCount.textContent = `(States: ${row.cells[1].textContent.toLowerCase()})`;
+                } else {
+                    row.style.display = "none"; // Hide non-matching rows
+                }
+            }
+
+            nationsTable.style.display = "none";
+
+        });
+
+        canvas.addEventListener('click', (event) => {
+            const { offsetX, offsetY } = event;
+            const imageData = ctx.getImageData(offsetX, offsetY, 1, 1).data;
+            const rgb = [imageData[0], imageData[1], imageData[2]]; // Convert to array for distance calculation
+
+            // Initialize variables for tracking the closest color
+            var closestColorName = null;
+            var smallestDistance = Infinity;
+
+            // Iterate over the dictionary to find the closest color
+            for (const [colorRgb, colorName] of Object.entries(rgbToCountry)) {
+
+                const colorRgbArray = colorRgb
+                .replace("rgb(", "")  // Remove "rgb("
+                .replace(")", "")    // Remove ")"
+                .split(",")          // Split on commas
+                .map(Number);        // Convert to numbers
+                const distance = Math.sqrt(
+                    Math.pow(rgb[0] - colorRgbArray[0], 2) +
+                    Math.pow(rgb[1] - colorRgbArray[1], 2) +
+                    Math.pow(rgb[2] - colorRgbArray[2], 2)
+                );
+
+
+                if (distance < smallestDistance) {
+                    smallestDistance = distance;
+                    closestColorName = colorName;
+                }
+            }
+            const country = closestColorName;
+            localStorage.setItem('selectedCountry', country);
+            colorDisplay.textContent = `${country}`;
+            offerDisplay.textContent = `Offer Alliance to ${country}`;
+            const sendText = document.getElementById('sendText');
+            sendText.textContent = `Donate Supplies to ${country}`; 
+
+        var some_var = "{{ nation_name_at_war }}";
+        nationsAtWar = some_var.replaceAll("&#x27;", "");
+        var playerA = "{{PlayerAAA.name}}"
+        if (!nationsAtWar.includes(country)) {
+            document.getElementById("battle-form").style.display = "none";
+            document.getElementById('div1').style.display = "none";
+            document.getElementById('div2').style.display = "none";
+            document.getElementById('showDiv1').style.display = "none";
+            document.getElementById('showDiv2').style.display = "none";
+            if(playerA != country && "Ocean" != country){
+                document.getElementById('peace-form').style.display = "block";
+                const warInput = document.getElementById('war-input');
+                const allianceInput = document.getElementById('alliance-input');
+                const sendInput = document.getElementById('send-input');
+                warInput.value = country;
+                sendInput.value = country;
+                allianceInput.value = country;
+            }
+            if(playerA == country || "Ocean" == country){
+                document.getElementById('peace-form').style.display = "none";
+                offerHostility.textContent = `No Hostility`;
+                stateCount.textContent = `(not divided into states)`;
+            }
+            
+        } else {
+            document.getElementById("battle-form").style.display = "block";
+            document.getElementById('showDiv1').style.display = "inline-block";
+            document.getElementById('showDiv2').style.display = "inline-block";
+            document.getElementById('atWar').style.display = "inline-block";
+            document.getElementById('peace-form').style.display = "none";
+            const victimInput = document.getElementById('victim-input');
+            const defenderInput = document.getElementById('defender-input');
+            defenderInput.value = country;
+            victimInput.value = country;
+        }
+
+        console.log("Starting Next Part");
+        // Get the table element
+        // JavaScript variable 'country' (set this value dynamically)
+
+        // Get the table element and its rows
+        
+        const filter = country.toLowerCase(); // Convert country to lowercase for case-insensitive comparison
+        const nationsTable = document.getElementById('nationsTable'); // Reference the table element
+        const rows = nationsTable.getElementsByTagName('tbody')[0].getElementsByTagName('tr'); // Get all rows from the table body
+
+        // Loop through each row in the table
+        for (const row of rows) {
+            const name = row.cells[0].textContent.toLowerCase(); // Get text content from the 2nd column (index 1) and convert to lowercase
+
+            if (name === filter) {
+                offerHostility.textContent = `Hostility: ${row.cells[5].textContent.toLowerCase()}`;
+                stateCount.textContent = `(States: ${row.cells[1].textContent.toLowerCase()})`;
+            } else {
+                row.style.display = "none"; // Hide non-matching rows
+            }
+        }
+
+        // Make the table visible if at least one row matches
+        nationsTable.style.display = "table";
+
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Get buttons and divs
+            const button1 = document.getElementById('showDiv1');
+            const button2 = document.getElementById('showDiv2');
+            const div1 = document.getElementById('div1');
+            const div2 = document.getElementById('div2');
+            const battleForm = document.getElementById('battle-form');
+
+            // Ensure battle form is visible
+            battleForm.style.display = 'block';
+
+            // Show Div 1 and hide Div 2
+            button1.addEventListener('click', () => {
+                div1.style.display = 'block';
+                div2.style.display = 'none';
+            });
+
+            // Show Div 2 and hide Div 1
+            button2.addEventListener('click', () => {
+                div2.style.display = 'block';
+                div1.style.display = 'none';
+            });
+        });
+            document.addEventListener('DOMContentLoaded', () => {
+        
+                const gifPath = '/static/AWSDefcon1App/Loading_Battle.gif';
+                const gifContainer = document.createElement('div');
+                const gifImage = document.createElement('img');
+        
+                // Styling for the gif container
+                gifContainer.style.position = 'fixed';
+                gifContainer.style.top = '0';
+                gifContainer.style.left = '0';
+                gifContainer.style.width = '100%';
+                gifContainer.style.height = '100%';
+                gifContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';  // Semi-transparent black background
+                gifContainer.style.display = 'none';  // Hidden initially
+                gifContainer.style.justifyContent = 'center';
+                gifContainer.style.alignItems = 'center';
+                gifContainer.style.zIndex = '9999';  // Ensure it appears above all content
+        
+                // Setting up the gif image
+                gifImage.src = gifPath;
+                gifImage.style.maxWidth = '90%';
+                gifImage.style.maxHeight = '90%';
+        
+                gifContainer.appendChild(gifImage);
+                document.body.appendChild(gifContainer);
+        
+                // Event listener for clicks and form submissions
+                document.addEventListener('click', (event) => {
+                    const target = event.target;
+                    if (target.classList.contains('attacker') || target.closest('button.attacker')) {
+                        gifContainer.style.display = 'flex';
+                        
+                        // Automatically hide the gif after a certain duration
+                        setTimeout(() => {
+                            gifContainer.style.display = 'none';
+                        }, 2000000);  
+                    }
+                });
+        
+                // Event listener specifically for form submissions
+                document.addEventListener('submit', (event) => {
+                    const target = event.target;
+                    if (target.classList.contains('attacker')) {
+                        gifContainer.style.display = 'flex';
+    
+                    }
+                });
+        
+
+            });
+
+    document.querySelector('.qa-toggle-button').addEventListener('click', function() {
+    const container = document.querySelector('.qa-container');
+    container.style.display = (container.style.display === 'none' || container.style.display === '') ? 'block' : 'none';
+    });
+
+    document.querySelector('.qa-close').addEventListener('click', function() {
+    document.querySelector('.qa-container').style.display = 'none';
+    });
+
+    const questions = document.querySelectorAll('.qa-question');
+    questions.forEach(q => {
+    q.addEventListener('click', function() {
+        const answer = this.nextElementSibling;
+
+        // Hide all answers
+        document.querySelectorAll('.qa-answer').forEach(a => a.style.display = 'none');
+
+        // Toggle this one
+        answer.style.display = 'block';
+    });
+    });
 </script>
-
 {% endblock %}
