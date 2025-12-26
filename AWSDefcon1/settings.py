@@ -42,8 +42,12 @@ ASGI_APPLICATION = 'AWSDefcon1.asgi.application'
 
 CHANNEL_LAYERS = {
     "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
-    }
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [(os.environ.get("redis.railway.internal"), int(os.environ.get("6379")))],
+            "password": os.environ.get("DLKeuQYBQyVblGlgSrKICUHDAJHdOgvE"),
+        },
+    },
 }
 
 
