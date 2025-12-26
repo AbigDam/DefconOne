@@ -3,7 +3,7 @@ from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 import django
-import AWSDefcon1App.routing   # ← CHANGE to your app name
+import AWSDefcon1App.routing 
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "AWSDefcon1.settings")
 django.setup()
