@@ -1135,14 +1135,16 @@ img.src = `{{path}}`;
 
 let refreshed = false;
 
-const ws = new WebSocket(
-  "ws://" + window.location.host + "/ws/refresh/"
+const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+
+const socket = new WebSocket(
+    `${protocol}://${window.location.host}/ws/refresh/`
 );
 
-ws.onmessage = () => {
-  if (refreshed) return;
-  refreshed = true;
-  location.reload();
+socket.onmessage = () => {
+    if (refreshed) return;
+    refreshed = true;
+    location.reload();
 };
 
 
