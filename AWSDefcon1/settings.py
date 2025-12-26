@@ -44,16 +44,11 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [
-                (
-                    os.environ.get("REDISHOST"),       # host from Railway env
-                    int(6379)   # port from Railway env
-                )
-            ],
-            "password": os.environ.get("REDISPASSWORD"), # password from Railway env
+            "hosts": [os.environ["REDIS_URL"]],
         },
     },
 }
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
