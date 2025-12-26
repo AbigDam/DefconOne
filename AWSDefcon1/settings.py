@@ -47,7 +47,7 @@ CHANNEL_LAYERS = {
             "hosts": [
                 (
                     os.environ.get("REDISHOST"),       # host from Railway env
-                    int(os.environ.get("REDISPORT"))   # port from Railway env
+                    int(6379)   # port from Railway env
                 )
             ],
             "password": os.environ.get("REDISPASSWORD"), # password from Railway env
