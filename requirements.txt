@@ -9,3 +9,4 @@ whitenoise==6.7.0
 Pillow
 gunicorn
 requests
+daphne>=4.0
