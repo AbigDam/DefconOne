@@ -167,7 +167,12 @@ text-align: center;
     transform: translateY(-2px);
     box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
 }
-
+.subtitle {
+    text-align: center;
+    font-size: 1.05em;
+    color: #bbbbbb;
+    margin-bottom: 25px;
+}
 #openHistoryBtn:active {
     transform: translateY(0);
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.35);

@@ -40,6 +40,14 @@ INSTALLED_APPS = [
 
 ASGI_APPLICATION = 'AWSDefcon1.asgi.application'
 
+'''
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    }
+}
+
+''' 
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",

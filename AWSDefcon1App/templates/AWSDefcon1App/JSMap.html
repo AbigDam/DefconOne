@@ -30,15 +30,15 @@
                 </form>
         
                 <!-- Second Form -->
-                <form method="post" action="{% url 'makealliance' game_id=game_id %}" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2);">
+                <form id="alliance_form" method="post" action="{% url 'makealliance' game_id=game_id %}" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2);">
                     {% csrf_token %}
                     <input type="hidden" name="selected_nation" id="alliance-input" value="">
                     <h3 id="offerDisplay" style="text-align: center;">No Nation Selected </h3>
                     <h4 id="offerHostility" style="text-align: center;">Test Hostility</h4> 
                     <div style = "text-align: center;" class="info-bubble"> <span class="info-icon">🛈</span> 
                     <button type="submit" style="display: block; width: 100%; padding: 10px; color: black;  background-color: #000000; border: none; border-radius: 5px; cursor: pointer;"><img class="image-button" src="/static/AWSDefcon1App/Alliance_Offer.png" alt="Offer" style = "height: 100px;"> </button>
-                    <span class="tooltip-text">Asks a nation to join your alliance, their chance to join is based on hostility</span> 
-                </div>
+                    <span class="tooltip-text">Asks a nation to join your alliance, their chance to join is based on hostility.  Look at the supply market to lower hostility</span> 
+                    </div>
                 </form>
         
                 <!-- Third Form -->
@@ -282,11 +282,20 @@
                     class="reload-map-button">
                     ↻ Reload Map
                 </a>
-                <label style="font-size: 0.9em;">
+            </h3>
+                <label class="state-toggle-label">
                     <input type="checkbox" id="stateToggle">
-                    Specific state <div class="info-bubble"><span class="info-icon">🛈</span> <span class="tooltip-text">Chose which state in the nation you will attack from</span> </div>
+                    <h3> <span class="toggle-context right">Territory Select</span></h3>
+                    <div class="info-bubble">
+                        <span class="info-icon">🛈</span>
+                        <span  class = "tooltip-text">
+                             Off: Select entire countries<br>
+                            On: Select smaller territories
+                        </span>
+                    </div>
                 </label>
-                </h3>
+
+                
         </div>
 
                 <div> 
@@ -338,7 +347,7 @@
             
                 <div id="battle-form" style="text-align: center; display: none;">
                     <h4 id = "atWar" style="text-align: center; display: none;">At War!</h4> <br>
-                    <button id="showDiv1" class="toggle-button"><div class="info-bubble"><span class="info-icon">🛈</span>Military<span class="tooltip-text">Uses soldeirs to make large attacks, you can only do 5 battles in a turn!</span> </div></button>
+                    <button id="showDiv1" class="toggle-button"><div class="info-bubble"><span class="info-icon">🛈</span>Military<span class="tooltip-text">Uses soldiers to make large attacks, you can only do 5 battles in a turn!</span> </div></button>
                     <button id="showDiv2" class="toggle-button"><div class="info-bubble"><span class="info-icon">🛈</span>Espionage<span class="tooltip-text">Uses spies to preform special operations, counts as diplomatic requests</span> </div> </button> 
                 </div>
                 <div id="div2" style = "display: none;" class="toggle-div">
@@ -507,7 +516,7 @@
                     <button class = "attacker" type="submit" name="action" value="planes">
                         <img class="image-button" src="/static/AWSDefcon1App/Bombing.gif" alt="Bomb Their Soldiers" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
                     </button>
-                    <figcaption>Bomb Army<span class="info-icon">🛈</span> <span class="tooltip-text">Destroys some of your enemy's soldeirs based on how many planes you have</span> </div> </figcaption>
+                    <figcaption>Bomb Army<span class="info-icon">🛈</span> <span class="tooltip-text">Destroys some of your enemy's soldiers based on how many planes you have</span> </div> </figcaption>
                 </div>
                 
                 <div style="display: inline-block;">
@@ -576,8 +585,8 @@
                 </div>
 
                 <div id="dev-level-container" style="width:100%; max-width:420px; border: 1px solid #ccc; padding:10px; color:white; font-family:sans-serif;">
-                <div  class="info-bubble"> <h4> State Count: {{ PlayerAAA.states }}/902</h4>  <div></div><span class="info-icon" style="margin-right: 5px;">🛈</span> <span class="tooltip-text" style="font-size: 14px;">This is the amount of land you control</span></div>
-                <div  class="info-bubble"> <h4>Development Count: {% if PlayerAAA.states > 250 %}250{% else %} {{ PlayerAAA.states }}{% endif %}/250 </h4> <span class="info-icon" style="margin-right: 5px;">🛈</span> <span class="tooltip-text" style="font-size: 14px;">This determines how many troops you get each turn, right now it is just state count but capped at 250</span></div>
+                <div  class="info-bubble"> <h4> Territory Count: {{ PlayerAAA.states }}/902</h4>  <div></div><span class="info-icon" style="margin-right: 5px;">🛈</span> <span class="tooltip-text" style="font-size: 14px;">This is the amount of land you control</span></div>
+                <div  class="info-bubble"> <h4>Development Count: {% if PlayerAAA.states > 250 %}250{% else %} {{ PlayerAAA.states }}{% endif %}/250 </h4> <span class="info-icon" style="margin-right: 5px;">🛈</span> <span class="tooltip-text" style="font-size: 14px;">This determines how many troops you get each turn, it is your state count but capped at 250</span></div>
 
                 <div style="height:16px; background-color:#444; border-radius:8px; overflow:hidden; position:relative;">
                     <div id="dev-bar" style="
@@ -600,7 +609,7 @@
                 <!-- Open Shop Button -->
                 <button id="openShopBtn"
                         style="margin-top:20px; padding:10px 16px; font-size:16px; cursor:pointer;">
-                    Supply Market
+                    Buy Supplies
                 </button>
 <!-- Shop Overlay -->
 <div id="shopOverlay" style="
@@ -642,7 +651,12 @@
             {% csrf_token %}
 
             <h3 style="text-align:center;">Buy Supplies</h3>
-            <p style="text-align:center;">Focus Points: {{ PlayerAAA.points }}</p>
+            <p style="text-align:center;">Points: {{ PlayerAAA.points }}</p>
+
+            <div class="subtitle">
+                Here you can use your points, which you get every turn, to buy supplies, like armies, boats, and planes <br>
+                You can also use them for special actions like leaving your alliance
+            </div>
 
             <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:15px;">
 
@@ -710,13 +724,19 @@
 
         <!-- Divider -->
         <hr style="margin:25px 0; border:1px solid #444;">
-
+        <br> <br> <br>
         <!-- ================= SEND SUPPLIES ================= -->
+
+        
         <form method="post" action="{% url 'send' game_id=game_id %}" style="text-align:center;">
             {% csrf_token %}
 
             <h3 id="sendText">Donate Supplies</h3>
-
+            <div class="subtitle">
+                Here you can donate your supplies to the selected nation <br>
+                Donating to yourself has no effect <br>
+                Donating to the Ocean deletes those supplies, which could be useful if an invader is about to steal them!
+            </div>
             <input type="hidden" name="selected_nation" id="send-input" value="">
             <input type="hidden" name="send_type" id="send_type" value="">
 
@@ -724,7 +744,7 @@
             <input type="range" id="amount" name="amount" value="1" min="0" max="100"
                    style="width:80%; margin:10px 0;">
             <br>
-            <span id="amount_label">Amount: 1</span>
+            <span id="percent_label">Amount: 1</span>
             <br><br>
 
             <div class="info-bubble">
@@ -943,16 +963,32 @@
 
 
 <script>
-//Sliders Set up
+//### Refresh Protocol ###
+let refreshed = false;
+
+const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+
+const socket = new WebSocket(
+    `${protocol}://${window.location.host}/ws/refresh/`
+);
+
+socket.onmessage = () => {
+    if (refreshed) return;
+    refreshed = true;
+    location.reload();
+};
+
+
+// ### Sliders Set up ###
 var slider = document.getElementById("amount");
-var output = document.getElementById("amount_label");
-output.innerHTML = "Amount: " + slider.value;
+var output = document.getElementById("percent_label");
+output.innerHTML = slider.value + "%";
 
 slider.oninput = function() {
-    output.innerHTML = "Amount: " + slider.value;
+    output.innerHTML = slider.value + "%";
 }
 
-//Battle Sliders
+// ### Battle Sliders ###
 var div_attack_slider = document.getElementById("div_attack");
 var div_attack_output = document.getElementById("div_attack_label");
 div_attack_output.innerHTML = "Amount: " + div_attack_slider.value;
@@ -974,7 +1010,7 @@ planes_attack_slider.oninput = function () {
     planes_attack_output.innerHTML = "Amount: " + this.value;
 };
 
-//States Bar
+// ### States Bar ###
 document.addEventListener("DOMContentLoaded", function() {
     const states = parseInt("{{ PlayerAAA.states }}") || 0;
     const maxTier = 250;
@@ -985,39 +1021,32 @@ document.addEventListener("DOMContentLoaded", function() {
     bar.style.width = progress + "%";
 });
 
-//Shop logic
+// ### Shop Modal ###
 const openShopBtn = document.getElementById("openShopBtn");
 const closeShopBtn = document.getElementById("closeShopBtn");
 const shopOverlay = document.getElementById("shopOverlay");
-
 openShopBtn.addEventListener("click", () => {
     shopOverlay.style.display = "flex";
 });
-
 closeShopBtn.addEventListener("click", () => {
     shopOverlay.style.display = "none";
 });
-
-// Close when clicking the dark background
 shopOverlay.addEventListener("click", (e) => {
     if (e.target === shopOverlay) {
         shopOverlay.style.display = "none";
     }
 });
 
-//Onkectoves Logic
+// ### Objectives Modal ### 
 const openObjectivesBtn = document.getElementById("openObjectivesBtn");
 const closeObjectivesBtn = document.getElementById("closeObjectivesBtn");
 const objectivesOverlay = document.getElementById("objectivesOverlay");
-
 openObjectivesBtn.addEventListener("click", () => {
     objectivesOverlay.style.display = "flex";
 });
-
 closeObjectivesBtn.addEventListener("click", () => {
     objectivesOverlay.style.display = "none";
 });
-
 objectivesOverlay.addEventListener("click", (e) => {
     if (e.target === objectivesOverlay) {
         objectivesOverlay.style.display = "none";
@@ -1025,131 +1054,195 @@ objectivesOverlay.addEventListener("click", (e) => {
 });
 
 
+// ### Current Wars Modal### 
 const openWarsBtn = document.getElementById("openWarsBtn");
 const closeWarsBtn = document.getElementById("closeWarsBtn");
 const warsOverlay = document.getElementById("warsOverlay");
-
 openWarsBtn.addEventListener("click", () => {
     warsOverlay.style.display = "flex";
 });
-
 closeWarsBtn.addEventListener("click", () => {
     warsOverlay.style.display = "none";
 });
-
-// Close when clicking the background
 warsOverlay.addEventListener("click", (e) => {
     if (e.target === warsOverlay) {
         warsOverlay.style.display = "none";
     }
 });
 
-
+// ### Histroy Modal### 
 const openHistoryBtn = document.getElementById("openHistoryBtn");
 const closeHistoryBtn = document.getElementById("closeHistoryBtn");
 const historyOverlay = document.getElementById("historyOverlay");
-
 openHistoryBtn.addEventListener("click", () => {
     historyOverlay.style.display = "flex";
 });
-
 closeHistoryBtn.addEventListener("click", () => {
     historyOverlay.style.display = "none";
 });
-
-// Close when clicking the background
 historyOverlay.addEventListener("click", (e) => {
     if (e.target === historyOverlay) {
         historyOverlay.style.display = "none";
     }
 });
 
+// ### Camera State ###
+let scale = 1;
+let offsetX = 0;
+let offsetY = 0;
+
+function applyTransform(ctx) {
+    ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
+}
+
+function clearCanvas(ctx, canvas) {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function screenToWorld(x, y) {
+    return {
+        x: (x - offsetX) / scale,
+        y: (y - offsetY) / scale
+    };
+}
+
+
+
+
+// ### Canvas Variables ### 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 canvas.width = 1120;
 canvas.height = 480;
 const colorDisplay = document.getElementById('colorDisplay');
-
 const overlay = document.getElementById('overlayCanvas');
 const ctxO = overlay.getContext('2d');
+const bottom = document.getElementById('canvas');
 
-overlay.addEventListener('click', function(event) {
-
+// ### Hand Clicks on the top layer ### 
+overlay.addEventListener('click', function (event) {
     const rect = overlay.getBoundingClientRect();
-    
-    // Correct for any scaling
-    const scaleX = overlay.width / rect.width;
-    const scaleY = overlay.height / rect.height;
-    
-    const x = (event.clientX - rect.left) * scaleX;
-    const y = (event.clientY - rect.top) * scaleY;
+    const screenX = event.clientX - rect.left;
+    const screenY = event.clientY - rect.top;
 
-    // Wipe ONLY the overlay canvas (keeps tiles visible underneath)
-    ctxO.clearRect(0, 0, overlay.width, overlay.height);
+    const world = screenToWorld(screenX, screenY);
+
+    clearCanvas(ctxO, overlay);
+    applyTransform(ctxO);
+
     if (stateToggle.checked) {
-        // Draw the new circle
         ctxO.beginPath();
-        ctxO.arc(x, y, 10, 0, Math.PI * 2);
+        ctxO.arc(world.x, world.y, 10 / scale, 0, Math.PI * 2);
         ctxO.fillStyle = "rgba(255, 0, 0, 0.6)";
         ctxO.fill();
         ctxO.strokeStyle = "red";
-        ctxO.lineWidth = 2;
+        ctxO.lineWidth = 2 / scale;
         ctxO.stroke();
     }
-});
 
-const bottom = document.getElementById('canvas');
-const stateToggle = document.getElementById("stateToggle");
+    const bottomRect = canvas.getBoundingClientRect();
 
-overlay.addEventListener('click', function(event) {
-    // 1. Draw the circle on top
-    const rect = overlay.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    
-    // (Circle drawing code here...)
-
-    // 2. Manually trigger the click on the bottom canvas
-    const simulatedClick = new MouseEvent('click', {
-        clientX: event.clientX,
-        clientY: event.clientY,
+    const simulated = new MouseEvent('click', {
+        clientX: world.x * scale + offsetX + bottomRect.left,
+        clientY: world.y * scale + offsetY + bottomRect.top,
         bubbles: true,
         cancelable: true
     });
-    
-    bottom.dispatchEvent(simulatedClick);
+
+    canvas.dispatchEvent(simulated);
 });
 
-const img = new Image();
-img.onload = () => {{
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+// ### Scroll Wheel ###
+const DEFAULT_SCALE = 1;
+const DEFAULT_OFFSET_X = 0;
+const DEFAULT_OFFSET_Y = 0;
+overlay.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    const zoomFactor = 1.1;
+    const mouseX = e.offsetX;
+    const mouseY = e.offsetY;
+    const before = screenToWorld(mouseX, mouseY);
+    let newScale = scale * (e.deltaY < 0 ? zoomFactor : 1 / zoomFactor);
+    // Clamp zoom-in max
+    newScale = Math.min(newScale, 6);
+    // Snap to default if zooming out too far
+    if (newScale < DEFAULT_SCALE) {
+        scale = DEFAULT_SCALE;
+        offsetX = DEFAULT_OFFSET_X;
+        offsetY = DEFAULT_OFFSET_Y;
+        redraw();
+        return;
+    }
+    scale = newScale;
+    const after = screenToWorld(mouseX, mouseY);
+    offsetX += (after.x - before.x) * scale;
+    offsetY += (after.y - before.y) * scale;
+    redraw();
+}, { passive: false });
+
+
+
+// ### Dragging ###
+let dragging = false;
+let lastX, lastY;
+overlay.addEventListener("mousedown", (e) => {
+    dragging = true;
+    lastX = e.clientX;
+    lastY = e.clientY;
+});
+window.addEventListener("mousemove", (e) => {
+    if (!dragging) return;
+    offsetX += e.clientX - lastX;
+    offsetY += e.clientY - lastY;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    redraw();
+});
+window.addEventListener("mouseup", () => {
+    dragging = false;
+});
+
+
+// ### Clear Circle ### 
+const stateToggle = document.getElementById("stateToggle");
+stateToggle.addEventListener("change", () => {
+    if (!stateToggle.checked) {
+        ctxO.clearRect(0, 0, overlay.width, overlay.height);
+        frontName.textContent = "";
+        frontNameInput.value = "";
+    }
+});
+
+
+
+
+function redraw() {
+    clearCanvas(ctx, canvas);
+    clearCanvas(ctxO, overlay);
+
+    applyTransform(ctx);
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
+    applyTransform(ctxO);
+}
+
+
+// ### Load in the Canvas Image ### 
+const img = new Image();
+img.onload = () => {
+    redraw();
     document.getElementById('loading').style.display = 'none';
     document.getElementById('canvasContainer').style.display = 'block';
-}};
+};
+
 img.crossOrigin = "anonymous"; 
 const gameId = '{{ game_id }}';
 img.src = `{{path}}`;
 
-
-let refreshed = false;
-
-const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-
-const socket = new WebSocket(
-    `${protocol}://${window.location.host}/ws/refresh/`
-);
-
-socket.onmessage = () => {
-    if (refreshed) return;
-    refreshed = true;
-    location.reload();
-};
-
-
+// ### Load in the tiles list ### 
 const tileCanvases = [];
-
 async function loadTiles() {
   await Promise.all(
     window.TILES.map((relPath) => {
@@ -1169,249 +1262,65 @@ async function loadTiles() {
     })
   );
 }
-
 loadTiles();
 
-const map = document.getElementById("canvas");
 const frontName = document.getElementById('frontName');
 const frontNameInput = document.getElementById('frontNameInput');
 
-
-map.addEventListener("click", (e) => {
-    
-  if (!stateToggle.checked) {
-    frontName.textContent = "";
-    frontNameInput.value = "";
-    return
-  }
-  const rect = map.getBoundingClientRect();
-  const x = Math.floor(e.clientX - rect.left);
-  const y = Math.floor(e.clientY - rect.top);
-
-  for (const tile of tileCanvases) {
-    const alpha = tile.ctx.getImageData(x, y, 1, 1).data[3];
-    if (alpha > 0) {
-      var clean =  tile.name.replace("AWSDefcon1App/white_image/MapChart_Map.", "").replace(/\.png$/, "");
-      frontName.textContent = clean + " front";
-      break;
+// ### Determine State ### 
+canvas.addEventListener("click", (e) => {
+    if (!stateToggle.checked) {
+        frontName.textContent = "";
+        frontNameInput.value = "";
+        return;
     }
-  }
 
-  frontNameInput.value = frontName.textContent
+    const rect = canvas.getBoundingClientRect();
 
+    const screenX = e.clientX - rect.left;
+    const screenY = e.clientY - rect.top;
+
+    // Screen → World
+    const worldX = (screenX - offsetX) / scale;
+    const worldY = (screenY - offsetY) / scale;
+
+    const x = Math.floor(worldX);
+    const y = Math.floor(worldY);
+
+    for (const tile of tileCanvases) {
+        const alpha = tile.ctx.getImageData(x, y, 1, 1).data[3];
+        if (alpha > 0) {
+            const clean = tile.name
+                .replace("AWSDefcon1App/white_image/MapChart_Map.", "")
+                .replace(/\.png$/, "");
+            frontName.textContent = clean + " front";
+            break;
+        }
+    }
+
+    frontNameInput.value = frontName.textContent;
 });
-        const hexToRgb = (hex) => {
-            const bigint = parseInt(hex.slice(1), 16);
-            const r = (bigint >> 16) & 255;
-            const g = (bigint >> 8) & 255;
-            const b = bigint & 255;
-            return `rgb(${r}, ${g}, ${b})`;
-        };
-        const rgbToCountry = {};
-        for (const country in colors) {
-            const rgbColor = hexToRgb(colors[country]);
-            rgbToCountry[rgbColor] = country;
-        }
-
-    window.addEventListener('DOMContentLoaded', () => {
-        const country = localStorage.getItem('selectedCountry');
-        const nationSelect = document.getElementById('nationSelect');
-        // Check if the country is still a valid option
-        const isCountryValid = [...nationSelect.options].some(
-            option => option.value === country
-        );
-
-        if (country && isCountryValid) {
-            const frontName = document.getElementById('frontName');
-            const frontNameInput = document.getElementById('frontNameInput');
-            frontName.textContent = "";
-            frontNameInput.value = "";
-            
-            const sendText = document.getElementById('sendText');
-
-            colorDisplay.textContent = `${country}`;
-            offerDisplay.textContent = `Offer Alliance to ${country}`;
-            sendText.textContent = `Donate Supplies to ${country}`; 
-
-            var some_var = "{{ nation_name_at_war }}";
-            nationsAtWar = some_var.replaceAll("&#x27;", "");
-            var playerA = "{{PlayerAAA.name}}"
-            console.log(playerA);
-            if (!nationsAtWar.includes(country)) {
-                document.getElementById("battle-form").style.display = "none";
-                document.getElementById('div1').style.display = "none";
-                document.getElementById('div2').style.display = "none";
-                document.getElementById('showDiv1').style.display = "none";
-                document.getElementById('showDiv2').style.display = "none";
-                if(playerA != country && "Ocean" != country){
-                    document.getElementById('peace-form').style.display = "block";
-                    const warInput = document.getElementById('war-input');
-                    const allianceInput = document.getElementById('alliance-input');
-                    const sendInput = document.getElementById('send-input');
-                    warInput.value = country;
-                    sendInput.value = country;
-                    allianceInput.value = country;
-                }
-                if(playerA == country || "Ocean" == country){
-                    document.getElementById('peace-form').style.display = "none";
-                    offerHostility.textContent = `No Hostility`;
-                    stateCount.textContent = `(not divided into states)`;
-                }
-                
-            } else {
-                document.getElementById("battle-form").style.display = "block";
-                document.getElementById('showDiv1').style.display = "inline-block";
-                document.getElementById('showDiv2').style.display = "inline-block";
-                document.getElementById('atWar').style.display = "inline-block";
-                document.getElementById('peace-form').style.display = "none";
-                const victimInput = document.getElementById('victim-input');
-                const defenderInput = document.getElementById('defender-input');
-                defenderInput.value = country;
-                victimInput.value = country;
-            }
-
-            console.log("Starting Next Part");
-            // Get the table element
-            // JavaScript variable 'country' (set this value dynamically)
-
-            // Get the table element and its rows
-            const stateCount = document.getElementById('stateCount');
-            const filter = country.toLowerCase(); // Convert country to lowercase for case-insensitive comparison
-            const nationsTable = document.getElementById('nationsTable'); // Reference the table element
-            const rows = nationsTable.getElementsByTagName('tbody')[0].getElementsByTagName('tr'); // Get all rows from the table body
-            // Loop through each row in the table
-            for (const row of rows) {
-                const name = row.cells[0].textContent.toLowerCase(); // Get text content from the 2nd column (index 1) and convert to lowercase
-
-                if (name === filter) {
-                    offerHostility.textContent = `Hostility: ${row.cells[5].textContent.toLowerCase()}`;
-                    stateCount.textContent = `(States: ${row.cells[1].textContent.toLowerCase()})`;
-
-                } else {
-                    row.style.display = "none"; // Hide non-matching rows
-                }
-            }
 
 
-        }
-    });
+// ### Hex to RGB and RGB to Country ### 
+const hexToRgb = (hex) => {
+    const bigint = parseInt(hex.slice(1), 16);
+    const r = (bigint >> 16) & 255;
+    const g = (bigint >> 8) & 255;
+    const b = bigint & 255;
+    return `rgb(${r}, ${g}, ${b})`;
+};
+const rgbToCountry = {};
+for (const country in colors) {
+    const rgbColor = hexToRgb(colors[country]);
+    rgbToCountry[rgbColor] = country;
+}
 
-    document.getElementById('nationForm').addEventListener('submit', function(event) {
-            const frontName = document.getElementById('frontName');
-            const frontNameInput = document.getElementById('frontNameInput');
-            const sendText = document.getElementById('sendText');
-
-            frontName.textContent = "";
-            frontNameInput.value = "";
-
-            event.preventDefault();  
-            const country = document.getElementById('nationSelect').value;
-            localStorage.setItem('selectedCountry', country);
-            console.log(`Closest color name: ${country}`);
-            
-            colorDisplay.textContent = `${country}`;
-            offerDisplay.textContent = `Offer Alliance to ${country}`;
-            sendText.textContent = `Donate Supplies to ${country}`; 
-
-            var some_var = "{{ nation_name_at_war }}";
-            nationsAtWar = some_var.replaceAll("&#x27;", "");
-            var playerA = "{{PlayerAAA.name}}"
-            console.log(playerA);
-            if (!nationsAtWar.includes(country)) {
-                document.getElementById("battle-form").style.display = "none";
-                document.getElementById('div1').style.display = "none";
-                document.getElementById('div2').style.display = "none";
-                document.getElementById('showDiv1').style.display = "none";
-                document.getElementById('showDiv2').style.display = "none";
-                if(playerA != country && "Ocean" != country){
-                    document.getElementById('peace-form').style.display = "block";
-                    const warInput = document.getElementById('war-input');
-                    const allianceInput = document.getElementById('alliance-input');
-                    const sendInput = document.getElementById('send-input');
-                    warInput.value = country;
-                    sendInput.value = country;
-                    allianceInput.value = country;
-                }
-                if(playerA == country || "Ocean" == country){
-                    document.getElementById('peace-form').style.display = "none";
-                    offerHostility.textContent = `No Hostility`;
-                    stateCount.textContent = `(not divided into states)`;
-                }
-                
-            } else {
-                document.getElementById("battle-form").style.display = "block";
-                document.getElementById('showDiv1').style.display = "inline-block";
-                document.getElementById('showDiv2').style.display = "inline-block";
-                document.getElementById('atWar').style.display = "inline-block";
-                document.getElementById('peace-form').style.display = "none";
-                const victimInput = document.getElementById('victim-input');
-                const defenderInput = document.getElementById('defender-input');
-                defenderInput.value = country;
-                victimInput.value = country;
-            }
-
-            console.log("Starting Next Part");
-            // Get the table element
-            // JavaScript variable 'country' (set this value dynamically)
-
-            // Get the table element and its rows
-            
-            const filter = country.toLowerCase(); // Convert country to lowercase for case-insensitive comparison
-            const nationsTable = document.getElementById('nationsTable'); // Reference the table element
-            const offerHostility = document.getElementById('offerHostility');
-            const rows = nationsTable.getElementsByTagName('tbody')[0].getElementsByTagName('tr'); // Get all rows from the table body
-            // Loop through each row in the table
-            for (const row of rows) {
-                const name = row.cells[0].textContent.toLowerCase(); // Get text content from the 2nd column (index 1) and convert to lowercase
-
-
-                if (name === filter) {
-                    offerHostility.textContent = `Hostility: ${row.cells[5].textContent.toLowerCase()}`;
-                    stateCount.textContent = `(States: ${row.cells[1].textContent.toLowerCase()})`;
-                } else {
-                    row.style.display = "none"; // Hide non-matching rows
-                }
-            }
-
-            nationsTable.style.display = "none";
-
-        });
-
-        canvas.addEventListener('click', (event) => {
-            const { offsetX, offsetY } = event;
-            const imageData = ctx.getImageData(offsetX, offsetY, 1, 1).data;
-            const rgb = [imageData[0], imageData[1], imageData[2]]; // Convert to array for distance calculation
-
-            // Initialize variables for tracking the closest color
-            var closestColorName = null;
-            var smallestDistance = Infinity;
-
-            // Iterate over the dictionary to find the closest color
-            for (const [colorRgb, colorName] of Object.entries(rgbToCountry)) {
-
-                const colorRgbArray = colorRgb
-                .replace("rgb(", "")  // Remove "rgb("
-                .replace(")", "")    // Remove ")"
-                .split(",")          // Split on commas
-                .map(Number);        // Convert to numbers
-                const distance = Math.sqrt(
-                    Math.pow(rgb[0] - colorRgbArray[0], 2) +
-                    Math.pow(rgb[1] - colorRgbArray[1], 2) +
-                    Math.pow(rgb[2] - colorRgbArray[2], 2)
-                );
-
-
-                if (distance < smallestDistance) {
-                    smallestDistance = distance;
-                    closestColorName = colorName;
-                }
-            }
-            const country = closestColorName;
-            localStorage.setItem('selectedCountry', country);
-            colorDisplay.textContent = `${country}`;
-            offerDisplay.textContent = `Offer Alliance to ${country}`;
-            const sendText = document.getElementById('sendText');
-            sendText.textContent = `Donate Supplies to ${country}`; 
+function updateCountryTab(country){
+        colorDisplay.textContent = `${country}`;
+        offerDisplay.textContent = `Offer Alliance to ${country}`;
+        const sendText = document.getElementById('sendText');
+        sendText.textContent = `Donate Supplies to ${country}`; 
 
         var some_var = "{{ nation_name_at_war }}";
         nationsAtWar = some_var.replaceAll("&#x27;", "");
@@ -1423,6 +1332,7 @@ map.addEventListener("click", (e) => {
             document.getElementById('showDiv1').style.display = "none";
             document.getElementById('showDiv2').style.display = "none";
             if(playerA != country && "Ocean" != country){
+                document.getElementById('alliance_form').style.display = "block";
                 document.getElementById('peace-form').style.display = "block";
                 const warInput = document.getElementById('war-input');
                 const allianceInput = document.getElementById('alliance-input');
@@ -1432,9 +1342,14 @@ map.addEventListener("click", (e) => {
                 allianceInput.value = country;
             }
             if(playerA == country || "Ocean" == country){
+                document.getElementById('alliance_form').style.display = "none";
                 document.getElementById('peace-form').style.display = "none";
                 offerHostility.textContent = `No Hostility`;
                 stateCount.textContent = `(not divided into states)`;
+            }
+            if("Ocean" == country){
+                frontName.textContent = "";
+                frontNameInput.value = "";
             }
             
         } else {
@@ -1449,12 +1364,6 @@ map.addEventListener("click", (e) => {
             victimInput.value = country;
         }
 
-        console.log("Starting Next Part");
-        // Get the table element
-        // JavaScript variable 'country' (set this value dynamically)
-
-        // Get the table element and its rows
-        
         const filter = country.toLowerCase(); // Convert country to lowercase for case-insensitive comparison
         const nationsTable = document.getElementById('nationsTable'); // Reference the table element
         const rows = nationsTable.getElementsByTagName('tbody')[0].getElementsByTagName('tr'); // Get all rows from the table body
@@ -1469,86 +1378,146 @@ map.addEventListener("click", (e) => {
             } else {
                 row.style.display = "none"; // Hide non-matching rows
             }
+     }
+}
+
+
+
+// ### Determine Country from Local Storage ### 
+window.addEventListener('DOMContentLoaded', () => {
+    const country = localStorage.getItem('selectedCountry');
+    const nationSelect = document.getElementById('nationSelect');
+    // Check if the country is still a valid option
+    const isCountryValid = [...nationSelect.options].some(
+        option => option.value === country
+    );
+
+    if (country && isCountryValid) {
+        const frontName = document.getElementById('frontName');
+        const frontNameInput = document.getElementById('frontNameInput');
+        frontName.textContent = "";
+        frontNameInput.value = "";
+        updateCountryTab(country);
+      
+    }
+});
+
+// ### Determine Country from Dropdown ### 
+document.getElementById('nationForm').addEventListener('submit', function(event) {
+    const frontName = document.getElementById('frontName');
+    const frontNameInput = document.getElementById('frontNameInput');
+    frontName.textContent = "";
+    frontNameInput.value = "";
+    event.preventDefault();  
+    const country = document.getElementById('nationSelect').value;
+    localStorage.setItem('selectedCountry', country);
+    updateCountryTab(country);
+});
+
+// ### Determine Country from Click ### 
+canvas.addEventListener('click', (event) => {
+    const { offsetX, offsetY } = event;
+    const imageData = ctx.getImageData(offsetX, offsetY, 1, 1).data;
+    const rgb = [imageData[0], imageData[1], imageData[2]]; // Convert to array for distance calculation
+
+    // Initialize variables for tracking the closest color
+    var closestColorName = null;
+    var smallestDistance = Infinity;
+
+    // Iterate over the dictionary to find the closest color
+    for (const [colorRgb, colorName] of Object.entries(rgbToCountry)) {
+        const colorRgbArray = colorRgb
+        .replace("rgb(", "")  // Remove "rgb("
+        .replace(")", "")    // Remove ")"
+        .split(",")          // Split on commas
+        .map(Number);        // Convert to numbers
+        const distance = Math.sqrt(
+            Math.pow(rgb[0] - colorRgbArray[0], 2) +
+            Math.pow(rgb[1] - colorRgbArray[1], 2) +
+            Math.pow(rgb[2] - colorRgbArray[2], 2)
+        );
+        if (distance < smallestDistance) {
+            smallestDistance = distance;
+            closestColorName = colorName;
         }
+    }
+    const country = closestColorName;
+    localStorage.setItem('selectedCountry', country);
+    updateCountryTab(country)
+});
 
-        // Make the table visible if at least one row matches
-        nationsTable.style.display = "table";
+document.addEventListener('DOMContentLoaded', () => {
+    // Get buttons and divs
+    const button1 = document.getElementById('showDiv1');
+    const button2 = document.getElementById('showDiv2');
+    const div1 = document.getElementById('div1');
+    const div2 = document.getElementById('div2');
+    const battleForm = document.getElementById('battle-form');
 
-        });
+    // Ensure battle form is visible
+    battleForm.style.display = 'block';
 
-        document.addEventListener('DOMContentLoaded', () => {
-            // Get buttons and divs
-            const button1 = document.getElementById('showDiv1');
-            const button2 = document.getElementById('showDiv2');
-            const div1 = document.getElementById('div1');
-            const div2 = document.getElementById('div2');
-            const battleForm = document.getElementById('battle-form');
+    // Show Div 1 and hide Div 2
+    button1.addEventListener('click', () => {
+        div1.style.display = 'block';
+        div2.style.display = 'none';
+    });
 
-            // Ensure battle form is visible
-            battleForm.style.display = 'block';
+    // Show Div 2 and hide Div 1
+    button2.addEventListener('click', () => {
+        div2.style.display = 'block';
+        div1.style.display = 'none';
+    });
+});
 
-            // Show Div 1 and hide Div 2
-            button1.addEventListener('click', () => {
-                div1.style.display = 'block';
-                div2.style.display = 'none';
-            });
+document.addEventListener('DOMContentLoaded', () => {
+    const gifPath = '/static/AWSDefcon1App/Loading_Battle.gif';
+    const gifContainer = document.createElement('div');
+    const gifImage = document.createElement('img');
+    // Styling for the gif container
+    gifContainer.style.position = 'fixed';
+    gifContainer.style.top = '0';
+    gifContainer.style.left = '0';
+    gifContainer.style.width = '100%';
+    gifContainer.style.height = '100%';
+    gifContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';  // Semi-transparent black background
+    gifContainer.style.display = 'none';  // Hidden initially
+    gifContainer.style.justifyContent = 'center';
+    gifContainer.style.alignItems = 'center';
+    gifContainer.style.zIndex = '9999';  // Ensure it appears above all content
 
-            // Show Div 2 and hide Div 1
-            button2.addEventListener('click', () => {
-                div2.style.display = 'block';
-                div1.style.display = 'none';
-            });
-        });
-            document.addEventListener('DOMContentLoaded', () => {
-        
-                const gifPath = '/static/AWSDefcon1App/Loading_Battle.gif';
-                const gifContainer = document.createElement('div');
-                const gifImage = document.createElement('img');
-        
-                // Styling for the gif container
-                gifContainer.style.position = 'fixed';
-                gifContainer.style.top = '0';
-                gifContainer.style.left = '0';
-                gifContainer.style.width = '100%';
-                gifContainer.style.height = '100%';
-                gifContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';  // Semi-transparent black background
-                gifContainer.style.display = 'none';  // Hidden initially
-                gifContainer.style.justifyContent = 'center';
-                gifContainer.style.alignItems = 'center';
-                gifContainer.style.zIndex = '9999';  // Ensure it appears above all content
-        
-                // Setting up the gif image
-                gifImage.src = gifPath;
-                gifImage.style.maxWidth = '90%';
-                gifImage.style.maxHeight = '90%';
-        
-                gifContainer.appendChild(gifImage);
-                document.body.appendChild(gifContainer);
-        
-                // Event listener for clicks and form submissions
-                document.addEventListener('click', (event) => {
-                    const target = event.target;
-                    if (target.classList.contains('attacker') || target.closest('button.attacker')) {
-                        gifContainer.style.display = 'flex';
-                        
-                        // Automatically hide the gif after a certain duration
-                        setTimeout(() => {
-                            gifContainer.style.display = 'none';
-                        }, 2000000);  
-                    }
-                });
-        
-                // Event listener specifically for form submissions
-                document.addEventListener('submit', (event) => {
-                    const target = event.target;
-                    if (target.classList.contains('attacker')) {
-                        gifContainer.style.display = 'flex';
-    
-                    }
-                });
-        
+    // Setting up the gif image
+    gifImage.src = gifPath;
+    gifImage.style.maxWidth = '90%';
+    gifImage.style.maxHeight = '90%';
 
-            });
+    gifContainer.appendChild(gifImage);
+    document.body.appendChild(gifContainer);
+
+    // Event listener for clicks and form submissions
+    document.addEventListener('click', (event) => {
+        const target = event.target;
+        if (target.classList.contains('attacker') || target.closest('button.attacker')) {
+            gifContainer.style.display = 'flex';
+            
+            // Automatically hide the gif after a certain duration
+            setTimeout(() => {
+                gifContainer.style.display = 'none';
+            }, 2000000);  
+        }
+    });
+
+    // Event listener specifically for form submissions
+    document.addEventListener('submit', (event) => {
+        const target = event.target;
+        if (target.classList.contains('attacker')) {
+            gifContainer.style.display = 'flex';
+
+        }
+    });
+
+
+});
 
     document.querySelector('.qa-toggle-button').addEventListener('click', function() {
     const container = document.querySelector('.qa-container');
