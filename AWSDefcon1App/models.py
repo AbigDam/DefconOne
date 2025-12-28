@@ -8,6 +8,7 @@ class User(AbstractUser):
     donations = models.IntegerField(default=0)
     achievements = models.IntegerField(default=0)
     bio = models.CharField(max_length=500, null=True, blank=True)
+    is_temporary = models.BooleanField(default=False)
     pass
 
 class Games(models.Model):

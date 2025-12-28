@@ -173,7 +173,10 @@
                                     {% endfor %}
                                 </tbody>
                             </table>
-
+              
+                                <!-- Divider -->
+                                <hr style="margin:25px 0; border:1px solid #444;">
+                                <br> <br> <br>
                             {% if allies %}
                             <div style="margin-top:20px;">
                                 <h3 style="text-align:center; margin-bottom:10px;">Current Allies</h3>
@@ -197,6 +200,52 @@
                                 </table>
                             </div>
                             {% endif %}
+                        
+                                <!-- Divider -->
+                                <hr style="margin:25px 0; border:1px solid #444;">
+                                <br> <br> <br>
+                                <!-- ================= SEND SUPPLIES ================= -->
+
+                                
+                                <form method="post" action="{% url 'send' game_id=game_id %}" style="text-align:center;">
+                                    {% csrf_token %}
+
+                                    <h3 id="sendText">Donate Supplies</h3>
+                                    <div class="subtitle">
+                                        Here you can donate your supplies to the selected nation <br>
+                                        Donating to yourself has no effect <br>
+                                        Donating to the Ocean deletes those supplies, which could be useful if an invader is about to steal them!
+                                    </div>
+                                    <input type="hidden" name="selected_nation" id="send-input" value="">
+                                    <input type="hidden" name="send_type" id="send_type" value="">
+
+                                    <label style="font-weight:bold;">Enter Percent</label><br>
+                                    <input type="range" id="amount" name="amount" value="1" min="0" max="100"
+                                        style="width:80%; margin:10px 0;">
+                                    <br>
+                                    <span id="percent_label">Amount: 1</span>
+                                    <br><br>
+
+                                    <div class="info-bubble">
+                                        <span class="info-icon">🛈</span>
+
+                                        <button type="submit" onclick="send_type.value='1'" style="background:none; border:none; cursor:pointer;">
+                                            <img class="image-button" src="/static/AWSDefcon1App/Gun.png" style="height:50px; border:2px solid #fff; border-radius:5px;">
+                                        </button>
+
+                                        <button type="submit" onclick="send_type.value='2'" style="background:none; border:none; cursor:pointer;">
+                                            <img class="image-button" src="/static/AWSDefcon1App/Airplane.png" style="height:50px; border:2px solid #fff; border-radius:5px;">
+                                        </button>
+
+                                        <button type="submit" onclick="send_type.value='3'" style="background:none; border:none; cursor:pointer;">
+                                            <img class="image-button" src="/static/AWSDefcon1App/Boat.png" style="height:50px; border:2px solid #fff; border-radius:5px;">
+                                        </button>
+
+                                        <span class="tooltip-text">
+                                            Send a percent of units to reduce hostility
+                                        </span>
+                                    </div>
+                                </form>
                         </div>
                     </div>
 
@@ -722,51 +771,6 @@
             </div>
         </form>
 
-        <!-- Divider -->
-        <hr style="margin:25px 0; border:1px solid #444;">
-        <br> <br> <br>
-        <!-- ================= SEND SUPPLIES ================= -->
-
-        
-        <form method="post" action="{% url 'send' game_id=game_id %}" style="text-align:center;">
-            {% csrf_token %}
-
-            <h3 id="sendText">Donate Supplies</h3>
-            <div class="subtitle">
-                Here you can donate your supplies to the selected nation <br>
-                Donating to yourself has no effect <br>
-                Donating to the Ocean deletes those supplies, which could be useful if an invader is about to steal them!
-            </div>
-            <input type="hidden" name="selected_nation" id="send-input" value="">
-            <input type="hidden" name="send_type" id="send_type" value="">
-
-            <label style="font-weight:bold;">Enter Percent</label><br>
-            <input type="range" id="amount" name="amount" value="1" min="0" max="100"
-                   style="width:80%; margin:10px 0;">
-            <br>
-            <span id="percent_label">Amount: 1</span>
-            <br><br>
-
-            <div class="info-bubble">
-                <span class="info-icon">🛈</span>
-
-                <button type="submit" onclick="send_type.value='1'" style="background:none; border:none; cursor:pointer;">
-                     <img class="image-button" src="/static/AWSDefcon1App/Gun.png" style="height:50px; border:2px solid #fff; border-radius:5px;">
-                </button>
-
-                <button type="submit" onclick="send_type.value='2'" style="background:none; border:none; cursor:pointer;">
-                    <img class="image-button" src="/static/AWSDefcon1App/Airplane.png" style="height:50px; border:2px solid #fff; border-radius:5px;">
-                </button>
-
-                <button type="submit" onclick="send_type.value='3'" style="background:none; border:none; cursor:pointer;">
-                    <img class="image-button" src="/static/AWSDefcon1App/Boat.png" style="height:50px; border:2px solid #fff; border-radius:5px;">
-                </button>
-
-                <span class="tooltip-text">
-                    Send a percent of units to reduce hostility
-                </span>
-            </div>
-        </form>
     </div>
 </div>
 

@@ -39,6 +39,9 @@ urlpatterns = [
     path('game_maker_redirrect', views.game_maker_redirrect, name='game_maker_redirrect'),
     path('ads.txt', views.gameMonetize, name='gameMonetize'),
     path("robots.txt", views.robots_txt, name='robots_txt'),
+    path("start_guest_game", views.start_guest_game, name='start_guest_game'),
+    path("guest_game_maker_redirrect", views.guest_game_maker_redirrect, name='guest_game_maker_redirrect'),
+
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
