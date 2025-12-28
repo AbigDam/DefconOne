@@ -2089,7 +2089,7 @@ def makealliance(request,game_id):
                 temp_friendlyness += 5
             
             if nation2.user.username == 'empty' or nation2.user.username == 'closed':
-              chance = random.randint(1,temp_friendlyness + 1)
+              chance = random.randint(1,temp_friendlyness + 2)
               if chance == 1 or temp_friendlyness == 1:
                   player_nation = Nations.objects.get(name=selected_nation, game=game_id)
                   player_nation.alliance_name = Nations.objects.get(user=request.user,game_id = game_id).alliance_name
