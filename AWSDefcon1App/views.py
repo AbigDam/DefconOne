@@ -22,6 +22,7 @@ from glob import glob
 import uuid
 from .utils import refresh_all
 from collections import deque
+from django.views.static import serve
 
 
 
@@ -111,6 +112,13 @@ colors = {
     'Tannu Tuva': '#e94a4a', #Nepal
     'Yemen': '#905d5d',
 }
+
+def serve_media_no_cache(request, path):
+    response = serve(request, path, document_root=settings.MEDIA_ROOT)
+    response["Cache-Control"] = "no-store"
+    response["Pragma"] = "no-cache"
+    response["Expires"] = "0"
+    return response
 
 def start_guest_game(request):
     user = User.objects.create_user(
@@ -353,7 +361,6 @@ def announcemnts(request, game_id):
 
 @login_required  
 def beg(request, game_id):
-  refresh_all()
   PlayerAAA = Nations.objects.get(game=game_id, user=request.user)
   user = request.user
   alliance = Nations.objects.get(game = game_id, user = user).alliance_name
@@ -440,7 +447,6 @@ def beg(request, game_id):
     # Get the player's nation
     playernation = Nations.objects.filter(game=game_id, user=request.user).first()
     knownnations = Nations.objects.filter(game=game_id, alliance_name=playernation.alliance_name)
-    refresh_all()
     return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
   player = Nations.objects.get(game = game_id, user = user)
   user = request.user
@@ -955,11 +961,9 @@ def focus(request, game_id):
           player.save()
     player = Nations.objects.get(game = game_id, user = request.user)
     points = player.points
-    refresh_all()
     return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
 
 def spies(request, game_id):
-    refresh_all()
     PlayerAAA = Nations.objects.get(game=game_id, user=request.user)
     if request.method == 'POST':
         get = request.POST.get("get")
@@ -980,7 +984,6 @@ def spies(request, game_id):
         if enemy.spies < 1:
             nations = Nations.objects.filter(game = game_id).exclude(user = User.objects.get(username = "loser")).exclude(user = request.user)
             requesters = player.requests
-            refresh_all()
             return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
         if get:
             chance = player.spies/((enemy.spies * 1) + 1)
@@ -1164,7 +1167,6 @@ def join(request, game_id, player_number):
         nation, created = Nations.objects.get_or_create(game=game, player_number=player_number)
         nation.user = request.user
         nation.save()
-    refresh_all()
     return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
     
     make_game = True
@@ -1172,7 +1174,6 @@ def join(request, game_id, player_number):
 
 @login_required(login_url='login')
 def battle(request, game_id):
-    refresh_all()
 
     # Prefetch related objects early to avoid redundant queries
     game = Games.objects.select_related().get(id=game_id)
@@ -2029,7 +2030,6 @@ def loader(request, game_id, reload):
         final_image.save(output_path, optimize=True)
         
         if reload == 1:
-            refresh_all()
             return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
         else:  
             return HttpResponseRedirect(reverse('full_index'))
@@ -2129,7 +2129,6 @@ def makealliance(request,game_id):
     user = request.user
     player = Nations.objects.get(game = game_id, user = user)
     requesters = player.requests
-    refresh_all()
     return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
 
 @login_required(login_url='login')
@@ -2218,7 +2217,6 @@ def send(request,game_id):
     playernation = Nations.objects.filter(game=game_id, user=request.user).first()
     allies = Nations.objects.filter(game=game_id, alliance_name=playernation.alliance_name)
 
-    refresh_all()
     return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
 
 
