@@ -6,7 +6,7 @@
   </div>
   <div class="game-container" style="text-align: center;">
 
-      {% for nation_list in games %}
+  {% for nation_list in games %}
 <div class="game">
   <hr>
 
@@ -30,7 +30,7 @@
         {% elif nation.user.username == 'empty' %}
             <a class="player-link button" href="{% url 'joingame' game_id=nation_list.0  player_number=nation.player_number %}">Join as {{ nation.name }}</a>
         {% else %}
-          {{ nation.user.username }}
+      {{ nation.user.username }}
         {% endif %}
       </p>
     {% endfor %}

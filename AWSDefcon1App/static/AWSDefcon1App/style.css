@@ -1,3 +1,56 @@
+.stats-table {
+    width: 100%;
+    max-width: 520px;
+    margin: 20px auto;
+    border-collapse: collapse;
+    background: linear-gradient(180deg, #1b1f2a, #141824);
+    color: #e6e9f0;
+    font-family: system-ui, sans-serif;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+}
+
+.stats-table th {
+    text-align: left;
+    padding: 14px 16px;
+    background: #23283a;
+    font-size: 1.1rem;
+    letter-spacing: 0.5px;
+}
+
+.stats-table td {
+    padding: 12px 16px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.95rem;
+}
+
+.stats-table tr:hover {
+    background: rgba(255,255,255,0.03);
+}
+
+.stat-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.stat-icon {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    opacity: 0.9;
+}
+
+.stat-value {
+    text-align: right;
+    font-weight: 600;
+}
+
+.subtle {
+    opacity: 0.75;
+    font-weight: 400;
+}
 .status-bar {
 display: inline-flex;
 align-items: center;
@@ -29,6 +82,45 @@ text-align: center;
 .reload-map-button:hover {
     background-color: #1a252f;
 }
+
+
+#openInventorysBtn {
+    background: linear-gradient(135deg, #2b6cb0, #1a365d);
+    color: #ffffff;
+    border: 2px solid #63b3ed;
+    border-radius: 10px;
+    padding: 12px 22px;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+    transition: 
+        transform 0.15s ease,
+        box-shadow 0.15s ease,
+        background 0.15s ease,
+        border-color 0.15s ease;
+}
+
+#openInventorysBtn:hover {
+    background: linear-gradient(135deg, #3182ce, #2c5282);
+    border-color: #90cdf4;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
+}
+
+#openInventorysBtn:active {
+    transform: translateY(0);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.35);
+}
+
+#openInventorysBtn:focus {
+    outline: none;
+    box-shadow: 
+        0 0 0 2px rgba(99, 179, 237, 0.6),
+        0 4px 10px rgba(0, 0, 0, 0.35);
+}
+
 
 
 #openShopBtn {

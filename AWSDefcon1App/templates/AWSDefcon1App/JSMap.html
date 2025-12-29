@@ -392,13 +392,16 @@
                             <img class="image-button" src = "/static/AWSDefcon1App/DeclareWar.png" alt="Declare Fight" style="width: 100px; height: 100px; border:2px solid #fff; border-radius:5px;"">
                         </button>
                     </form>
+                <button id = "showDiv2-peace" class="toggle-button"><div class="info-bubble"><span class="info-icon">🛈</span>Espionage<span class="tooltip-text">Uses spies to preform special operations, counts as diplomatic requests</span> </div> </button> 
                 </div>
-            
+
                 <div id="battle-form" style="text-align: center; display: none;">
                     <h4 id = "atWar" style="text-align: center; display: none;">At War!</h4> <br>
                     <button id="showDiv1" class="toggle-button"><div class="info-bubble"><span class="info-icon">🛈</span>Military<span class="tooltip-text">Uses soldiers to make large attacks, you can only do 5 battles in a turn!</span> </div></button>
-                    <button id="showDiv2" class="toggle-button"><div class="info-bubble"><span class="info-icon">🛈</span>Espionage<span class="tooltip-text">Uses spies to preform special operations, counts as diplomatic requests</span> </div> </button> 
+                    <button id = "showDiv2-war" class="toggle-button"><div class="info-bubble"><span class="info-icon">🛈</span>Espionage<span class="tooltip-text">Uses spies to preform special operations, counts as diplomatic requests</span> </div> </button> 
                 </div>
+
+
                 <div id="div2" style = "display: none;" class="toggle-div">
                     <form style = "text-align: center;" action="{% url 'spies' game_id=game_id %}" method="post">
                         {% csrf_token %}
@@ -493,7 +496,7 @@
                 <div style="display: inline-block;">
 
                 <label for="div_attack" style="font-weight: bold;">Active Armies</label><br>
-                <input type="range" id="div_attack" name="div_attack" value="1" min="0" max="{{PlayerAAA.act_divisions}}" style="width: 80%; margin-bottom: 10px;">
+                <input type="range" id="div_attack" name="div_attack" value="{{default_divs}}" min="0" max="{{playernation.act_divisions}}" style="width: 80%; margin-bottom: 10px;">
                 <br>
                 <span id="div_attack_label">Amount: 1</span><br><br>
 
@@ -521,7 +524,7 @@
                 <div style="display: inline-block;">
 
                 <label for="boat_attack" style="font-weight: bold;">Active Boats</label><br>
-                <input type="range" id="boat_attack" name="boat_attack" value="1" min="0" max="{{PlayerAAA.act_boats}}" style="width: 80%; margin-bottom: 10px;">
+                <input type="range" id="boat_attack" name="boat_attack" value="{{default_boats}}" min="0" max="{{playernation.act_boats}}" style="width: 80%; margin-bottom: 10px;">
                 <br>
                 <span id="boat_attack_label">Amount: 1</span><br><br>
 
@@ -548,7 +551,7 @@
                 <div style="display: inline-block;">
 
                 <label for="planes_attack" style="font-weight: bold;">Active Planes</label><br>
-                <input type="range" id="planes_attack" name="planes_attack" value="1" min="0" max="{{PlayerAAA.act_planes}}" style="width: 80%; margin-bottom: 10px;">
+                <input type="range" id="planes_attack" name="planes_attack" value="{{default_planes}}" min="0" max="{{playernation.act_planes}}" style="width: 80%; margin-bottom: 10px;">
                 <br>
                 <span id="planes_attack_label">Amount: 1</span><br><br>
 
@@ -592,7 +595,7 @@
                     <button class = "attacker" style="pointer-events: none;">
                         <img class="image-button" src="/static/AWSDefcon1App/Nuke.gif" alt="Nuclear Attack" style="filter: grayscale(100%); border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" > 
                     </button>
-                    <figcaption>Nukes in {{PlayerAAA.nuke_time}} turns<span class="info-icon">🛈</span> <span class="tooltip-text">In {{PlayerAAA.nuke_time}} turns you will be able to use Nukes</span> </div></figcaption>
+                    <figcaption>Nukes in {{playernation.nuke_time}} turns<span class="info-icon">🛈</span> <span class="tooltip-text">In {{playernation.nuke_time}} turns you will be able to use Nukes</span> </div></figcaption>
                 </div>
                 {% endif %}
                 </div>
@@ -634,8 +637,8 @@
                 </div>
 
                 <div id="dev-level-container" style="width:100%; max-width:420px; border: 1px solid #ccc; padding:10px; color:white; font-family:sans-serif;">
-                <div  class="info-bubble"> <h4> Territory Count: {{ PlayerAAA.states }}/902</h4>  <div></div><span class="info-icon" style="margin-right: 5px;">🛈</span> <span class="tooltip-text" style="font-size: 14px;">This is the amount of land you control</span></div>
-                <div  class="info-bubble"> <h4>Development Count: {% if PlayerAAA.states > 250 %}250{% else %} {{ PlayerAAA.states }}{% endif %}/250 </h4> <span class="info-icon" style="margin-right: 5px;">🛈</span> <span class="tooltip-text" style="font-size: 14px;">This determines how many troops you get each turn, it is your state count but capped at 250</span></div>
+                <div  class="info-bubble"> <h4> Territory Count: {{ playernation.states }}/902</h4>  <div></div><span class="info-icon" style="margin-right: 5px;">🛈</span> <span class="tooltip-text" style="font-size: 14px;">This is the amount of land you control</span></div>
+                <div  class="info-bubble"> <h4>Development Count: {% if playernation.states > 250 %}250{% else %} {{ playernation.states }}{% endif %}/250 </h4> <span class="info-icon" style="margin-right: 5px;">🛈</span> <span class="tooltip-text" style="font-size: 14px;">This determines how many troops you get each turn, it is your state count but capped at 250</span></div>
 
                 <div style="height:16px; background-color:#444; border-radius:8px; overflow:hidden; position:relative;">
                     <div id="dev-bar" style="
@@ -696,15 +699,16 @@
         ">✕</button>
 
         <!-- ================= BUY SUPPLIES ================= -->
-        <form method="post" action="{% url 'focus' game_id=game_id %}">
+        <form id = 'BuySupplies' method="post" action="{% url 'focus' game_id=game_id %}">
             {% csrf_token %}
 
             <h3 style="text-align:center;">Buy Supplies</h3>
-            <p style="text-align:center;">Points: {{ PlayerAAA.points }}</p>
+            <p style="text-align:center;"> <strong> Points: {{ playernation.points }} </strong></p>
 
             <div class="subtitle">
                 Here you can use your points, which you get every turn, to buy supplies, like armies, boats, and planes <br>
-                You can also use them for special actions like leaving your alliance
+                You can also use them for special actions like leaving your alliance <br>
+                New armies, planes,and boats are initially <strong> tired </strong>
             </div>
 
             <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:15px;">
@@ -714,7 +718,7 @@
                     <button type="submit" name="air" value="1" style="background:none; border:none; padding:0; cursor:pointer;">
                         <img class="image-button" src="/static/AWSDefcon1App/Airplane.png" style="height:50px; border:2px solid #fff; border-radius:5px;">
                     </button>
-                    <label style="margin-left:8px;">Planes: {{ PlayerAAA.planes }}</label>
+                    <label style="margin-left:8px;">Build Planes</label>
                     <span class="info-icon" style="margin-left:6px;">🛈</span>
                     <span class="tooltip-text">Buy 1000 planes for 1 point</span>
                 </div>
@@ -724,9 +728,9 @@
                     <button type="submit" name="army" value="1" style="background:none; border:none; padding:0; cursor:pointer;">
                         <img class="image-button" src="/static/AWSDefcon1App/Gun.png" style="height:50px; border:2px solid #fff; border-radius:5px;">
                     </button>
-                    <label style="margin-left:8px;">Armies: {{ PlayerAAA.divisions }}</label>
+                    <label style="margin-left:8px;">Train Armies</label>
                     <span class="info-icon" style="margin-left:6px;">🛈</span>
-                    <span class="tooltip-text">Buy 80 divisions for 1 point</span>
+                    <span class="tooltip-text">Buy 80 armies for 1 point</span>
                 </div>
 
                 <!-- NAVY -->
@@ -734,7 +738,7 @@
                     <button type="submit" name="navy" value="1" style="background:none; border:none; padding:0; cursor:pointer;">
                         <img class="image-button" src="/static/AWSDefcon1App/Boat.png" style="height:50px; border:2px solid #fff; border-radius:5px;">
                     </button>
-                    <label style="margin-left:8px;">Boats: {{ PlayerAAA.boats }}</label>
+                    <label style="margin-left:8px;">Build Boats</label>
                     <span class="info-icon" style="margin-left:6px;">🛈</span>
                     <span class="tooltip-text">Buy 60 boats for 1 point</span>
                 </div>
@@ -744,9 +748,9 @@
                     <button type="submit" name="spies" value="1" style="background:none; border:none; padding:0; cursor:pointer;">
                         <img class="image-button" src="/static/AWSDefcon1App/Spies.png" style="height:50px; border:2px solid #fff; border-radius:5px;">
                     </button>
-                    <label style="margin-left:8px;">Spies: {{ PlayerAAA.spies }}</label>
+                    <label style="margin-left:8px;">Train Spies</label>
                     <span class="info-icon" style="margin-left:6px;">🛈</span>
-                    <span class="tooltip-text">Buy 1 new spy</span>
+                    <span class="tooltip-text">Train a spy for 1 point</span>
                 </div>
 
                 <!-- NUKES -->
@@ -754,9 +758,9 @@
                     <button type="submit" name="nuke" value="1" style="background:none; border:none; padding:0; cursor:pointer;">
                         <img class="image-button" src="/static/AWSDefcon1App/Nukes.png" style="height:50px; border:2px solid #fff; border-radius:5px;">
                     </button>
-                    <label style="margin-left:8px;">Nukes: {{ PlayerAAA.nukes }}</label>
+                    <label style="margin-left:8px;">2 Points for Nuclear Tech</label>
                     <span class="info-icon" style="margin-left:6px;">🛈</span>
-                    <span class="tooltip-text">Build nuke / reduce timer for 2 points</span>
+                    <span class="tooltip-text">Nuclear Tech for 2 Points, or 1 Nuke for 2 points if you already have the tech</span>
                 </div>
 
                 <!-- POLICY -->
@@ -764,9 +768,9 @@
                     <button type="submit" name="policy" value="1" style="background:none; border:none; padding:0; cursor:pointer;">
                         <img class="image-button" src="/static/AWSDefcon1App/Chains.png" style="height:50px; border:2px solid #fff; border-radius:5px;">
                     </button>
-                    <label style="margin-left:8px;">Allies: {{ num_allies }}</label>
+                    <label style="margin-left:8px;">2 Points Betray Allies</label>
                     <span class="info-icon" style="margin-left:6px;">🛈</span>
-                    <span class="tooltip-text">Disband alliance for 2 points</span>
+                    <span class="tooltip-text">You can leave your alliance betray allies, but it will cost you</span>
                 </div>
             </div>
         </form>
@@ -836,7 +840,139 @@
         <hr>
     </div>
 </div>
-       
+
+
+<!-- Open Inventory Button -->
+<button id="openInventorysBtn"
+        style="margin-top:15px; padding:10px 16px; font-size:16px; cursor:pointer;">
+    Inventory
+</button>
+
+<!-- Inventory Overlay -->
+<div id="inventoryOverlay" style="
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.6);
+    z-index:1000;
+    align-items:center;
+    justify-content:center;
+">
+
+    <!-- Inventory Modal -->
+    <div style="
+        background:#1e1e1e;
+        color:white;
+        width:600px;
+        max-height:80vh;
+        overflow-y:auto;
+        padding:20px;
+        border-radius:10px;
+        position:relative;
+    ">
+
+        <!-- Close Button -->
+        <button id="closeInventoryBtn" style="
+            position:absolute;
+            top:10px;
+            right:10px;
+            background:none;
+            border:none;
+            color:white;
+            font-size:20px;
+            cursor:pointer;
+        ">✕</button>
+
+        <hr>
+
+        <div class="boxed-list" style="
+            border:1px solid #ccc;
+            padding:10px;
+            border-radius:5px;
+            box-shadow:1px 1px 5px rgba(0,0,0,0.2);
+        ">
+            <table class="stats-table">
+                <thead>
+                    <tr>
+                        <th colspan="2">Inventory</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="stat-label">
+                            <img class="stat-icon" src="\static\AWSDefcon1App\invenDivsIcon.png" alt="">
+                            Active Armies
+                        </td>
+                        <td class="stat-value">{{ playernation.act_divisions }}</td>
+                    </tr>
+                    <tr>
+                        <td class="stat-label subtle">
+                            <img class="stat-icon" src="\static\AWSDefcon1App\invenDivsIcon.png" alt="">
+                            Tired Armies
+                        </td>
+                        <td class="stat-value">
+                            {{ tired_divisions }}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="stat-label">
+                            <img class="stat-icon" src="/static/AWSDefcon1App/invenBoatIcon.png" alt="">
+                            Active Boats
+                        </td>
+                        <td class="stat-value">{{ playernation.act_boats }}</td>
+                    </tr>
+                    <tr>
+                        <td class="stat-label subtle">
+                            <img class="stat-icon" src="/static/AWSDefcon1App/invenBoatIcon.png" alt="">
+                            Tired Boats
+                        </td>
+                        <td class="stat-value">
+                            {{ tired_boats}}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="stat-label">
+                            <img class="stat-icon" src="/static/AWSDefcon1App/invenPlanesIcon.png" alt="">
+                            Active Planes
+                        </td>
+                        <td class="stat-value">{{ playernation.act_planes }}</td>
+                    </tr>
+                    <tr>
+                        <td class="stat-label subtle">
+                            <img class="stat-icon" src="/static/AWSDefcon1App/invenPlanesIcon.png" alt="">
+                            Tired Planes
+                        </td>
+                        <td class="stat-value">
+                            {{tired_planes}}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="stat-label">
+                            <img class="stat-icon" src="/static/AWSDefcon1App/Spies.png" alt="">
+                            Spies
+                        </td>
+                        <td class="stat-value">{{ playernation.spies }}</td>
+                    </tr>
+                    <tr>
+                        <td class="stat-label">
+                            <img class="stat-icon" src="/static/AWSDefcon1App/Nukes.png" alt="">
+                            Nukes
+                        </td>
+                        <td class="stat-value">{{ playernation.nukes }}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+        </div>
+
+        <hr>
+    </div>
+</div>
+
+
 <table id="nationsTable" class="table table-striped table-sm" style="display: none;">
     <thead  style="display: none;">
         <tr>         
@@ -967,20 +1103,72 @@
 
 
 <script>
+
+// ### Check 0 Points ###
+const supplyForm = document.querySelector('#BuySupplies'); 
+
+if (supplyForm) {
+    supplyForm.addEventListener('submit', function (event) {
+        const points = Number("{{ playernation.points }}");
+            const button = event.submitter; 
+            const action = button?.name;
+
+        if (points === 0) {
+            event.preventDefault();
+            alert("You must have points to buy items");
+        }
+        if (points === 1 && (action === 'nuke'|| action === 'policy') ) {
+            event.preventDefault();
+            alert("This item costs 2 points!!");
+        }
+    });
+}
+
+
+
+
+
 //### Refresh Protocol ###
 let refreshed = false;
 
-const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+// configurable cooldown (ms)
+const REFRESH_COOLDOWN = 2000;
 
+// store last manual refresh time
+const LAST_REFRESH_KEY = "last_manual_refresh_ts";
+
+const protocol = window.location.protocol === "https:" ? "wss" : "ws";
 const socket = new WebSocket(
     `${protocol}://${window.location.host}/ws/refresh/`
 );
 
+// mark manual refreshes
+window.addEventListener("beforeunload", () => {
+    sessionStorage.setItem(LAST_REFRESH_KEY, Date.now().toString());
+});
+
+function refreshedRecently() {
+    const last = Number(sessionStorage.getItem(LAST_REFRESH_KEY));
+    return last && (Date.now() - last) < REFRESH_COOLDOWN;
+}
+
 socket.onmessage = () => {
     if (refreshed) return;
+
+    // ignore if user just refreshed / did a recent action
+    if (refreshedRecently()) return;
+
+    const confirmRefresh = window.confirm(
+        "An update has occured. Do you want to refresh now?"
+    );
+
+    if (!confirmRefresh) return;
+
     refreshed = true;
+    sessionStorage.setItem(LAST_REFRESH_KEY, Date.now().toString());
     location.reload();
 };
+
 
 
 // ### Sliders Set up ###
@@ -1016,7 +1204,7 @@ planes_attack_slider.oninput = function () {
 
 // ### States Bar ###
 document.addEventListener("DOMContentLoaded", function() {
-    const states = parseInt("{{ PlayerAAA.states }}") || 0;
+    const states = parseInt("{{ playernation.states }}") || 0;
     const maxTier = 250;
     const bar = document.getElementById("dev-bar");
 
@@ -1040,6 +1228,24 @@ shopOverlay.addEventListener("click", (e) => {
         shopOverlay.style.display = "none";
     }
 });
+
+// ### Inventory Modal ###
+const openInventorysBtn = document.getElementById("openInventorysBtn");
+const closeInventoryBtn = document.getElementById("closeInventoryBtn");
+const inventoryOverlay = document.getElementById("inventoryOverlay");
+openInventorysBtn.addEventListener("click", () => {
+    inventoryOverlay.style.display = "flex";
+});
+closeInventoryBtn.addEventListener("click", () => {
+    inventoryOverlay.style.display = "none";
+});
+inventoryOverlay.addEventListener("click", (e) => {
+    if (e.target === inventoryOverlay) {
+        inventoryOverlay.style.display = "none";
+    }
+});
+
+
 
 // ### Objectives Modal ### 
 const openObjectivesBtn = document.getElementById("openObjectivesBtn");
@@ -1328,13 +1534,17 @@ function updateCountryTab(country){
 
         var some_var = "{{ nation_name_at_war }}";
         nationsAtWar = some_var.replaceAll("&#x27;", "");
-        var playerA = "{{PlayerAAA.name}}"
+        var playerA = "{{playernation.name}}"
+        const victimInput = document.getElementById('victim-input');
+        const defenderInput = document.getElementById('defender-input');
+        defenderInput.value = country;
+        victimInput.value = country;
         if (!nationsAtWar.includes(country)) {
             document.getElementById("battle-form").style.display = "none";
             document.getElementById('div1').style.display = "none";
             document.getElementById('div2').style.display = "none";
             document.getElementById('showDiv1').style.display = "none";
-            document.getElementById('showDiv2').style.display = "none";
+            document.getElementById('showDiv2-war').style.display = "none";
             if(playerA != country && "Ocean" != country){
                 document.getElementById('alliance_form').style.display = "block";
                 document.getElementById('peace-form').style.display = "block";
@@ -1359,13 +1569,10 @@ function updateCountryTab(country){
         } else {
             document.getElementById("battle-form").style.display = "block";
             document.getElementById('showDiv1').style.display = "inline-block";
-            document.getElementById('showDiv2').style.display = "inline-block";
+            document.getElementById('showDiv2-war').style.display = "inline-block";
             document.getElementById('atWar').style.display = "inline-block";
             document.getElementById('peace-form').style.display = "none";
-            const victimInput = document.getElementById('victim-input');
-            const defenderInput = document.getElementById('defender-input');
-            defenderInput.value = country;
-            victimInput.value = country;
+
         }
 
         const filter = country.toLowerCase(); // Convert country to lowercase for case-insensitive comparison
@@ -1453,7 +1660,9 @@ canvas.addEventListener('click', (event) => {
 document.addEventListener('DOMContentLoaded', () => {
     // Get buttons and divs
     const button1 = document.getElementById('showDiv1');
-    const button2 = document.getElementById('showDiv2');
+    const button2 = document.getElementById('showDiv2-war');
+    const button3 = document.getElementById('showDiv2-peace');
+
     const div1 = document.getElementById('div1');
     const div2 = document.getElementById('div2');
     const battleForm = document.getElementById('battle-form');
@@ -1469,6 +1678,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Show Div 2 and hide Div 1
     button2.addEventListener('click', () => {
+        div2.style.display = 'block';
+        div1.style.display = 'none';
+    });
+
+    button3.addEventListener('click', () => {
         div2.style.display = 'block';
         div1.style.display = 'none';
     });

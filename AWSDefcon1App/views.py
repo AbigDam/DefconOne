@@ -185,6 +185,7 @@ def passer(request, game_id):
     user = request.user
     nation = Nations.objects.get(game = game_id, user = user)
     nation.attacks = 0
+    nation.requests = 0
     nation.save()
     loser_user = User.objects.get(username="loser")
     empty_user = User.objects.get(username="empty")
@@ -217,10 +218,10 @@ def passer(request, game_id):
             # Apply production values
             nation.divisions += int(states * mult)
             nation.act_divisions = nation.divisions
-            nation.planes += states * 10
+            nation.planes = states * 10
             nation.act_planes += nation.planes
             nation.boats += states // 2
-            nation.act_boats += nation.boats
+            nation.act_boats = nation.boats
             nation.points += 1
             nation.nuke_time -= 1
 
@@ -279,11 +280,11 @@ def user_list(request, game_id):
     if request.user.is_anonymous or request.user.is_temporary:
         return HttpResponseRedirect(reverse('welcome'))
     if game_id == 0:
-        users = User.objects.exclude(id=request.user.id).distinct()
+        users = User.objects.filter(is_temporary = False).exclude(id=request.user.id).distinct()
         return render(request, 'AWSDefcon1App/user_list.html', {'users': users, 'game_id': game_id})
     else: 
         game = get_object_or_404(Games, id=game_id)
-        users = User.objects.filter(nations__game=game).exclude(id=request.user.id).distinct()
+        users = User.objects.filter(nations__game=game, is_temporary = False).exclude(id=request.user.id).distinct()
         return render(request, 'AWSDefcon1App/user_list.html', {'users': users, 'game_id': game_id})
 
 @login_required(login_url='login')
@@ -1460,7 +1461,6 @@ def battle(request, game_id):
                   planes_attack_amount = int(ogap) - int(ogdb)*10
               elif chance == 20:
                   planes_attack_amount = int(ogap) - int(ogdb)*1
-
               planes_attackers_lost = ogap - int(planes_attack_amount)
               boats_defenders_lost =  ogdb - int(boat_defend_amount)
               nation_attacker = Nations.objects.get(game=game_id, user=request.user) 
@@ -1573,179 +1573,287 @@ def battle(request, game_id):
             # Clamp to zero if negative
             division_defend_amount = max(0, division_defend_amount)
             division_attack_amount = max(0, division_attack_amount)
-
             # Calculate state changes
             state_changeA = (oga - division_attack_amount) // 10
             state_changeD = (ogd - division_attack_amount) // 10
 
-            ## Offensive Wins 
-            if state_changeD < state_changeA:
-                owner = Nations.objects.select_related("game").get(game=game_id, user=request.user)
-                defender = Nations.objects.get(game=game_id, name=division_defender)
-                map_obj = Map.objects.only("id").get(game__id=game_id)
-
-                # Allies
-                if owner.alliance_name:
-                    allies = list(Nations.objects.filter(game=game_id, alliance_name=owner.alliance_name))
-                else:
-                    allies = [owner]
-
-                all_squares = Square.objects.filter(map=map_obj).only("id", "number", "owner", "color", "neighbors")
-                square_dict = {sq.number: sq for sq in all_squares}
-
-                # Controlled squares
-                controlled_squares = [sq for sq in square_dict.values() if sq.owner_id in [ally.id for ally in allies]]
-                controlled_numbers = set(sq.number for sq in controlled_squares)
-
-                # Identify border squares: controlled by allies and bordering at least one defender square
-                border_squares = []
-                for sq in controlled_squares:
-                    if not sq.neighbors:
-                        continue
-                    for neighbor_num in sq.neighbors:
-                        neighbor = square_dict.get(neighbor_num)
-                        if neighbor and neighbor.owner_id == defender.id:
-                            border_squares.append(sq)
-                            break  # stop at first defender neighbor
-
-                # Determine start square
-                # Ensure singleFront is a non-empty string after stripping whitespace
-                if singleFront and singleFront.strip():
-                    try:
-                        front_square = Square.objects.get(map=map_obj, name=singleFront.strip())
-
-                        # Only include neighbors that are actually controlled
-                        controlled_neighbors = [
-                            square_dict[n] for n in getattr(front_square, 'neighbors', []) 
-                            if n in controlled_numbers
-                        ]
-
-                        if controlled_neighbors:
-                            start_square = random.choice(controlled_neighbors)
-                        elif border_squares:
-                            start_square = random.choice(border_squares)
-                        else:
-                            # Fallback: pick any controlled square
-                            start_square = random.choice(list(square_dict.values()))
-
-                    except Square.DoesNotExist:
-                        start_square = random.choice(border_squares)
-                else:           
-                    start_square = random.choice(border_squares)
-   
-                # Expansion parameters
-                state_change = min(state_changeA - state_changeD, 15)
-                attacker_color = colors.get(owner.name)
-                captured = 0
-                max_attempts = 1000  # hard cap to prevent infinite loops
-                attempts = 0
-                changed_squares = []
-
-                # Use a simple queue for expansion, but cap iterations
-                queue = [start_square]
-                visited = set([start_square.number])
-
-                while queue and captured < state_change and attempts < max_attempts:
-                    sq = queue.pop(0)
-                    for neighbor_num in sq.neighbors:
-                        if neighbor_num in visited:
+            if singleFront and singleFront.strip():
+                ## Offensive Wins 
+                if state_changeD < state_changeA:
+                    owner = Nations.objects.select_related("game").get(game=game_id, user=request.user)
+                    defender = Nations.objects.get(game=game_id, name=division_defender)
+                    map_obj = Map.objects.only("id").get(game__id=game_id)
+                    # Allies
+                    if owner.alliance_name:
+                        allies = list(Nations.objects.filter(game=game_id, alliance_name=owner.alliance_name))
+                    else:
+                        allies = [owner]
+                    all_squares = Square.objects.filter(map=map_obj).only("id", "number", "owner", "color", "neighbors")
+                    square_dict = {sq.number: sq for sq in all_squares}
+                    # Controlled squares
+                    controlled_squares = [sq for sq in square_dict.values() if sq.owner_id in [ally.id for ally in allies]]
+                    controlled_numbers = set(sq.number for sq in controlled_squares)
+                    # Identify border squares: controlled by allies and bordering at least one defender square
+                    border_squares = []
+                    for sq in controlled_squares:
+                        if not sq.neighbors:
                             continue
-                        neighbor = square_dict.get(neighbor_num)
-                        if neighbor and neighbor.owner_id == defender.id:
-                            # Capture
+                        for neighbor_num in sq.neighbors:
+                            neighbor = square_dict.get(neighbor_num)
+                            if neighbor and neighbor.owner_id == defender.id:
+                                border_squares.append(sq)
+                                break  # stop at first defender neighbor
+                    # Determine start square
+                    # Ensure singleFront is a non-empty string after stripping whitespace
+                    if singleFront and singleFront.strip():
+                        try:
+                            front_square = Square.objects.get(map=map_obj, name=singleFront.strip())
+
+                            # Only include neighbors that are actually controlled
+                            controlled_neighbors = [
+                                square_dict[n] for n in getattr(front_square, 'neighbors', []) 
+                                if n in controlled_numbers
+                            ]
+
+                            if controlled_neighbors:
+                                start_square = random.choice(controlled_neighbors)
+                            elif border_squares:
+                                start_square = random.choice(border_squares)
+                            else:
+                                # Fallback: pick any controlled square
+                                start_square = random.choice(list(square_dict.values()))
+
+                        except Square.DoesNotExist:
+                            start_square = random.choice(border_squares)
+                    else:           
+                        start_square = random.choice(border_squares)
+    
+                    # Expansion parameters
+                    state_change = min(state_changeA - state_changeD, 15)
+                    attacker_color = colors.get(owner.name)
+                    captured = 0
+                    max_attempts = 1000  # hard cap to prevent infinite loops
+                    attempts = 0
+                    changed_squares = []
+
+                    # Use a simple queue for expansion, but cap iterations
+                    queue = [start_square]
+                    visited = set([start_square.number])
+
+                    while queue and captured < state_change and attempts < max_attempts:
+                        sq = queue.pop(0)
+                        for neighbor_num in sq.neighbors:
+                            if neighbor_num in visited:
+                                continue
+                            neighbor = square_dict.get(neighbor_num)
+                            if neighbor and neighbor.owner_id == defender.id:
+                                # Capture
+                                neighbor.owner = owner
+                                neighbor.color = attacker_color
+                                changed_squares.append(neighbor)
+                                owner.states += 1
+                                defender.states -= 1
+                                captured += 1
+                                queue.append(neighbor)
+                            visited.add(neighbor_num)
+                        attempts += 1
+
+                    # Bulk save squares
+                    Square.objects.bulk_update(changed_squares, ["owner", "color"])
+                    owner.save()
+                    defender.save()
+
+                ## Defensive Wins
+                elif state_changeD >= state_changeA:
+                    defender = Nations.objects.select_related("game").get(game=game_id, name=division_defender)
+                    attacker = Nations.objects.get(game=game_id, user=request.user)
+                    map_obj = Map.objects.only("id").get(game__id=game_id)
+                    max_swaps = 10
+                    stater = defender.states * 3  # iteration limit
+                    # Determine defender's allies
+                    if defender.alliance_name:
+                        allies = list(Nations.objects.filter(game=game_id, alliance_name=defender.alliance_name))
+                    else:
+                        allies = [defender]
+                    # Controlled squares
+                    controlled_squares = list(Square.objects.filter(owner__in=allies, map=map_obj).only(
+                        "id", "number", "owner", "color", "neighbors"
+                    ))
+                    controlled_numbers = set(sq.number for sq in controlled_squares)
+                    # Pre-fetch all squares
+                    all_squares = list(Square.objects.filter(map=map_obj).only(
+                        "id", "number", "owner", "color", "neighbors"
+                    ))
+                    square_dict = {sq.number: sq for sq in all_squares}
+
+                    defender_color = colors.get(defender.name)
+                    swapped = 0
+                    iterations = 0
+                    changed_squares = []
+                    visited = set()
+                    # Start from a random border square
+                    all_squares = Square.objects.filter(map=map_obj).only("id", "number", "owner", "color", "neighbors")
+                    square_dict = {sq.number: sq for sq in all_squares}
+                    # Controlled squares
+                    controlled_squares = [sq for sq in square_dict.values() if sq.owner_id in [ally.id for ally in allies]]
+                    controlled_numbers = set(sq.number for sq in controlled_squares)
+                    # Identify border squares: controlled by allies and bordering at least one defender square
+                    border_squares = []
+                    for sq in controlled_squares:
+                        if not sq.neighbors:
+                            continue
+                        for neighbor_num in sq.neighbors:
+                            neighbor = square_dict.get(neighbor_num)
+                            if neighbor and neighbor.owner_id == defender.id:
+                                border_squares.append(sq)
+                                break  # stop at first defender neighbor    
+                    while swapped < max_swaps and iterations < stater:
+                        if not border_squares:
+                            # No available border squares: pick any controlled square
+                            border_squares = [square_dict[num] for num in controlled_numbers if num not in visited and square_dict[num].neighbors]
+                            if not border_squares:
+                                break  # nothing left to expand
+                        if singleFront != "":
+                            front_square = Square.objects.get(map=map_obj, name=singleFront)
+                            if front_square in border_squares:
+                                start_square = front_square
+                            else:
+                                start_square = random.choice(border_squares)
+                        queue = deque([start_square])
+                        visited.add(start_square.number)
+                        while queue and swapped < max_swaps:
+                            sq = queue.popleft()
+                            for neighbor_num in sq.neighbors:
+                                neighbor = square_dict.get(neighbor_num)
+                                if not neighbor or neighbor.owner_id != attacker.id or neighbor.number in visited:
+                                    continue
+                                # Flip control
+                                neighbor.owner = defender
+                                neighbor.color = defender_color
+                                changed_squares.append(neighbor)
+                                neighbor.save()
+                                attacker.states -= 1
+                                defender.states += 1
+                                swapped += 1
+                                visited.add(neighbor.number)
+                                # Add to queue to expand further
+                                queue.append(neighbor)
+                        # Remove the start square from border list
+                        border_squares = [sq for sq in border_squares if sq.number not in visited]
+                        iterations += 1
+                    attacker.save()
+                    defender.save()
+
+            else:
+                if state_changeD < state_changeA:
+                    print("Offesnive Wins")
+                    state_change = min(state_changeA - state_changeD, 15)
+
+                    owner = Nations.objects.select_related("game").get(game=game_id, user=request.user)
+                    defender = Nations.objects.get(game=game_id, name=division_defender)
+                    game = Games.objects.only("id").get(id=game_id)
+                    map_obj = Map.objects.only("id").get(game=game)
+
+                    owner_alliance = owner.alliance_name
+
+                    # If the defender is in an alliance, get all nations in the same alliance (excluding empty/closed/loser if needed)
+                    if owner_alliance:
+                        allies = Nations.objects.filter(game=game_id, alliance_name=owner_alliance)
+                    else:
+                        # Defender is not in an alliance — only they count as their own ally
+                        allies = Nations.objects.filter(pk=owner.pk)
+
+                    # Now fetch all squares owned by these allies
+                    owned_squares = Square.objects.filter(owner__in=allies, map=map_obj).only("number") 
+                    controlled_numbers = set(sq.number for sq in owned_squares)
+
+                    # Pre-fetch all neighbor squares to reduce queries
+                    all_squares = Square.objects.filter(map=map_obj).only("number", "owner", "color", "neighbors")
+                    square_dict = {sq.number: sq for sq in all_squares}
+
+                    captured = 0
+                    max_iterations = len(controlled_numbers) * 2  # Same logic as stater = states * 2
+                    iterations = 0
+                    attacker_color = colors.get(owner.name)
+
+                    for num in controlled_numbers:
+                        if iterations > max_iterations or captured >= state_change:
+                            break
+
+                        square = square_dict.get(num)
+                        if not square or not square.neighbors:
+                            continue
+
+                        for neighbor_num in square.neighbors:
+                            neighbor = square_dict.get(neighbor_num)
+                            if not neighbor or neighbor.owner_id != defender.id:
+                                continue
+
+                            # Capture square
                             neighbor.owner = owner
                             neighbor.color = attacker_color
                             changed_squares.append(neighbor)
+                            neighbor.save()
+
+                            # Adjust nation stats
                             owner.states += 1
                             defender.states -= 1
                             captured += 1
-                            queue.append(neighbor)
-                        visited.add(neighbor_num)
-                    attempts += 1
 
-                # Bulk save squares
-                Square.objects.bulk_update(changed_squares, ["owner", "color"])
-                owner.save()
-                defender.save()
-
-            ## Defensive Wins
-            elif state_changeD >= state_changeA:
-                print("Defensive Wins")
-
-                defender = Nations.objects.select_related("game").get(game=game_id, name=division_defender)
-                attacker = Nations.objects.get(game=game_id, user=request.user)
-                map_obj = Map.objects.only("id").get(game__id=game_id)
-
-                max_swaps = 10
-                stater = defender.states * 3  # iteration limit
-
-                # Determine defender's allies
-                if defender.alliance_name:
-                    allies = list(Nations.objects.filter(game=game_id, alliance_name=defender.alliance_name))
-                else:
-                    allies = [defender]
-
-                # Controlled squares
-                controlled_squares = list(Square.objects.filter(owner__in=allies, map=map_obj).only(
-                    "id", "number", "owner", "color", "neighbors"
-                ))
-                controlled_numbers = set(sq.number for sq in controlled_squares)
-
-                # Pre-fetch all squares
-                all_squares = list(Square.objects.filter(map=map_obj).only(
-                    "id", "number", "owner", "color", "neighbors"
-                ))
-                square_dict = {sq.number: sq for sq in all_squares}
-
-                defender_color = colors.get(defender.name)
-                swapped = 0
-                iterations = 0
-                changed_squares = []
-                visited = set()
-
-                # Start from a random border square
-
-                all_squares = Square.objects.filter(map=map_obj).only("id", "number", "owner", "color", "neighbors")
-                square_dict = {sq.number: sq for sq in all_squares}
-
-                # Controlled squares
-                controlled_squares = [sq for sq in square_dict.values() if sq.owner_id in [ally.id for ally in allies]]
-                controlled_numbers = set(sq.number for sq in controlled_squares)
-
-                # Identify border squares: controlled by allies and bordering at least one defender square
-                border_squares = []
-                for sq in controlled_squares:
-                    if not sq.neighbors:
-                        continue
-                    for neighbor_num in sq.neighbors:
-                        neighbor = square_dict.get(neighbor_num)
-                        if neighbor and neighbor.owner_id == defender.id:
-                            border_squares.append(sq)
-                            break  # stop at first defender neighbor
+                            if captured >= state_change:
+                                break
                         
-                while swapped < max_swaps and iterations < stater:
-                    if not border_squares:
-                        # No available border squares: pick any controlled square
-                        border_squares = [square_dict[num] for num in controlled_numbers if num not in visited and square_dict[num].neighbors]
-                        if not border_squares:
-                            break  # nothing left to expand
-
-                    if singleFront != "":
-                        front_square = Square.objects.get(map=map_obj, name=singleFront)
-                        if front_square in border_squares:
-                            start_square = front_square
-                        else:
-                            start_square = random.choice(border_squares)
+                        iterations += 1
                     
-                    queue = deque([start_square])
-                    visited.add(start_square.number)
+                    owner.save()
+                    defender.save()
 
-                    while queue and swapped < max_swaps:
-                        sq = queue.popleft()
+                ## Defensive Wins
+                elif state_changeD >= state_changeA:
+                    game = Games.objects.only("id").get(id=game_id)
+                    map_obj = Map.objects.only("id").get(game=game)
 
-                        for neighbor_num in sq.neighbors:
+                    defender = Nations.objects.select_related("game").get(game=game_id, name=division_defender)
+                    attacker = Nations.objects.get(game=game_id, user=request.user)
+                    # Precompute state-change attempts
+                    max_swaps = 10
+                    stater = defender.states * 3
+
+                    # Squares owned by defender
+                    defender_alliance = defender.alliance_name
+
+                    # If the defender is in an alliance, get all nations in the same alliance (excluding empty/closed/loser if needed)
+                    if defender_alliance:
+                        allies = Nations.objects.filter(game=game_id, alliance_name=defender_alliance)
+                    else:
+                        # Defender is not in an alliance — only they count as their own ally
+                        allies = Nations.objects.filter(pk=defender.pk)
+
+                    # Now fetch all squares owned by these allies
+                    owned_squares = Square.objects.filter(owner__in=allies, map=map_obj).only("number")                
+                    controlled_numbers = set(sq.number for sq in owned_squares)
+
+                    # Pre-fetch all relevant squares
+                    all_squares = Square.objects.filter(map=map_obj).only("number", "owner", "color", "neighbors")
+                    square_dict = {sq.number: sq for sq in all_squares}
+
+                    attacker_name = attacker.name
+                    defender_color = colors.get(defender.name)
+
+                    swapped = 0
+                    iterations = 0
+
+                    for num in controlled_numbers:
+                        if iterations > stater or swapped >= max_swaps:
+                            break
+
+                        square = square_dict.get(num)
+                        if not square or not square.neighbors:
+                            continue
+
+                        for neighbor_num in square.neighbors:
                             neighbor = square_dict.get(neighbor_num)
-                            if not neighbor or neighbor.owner_id != attacker.id or neighbor.number in visited:
+                            if not neighbor or neighbor.owner_id != attacker.id:
                                 continue
 
                             # Flip control
@@ -1754,27 +1862,22 @@ def battle(request, game_id):
                             changed_squares.append(neighbor)
                             neighbor.save()
 
+
                             attacker.states -= 1
                             defender.states += 1
                             swapped += 1
-                            visited.add(neighbor.number)
 
-                            # Add to queue to expand further
-                            queue.append(neighbor)
+                            if swapped >= max_swaps:
+                                break
 
-                    # Remove the start square from border list
-                    border_squares = [sq for sq in border_squares if sq.number not in visited]
-                    iterations += 1
+                        iterations += 1
 
-                attacker.save()
-                defender.save()
-
-            print(changed_squares)
+                        # Save nations once
+                        attacker.save()
+                        defender.save()
 
             div_attackers_lost = oga - int(division_attack_amount)
-
             div_defenders_lost = ogd - int(division_defend_amount)
-
             # Pre-fetch once
             game = Games.objects.only("id").get(id=game_id)
             attacker = Nations.objects.get(game=game_id, user=request.user)
@@ -1948,9 +2051,9 @@ def battle(request, game_id):
                 nation.divisions += int(states * mult)
                 nation.act_divisions = nation.divisions
                 nation.planes += states * 10
-                nation.act_planes += nation.planes
+                nation.act_planes = nation.planes
                 nation.boats += states // 2
-                nation.act_boats += nation.boats
+                nation.act_boats = nation.boats
                 nation.points += 1
                 nation.nuke_time -= 1
 
@@ -2384,7 +2487,7 @@ def map(request, game_id):
     player = Nations.objects.get(game = game_id, user = user)
     requesters = player.requests
     user = request.user.username
-    playernation = Nations.objects.filter(game=game_id, user=request.user).first()
+    playernation = Nations.objects.get(game=game_id, user=request.user)
     knownnations = Nations.objects.filter(game=game_id, alliance_name=playernation.alliance_name)
     if(playernation.alliance_name == ""):
         knownnations = [playernation]
@@ -2437,8 +2540,33 @@ def map(request, game_id):
 
     path = f"/media/AWSDefcon1App/MapChart_Game_{game_id}.png?v={version}"
 
-    return render(request, "AWSDefcon1App/JSMap.html",{"game_id":game_id, 'announces': announces, 'allies':allies,'wars':wars,'playernation':playernation, 'active_nations':active_nations, 'num_allies':num_allies,'path':path,'single_player':single_player, 'kill_list':kill_list, 'nation_list':nation_list, 'PlayerAAA':PlayerAAA,'alliances':alliances, 'nation_name_at_war':nation_name_at_war, 'nations_at_war':nations_at_war,'attacks_left':attacks_left, 'owner':owner, "requesters":requesters, "knownnations":knownnations, 'announce':announce, 'nations':nations})
-
+    tired_divisions = PlayerAAA.divisions - PlayerAAA.act_divisions
+    tired_planes = PlayerAAA.planes - PlayerAAA.act_planes
+    tired_boats = PlayerAAA.boats - PlayerAAA.act_boats
+    return render(request, "AWSDefcon1App/JSMap.html",{"game_id":game_id, 
+                                                       'tired_divisions': tired_divisions, 
+                                                       'tired_planes':tired_planes, 
+                                                       'tired_boats':tired_boats,
+                                                       'default_divs': playernation.act_divisions/2,
+                                                       'default_boats': playernation.act_boats/2,
+                                                       'default_planes': playernation.act_planes/2,
+                                                       'announces': announces, 
+                                                       'allies':allies,'wars':wars,
+                                                       'playernation':playernation,
+                                                        'active_nations':active_nations, 
+                                                        'num_allies':num_allies,'path':path,
+                                                        'single_player':single_player, 
+                                                        'kill_list':kill_list, 
+                                                        'nation_list':nation_list, 
+                                                        'alliances':alliances, 
+                                                        'nation_name_at_war':nation_name_at_war, 
+                                                        'nations_at_war':nations_at_war,
+                                                        'attacks_left':attacks_left, 
+                                                        'owner':owner, "requesters":requesters, 
+                                                        "knownnations":knownnations, 
+                                                        'announce':announce,
+                                                        'nations':nations
+                                                        })
     
 def makegame(request,game_id):
     if request.method == 'GET':
