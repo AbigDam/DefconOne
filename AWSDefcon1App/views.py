@@ -218,8 +218,8 @@ def passer(request, game_id):
             # Apply production values
             nation.divisions += int(states * mult)
             nation.act_divisions = nation.divisions
-            nation.planes = states * 10
-            nation.act_planes += nation.planes
+            nation.planes += states * 10
+            nation.act_planes = nation.planes
             nation.boats += states // 2
             nation.act_boats = nation.boats
             nation.points += 1
