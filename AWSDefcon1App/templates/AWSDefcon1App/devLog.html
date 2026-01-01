@@ -1,0 +1,122 @@
+{% extends "AWSDefcon1App/layout.html" %}
+
+{% block body %}
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Development Log</title>
+</head>
+
+<div class="container">
+    <h2 class="timeline-title">Developer Log Timeline (2026)</h2>
+
+    <ul class="timeline">
+        <!-- Example update -->
+        <li class="timeline-item">
+            <span class="timeline-date">2026-01-01 11:00 AM</span>
+            <button class="timeline-btn" data-modal="modal1">Lag Optimization Update</button>
+            <p class="timeline-summary">A bunch of small fixes mostly focused at lag prevention</p>
+        </li>
+
+
+        <!-- Developer can add more items here -->
+    </ul>
+</div>
+
+<!-- Modals -->
+<div id="modal1" class="custom-modal">
+    <div class="modal-content">
+        <span class="close-btn" data-close="modal1">&times;</span>
+        <h3>Update: 2026-01-01 10:00 AM</h3>
+        <ul>
+        
+        <li><strong>Feature Updates (Summary)</strong> 
+            <ul>
+                <li> <strong>Espionage</strong> no longer requires war</li>
+                <li>Any nation can now make an alliance</li>
+                <li>Error messages avoid changing page</li>
+                <li>Map is compressed</li>
+                <li>Dev-Log section added</li>
+                <li>Various small bug/ui fixes</li>
+            </ul>
+        </li>
+        <br><hr>
+        <li><strong>Bug Fixes</strong> 
+            <ul>
+                <li>Refreshes will now only occur in the lobby that triggered the refresh, not all other lobbies</li>
+                <li>Surrendering, or otherwise losing will now longer trigger an error message</li>
+                <li> <strong>Espionage</strong> is now possible <strong> without declaring war </strong> </li>
+                <li>Tile mappings will only load when the 'Territory Select' is selected, trading faster load pages for <strong> slightly delayed click response </strong></li>
+                <li>Guest single player no longer has the 'all other nations' restricting guests to the base 11 countries</li>
+            </ul>
+        </li>
+    
+        <li> <strong>UI Changes</strong>
+            <ul>
+                <li>Available nations will now appear at the top of join lists in lobbies</li>
+                <li>Verticle bar added to make attack modes more clear</li>
+                <li>Map <strong>compressed</strong> for faster load times</li>
+                <li>White box around "declare war" button is removed</li>
+                <li>The map is now centered instead of a few pixels to the left</li>
+            </ul>
+        </li>
+
+        <li> <strong>Error Message Updates</strong> 
+            <br> The following error messages replaced with alerts to remove unnecissary page changes
+        
+            <ul>
+                <li>0 Requests/Battles/Points Left</li>
+                <li>Attacking a nation with no border to you</li>
+                <li>Attacking a state you can't access that turn</li>
+                <li>Navally invading a non-costal state</li>
+                <li>Navally invading a nation with no coast</li>
+
+                Additionally, The following error messages removed by disabling the functionality that caused them
+                <li>Declaring war on an ally disabled</li>
+                <li>Offering an alliance to an ally disabled</li>
+                <li>Interacting with the "no nation selected" nation disabled</li>
+                <li>Interacting with the "no nation selected" nation disabled</li>
+            </ul>
+        </li>
+        
+        <li><strong>Alliance System Updates</strong> 
+            <br> Alliance related bugs fixed
+            <ul>
+                <li>Nations are now less likely to accept alliances</li>
+                <li>If a minor nations requests alliance to a bot major the minor will join the majors team</li>
+                <li>All nations can not offer alliances and create alliances</li>
+            </ul>
+        </li>
+    </ul>
+    </div>
+</div>
+
+
+
+
+<script>
+// Open modal
+document.querySelectorAll('.timeline-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const modalId = btn.getAttribute('data-modal');
+        document.getElementById(modalId).style.display = 'block';
+    });
+});
+
+// Close modal
+document.querySelectorAll('.close-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const modalId = btn.getAttribute('data-close');
+        document.getElementById(modalId).style.display = 'none';
+    });
+});
+
+// Close modal when clicking outside the modal content
+window.addEventListener('click', e => {
+    if (e.target.classList.contains('custom-modal')) {
+        e.target.style.display = 'none';
+    }
+});
+</script>
+{% endblock %}

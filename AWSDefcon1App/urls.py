@@ -41,7 +41,7 @@ urlpatterns = [
     path("robots.txt", views.robots_txt, name='robots_txt'),
     path("start_guest_game", views.start_guest_game, name='start_guest_game'),
     path("guest_game_maker_redirrect", views.guest_game_maker_redirrect, name='guest_game_maker_redirrect'),
-
+    path("devLog", views.devLog, name='devLog'),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

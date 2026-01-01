@@ -1,0 +1,10 @@
+<html>
+  <body>
+    
+<form method="post" action="{% url 'new'  game_id=game_id %}">
+    {% csrf_token %}
+    <button type="submit">New</button>
+  </form>
+    </body>
+
+</html>

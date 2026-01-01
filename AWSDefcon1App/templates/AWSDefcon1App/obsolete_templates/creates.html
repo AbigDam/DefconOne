@@ -1,0 +1,9 @@
+{% extends "AWSDefcon1App/layout.html" %}
+
+{% block body %}
+<h2>Create a new game</h2>
+
+<h3>The process of creating a game will take a long time.</h3>
+<h3> Please have some patience and wait for it to load</h3>
+<a href = "{% url 'makegame' game_id=max_id %}" ><h4>Click here to create a game</h4> </a>
+{% endblock %}

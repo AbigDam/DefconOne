@@ -4,9 +4,6 @@
 <html lang="en">
 <meta charset="UTF-8">
 <link rel="manifest" href = "/static/AWSDefcon1App/manifest.json">
-<meta name="ezoic-site-verification" content="gdlvsSoJ5tzab9BJUp13HaQXwFqF2H" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<meta name="monetag" content="3340a1381ee10ab0e6dca1500e245bc0">
 <head class = "wrapper">
     <meta name="google-site-verification" content="PK6KNLAReWC7Yi2LelA7TbhxHQGrg0XF-UzvITdvo2c" />
     <meta name="robots" content="index, follow">
@@ -14,7 +11,7 @@
     <meta name="keywords" content="Defcon1, Defcon One, Game, Strategy, Risk, Video Game, Multiplayer, Hoi4, Free">
     <title>{% block title %}Defcon One{% endblock %}</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-    <link href="{% static '/AWSDefcon1App/styles.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="/static/AWSDefcon1App/style.css" crossorigin="anonymous">
     <script>
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/static/AWSDefcon1App/service-worker.js")
@@ -43,17 +40,8 @@
             <img id="musicButton" style="position: fixed; width:70px; height:auto; border-radius: 100%;" src="/static/AWSDefcon1App/AudioMutedIcon.png" alt="Play Music">
             <h1 style = "text-align: center; top: 6%;">Defcon1</h1>
         </section>
-    
-    <style>
-        #musicButton {
-            cursor: pointer;
-            position: absolute;
-            top: 2.4%;
-            right: 10px;
-            width: 30px;
-            height: auto;
-        }
-    </style>
+        <audio id="backgroundMusic" src="/static/AWSDefcon1App/Defcon1Music.wav"></audio>
+
           <script>
         const musicButton = document.getElementById('musicButton');
         const backgroundMusic = document.getElementById('backgroundMusic');
@@ -77,7 +65,6 @@
         });
     </script>
 
-    <audio id="backgroundMusic" src="/static/AWSDefcon1App/Defcon1Music.wav"></audio>
 <script>
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -151,16 +138,21 @@ document.addEventListener('DOMContentLoaded', function() {
       <li class="{% if request.path == '/credits' %}active{% else %}nav-item{% endif %}">
         <a class="nav-link" href="{% url 'credits' %}">Credits</a>
       </li>
+      <li class="{% if request.path == '/devLog' %}active{% else %}nav-item{% endif %}">
+        <a class="nav-link" href="{% url 'devLog' %}">Dev-Log</a>
+      </li>
       <li class="{% if request.path == '/ads' %}active{% else %}nav-item{% endif %}">
         <a class="nav-link" href="{% url 'ads' %}">Support Us</a>
       </li>
       <li class="nav-item">
           <a class="nav-link" href="{% url 'logout' %}" style = "color: red">Log Out</a>
       </li>
-
   {% else %}
       <li class="{% if request.path == '/credits' %}active{% else %}nav-item{% endif %}">
         <a class="nav-link" href="{% url 'credits' %}">Credits</a>
+      </li>
+      <li class="{% if request.path == '/devLog' %}active{% else %}nav-item{% endif %}">
+        <a class="nav-link" href="{% url 'devLog' %}">Dev-Log</a>
       </li>
       <li class="{% if request.path == '/ads' %}active{% else %}nav-item{% endif %}">
         <a class="nav-link" href="{% url 'ads' %}">Support Us</a>
@@ -195,16 +187,6 @@ document.addEventListener('DOMContentLoaded', function() {
     </main>
 
 
-    <script>
-        document.getElementById('toggleFooter').addEventListener('click', function() {
-            var footerContainer = document.getElementById('footerContainer');
-            if (footerContainer.style.display === 'none') {
-                footerContainer.style.display = 'block';
-            } else {
-                footerContainer.style.display = 'none';
-            }
-        });
-    </script>    
 
           <!--<script>
           document.addEventListener('DOMContentLoaded', () => {
@@ -217,354 +199,13 @@ document.addEventListener('DOMContentLoaded', function() {
           });
            </script>-->
 
-              <style>
-
-        .info-icon {
-            font-size: 12px;
-            cursor: pointer;
-        }
-
-        .tooltip-text {
-            visibility: hidden;
-            width: 120px;
-            background-color: #555;
-            color: #fff;
-            text-align: center;
-            border-radius: 6px;
-            padding: 5px;
-            position: absolute;
-            z-index: 1;
-            bottom: 125%;
-            left: 50%;
-            margin-left: -60px;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .info-bubble:hover .tooltip-text {
-            visibility: visible;
-            opacity: 1;
-        }
-    </style>
 </head>
 
 <body>
-<style>
-.tutorial-widget {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 9999;
-  font-family: Arial, sans-serif;
-}
-
-/* Button appearance */
-.tutorial-button {
-  display: inline-block;
-  background-color: #444;
-  color: white;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  text-align: center;
-  line-height: 40px;
-  cursor: pointer;
-  box-shadow: 0 0 10px #000;
-  font-size: 24px;
-  transition: background 0.3s;
-}
-.tutorial-button:hover {
-  background-color: #666;
-}
-
-/* Hidden by default */
-.tutorial-content {
-  display: none;
-  background: #222;
-  color: white;
-  padding: 15px;
-  width: 250px;
-  border-radius: 10px;
-  position: absolute;
-  bottom: 60px;
-  right: 0;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-}
-
-/* Show when checked */
-#tutorial-toggle:checked ~ .tutorial-content {
-  display: block;
-}
-  .unread-indicator {
-    color: red;
-    font-size: 1.2em;
-    margin-left: 5px;
-  }
-  .info-bubble {
-      position: relative;
-  }
-
-  .info-icon {
-      font-size: 12px;
-      cursor: pointer;
-  }
-
-  .tooltip-text {
-      visibility: hidden;
-      width: 120px;
-      background-color: #555;
-      color: #fff;
-      text-align: center;
-      border-radius: 6px;
-      padding: 5px;
-      position: absolute;
-      z-index: 1;
-      bottom: 125%;
-      left: 50%;
-      margin-left: -60px;
-      opacity: 0;
-      transition: opacity 0.3s;
-  }
-
-  .info-bubble:hover .tooltip-text {
-      visibility: visible;
-      opacity: 1;
-  }
-</style>
 </head>
 <body>
 
 </div>
-<style>
-@media (min-width: 1600px) {
-    .wrapper {
-        width: 100%;
-        height: 100%;
-    }
-}
-@media (min-width: 430px) and (max-width: 1600px) {
-    .wrapper {
-        width: 1600px;
-        margin: 0 auto; /* This centers the wrapper if there's space */
-    }
-}
-
-@media(max-width: 430px) {
-    .wrapper {
-        transform-origin: center;
-        width: 100vh;  /* Height becomes the width */
-        height: 100vw; /* Width becomes the height */
-        overflow-x: hidden;
-        position: absolute;
-        top: 0;
-        left: 0;
-    }
-}
-
-  nav{
-    background-color:#e0e0e0;
-    font-family: "Hoefler Text", serif;
-    font-style: italic;
-  }
-  
-  body {
-      padding: 10px;
-      background-color: black;
-      color: white;
-  }
-  
-  .linker, .linker-hover {
-    font-family: "Hoefler Text", serif;
-    font-style: italic;
-    font-size: 30px;
-    text-decoration: none;
-
-  }
-  
-  .linker {
-    color: #407AD6;
-    text-decoration: none;
-
-  }
-  
-  .linker-hover {
-    color: #4E8EF5;
-    text-decoration: none;
-  }
-  
-  
-  .game-container {
-    display: flex;
-    flex-wrap: wrap;
-  }
-
-  .game {
-    flex: 0 0 calc(33.333% - 20px); /* Adjust the width as needed */
-    margin: 10px;
-  }
-  
-  .boxed-list {
-    border: 1px solid #ccc;
-    padding: 10px;
-    margin-top: 10px;
-  }
-  
-  .boxed-list-instance {
-    border-bottom: 1px solid #ddd;
-    padding: 5px 0;
-    color: #A9A9A9;
-    font-family: "Hoefler Text", serif;
-    font-style: italic;
-    font-size: 30px;
-  
-  }
-  .nav-item a {
-    display: inline-block;
-    padding: 10px 20px;
-    background-color: #252323;
-    color: white;
-    border-radius: 50px;
-    text-align: center;
-    text-decoration: none;
-    font-family: 'Karla', sans-serif;
-    margin: 5px;
-}
-
-.nav-item a:hover {
-    background-color: #357ABD;
-    text-decoration: none;
-}
-
-.active a{
-    display: inline-block;
-    padding: 10px 20px;
-    background-color: #0b338f;
-    color: white;
-    border-radius: 50px;
-    text-align: center;
-    text-decoration: none;
-    font-family: 'Karla', sans-serif;
-    margin: 5px;
-}
-
-.active a:hover {
-    background-color: #357ABD;
-    text-decoration: none;
-}
-  .table {
-    width: 100%;
-    max-width: 100%;
-    margin-bottom: 1rem;
-    color: var(--table-text);
-    background-color: var(--table-bg);
-  }
-  
-  .table-striped tbody tr:nth-of-type(odd) {
-    background-color: var(--table-striped-bg);
-  }
-  
-  .table-hover tbody tr:hover {
-    background-color: var(--table-hover-bg);
-  }
-  
-  .table-sm th,
-  .table-sm td {
-    padding: 0.4rem;
-  }
-  
-  /* Dark Mode-specific Styling */
-  .dark-mode .table {
-    color: var(--table-text);
-    background-color: var(--table-bg);
-  }
-  
-  .dark-mode .table-striped tbody tr:nth-of-type(odd) {
-    background-color: var(--table-striped-bg);
-  }
-  
-  .dark-mode .table-hover tbody tr:hover {
-    background-color: var(--table-hover-bg);
-  }
-  
-  #myProgress {
-    width: 100%;
-    background-color: rgb(40, 40, 40);
-  }
-  
-  #myBar {
-    width: 1%;
-    height: 30px;
-    background-color: green;
-  }
-
-  .how-to-play-widget {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    text-align: center;
-    z-index: 1000;
-}
-
-.how-to-play-button {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 50px;
-    padding: 10px 20px;
-    cursor: pointer;
-    font-size: 16px;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.how-to-play-content {
-    display: none;
-    background-color: white;
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    padding: 20px;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-    position: absolute;
-    bottom: 60px; /* Adjust according to button size */
-    right: 0;
-    width: 300px;
-}
-
-.how-to-play-widget.active .how-to-play-content {
-    display: block;
-}
-    /* Initially hide the buttons */
-    #showDiv1, #showDiv2 {
-        display: none;
-    }
-
-    /* Style the buttons */
-    .toggle-button {
-        background-color: #0a0daa; /* Green background */
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 5px;
-        font-size: 16px;
-        cursor: pointer;
-        margin: 10px;
-        transition: background-color 0.3s;
-        text-align: center;
-    }
-
-    /* Hover effect for buttons */
-    .toggle-button:hover {
-        background-color: #0e0ae4; /* Slightly darker green */
-    }
-
-    /* Focus effect for buttons */
-    .toggle-button:focus {
-        outline: none;
-        box-shadow: 0 0 10px #0d2fc7; /* Green glow effect */
-    }
-
-
-</style>
-
 
 
 

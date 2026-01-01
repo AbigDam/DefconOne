@@ -1,0 +1,14 @@
+{% extends "AWSDefcon1App/layout.html" %}
+
+{% block body %}
+
+<h2>Diplomacy</h2>
+
+<br>
+<a href = "{% url 'war' game_id=game_id %}" ><h4>Declare War</h4> </a>
+<br>
+<a href = "{% url 'makealliance' game_id=game_id %}" ><h4>Request Alliance</h4> </a>
+<br>
+<a href = "{% url 'send' game_id=game_id %}" ><h4>Send Supplies</h4> </a>
+<br>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "AWSDefcon1App/layout.html" %}
+
+{% block body %}
+
+    <h2 style = "text-align: center;">History</h2>
+
+
+    <div class="game-container"> 
+    {% if announces %}
+    {% for announce in announces %}
+    <div class="game">
+      <hr>  
+      <div class="boxed-list">
+        <p class = "boxed-list-instance"> {{announce.text}}</p>
+        <p style = "color: #A9A9A9; font-family: 'Hoefler Text', serif;font-style: italic; font-size: 10px;"> sent on {{announce.start_time}}</p>
+      </div>
+      <hr>
+    </div>
+    {% endfor %}
+    {% else %}
+
+    <div class="boxed-list">
+        <p class = "boxed-list-instance"> No Announcements Yet</p>
+      </div>
+  </div>
+    {% endif %}
+{% endblock %}

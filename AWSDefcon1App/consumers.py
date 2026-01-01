@@ -10,4 +10,5 @@ class RefreshConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard("refresh_page", self.channel_name)
 
     async def refresh(self, event):
-        await self.send(text_data=json.dumps({"refresh": True}))
+        await self.send(text_data=json.dumps({"refresh": True,"game_id": event["game_id"]}))
+        

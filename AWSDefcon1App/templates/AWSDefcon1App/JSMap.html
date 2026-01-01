@@ -5,15 +5,15 @@
 
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>State Images with Colors</title>
+        <title>Defcon1</title>
     </head>
     <body>
         <div style="display: flex; justify-content: center; align-items: flex-start; margin-bottom: 20px;">
-            <!-- Form on the left (optional, can be removed) -->
+            <!-- Form on the left -->
             <div style="width: 20%; padding: 10px; margin-right: 20px; display: flex; flex-direction: column; gap: 20px;">
                 <h3 style="text-align: center;">Requests Left: {{requesters}}</h3>
                 <!-- First Form -->
-                <form method="post" action="{% url 'beg' game_id=game_id %}" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2);">
+                <form id = "beg-form" method="post" action="{% url 'beg' game_id=game_id %}" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2);">
                     {% csrf_token %}
                     <h3 style="text-align: center;">Ask allies for aid</h3>
 
@@ -30,7 +30,7 @@
                 </form>
         
                 <!-- Second Form -->
-                <form id="alliance_form" method="post" action="{% url 'makealliance' game_id=game_id %}" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2);">
+                <form id="alliance_form" method="post" action="{% url 'makealliance' game_id=game_id %}" style="display:none; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2);">
                     {% csrf_token %}
                     <input type="hidden" name="selected_nation" id="alliance-input" value="">
                     <h3 id="offerDisplay" style="text-align: center;">No Nation Selected </h3>
@@ -317,8 +317,7 @@
 
             </div>
             <!-- Canvas in the center -->
-                
-            <div style=" text-align: center;">
+            <div style="text-align: center;">
                 
                 <div id="loading">
                     <img src="/static/AWSDefcon1App/Loading.gif" alt="Loading..." style="width: 1120px; height: 480px;">
@@ -388,10 +387,11 @@
                         
                         <input type="hidden" name="selected_nation" id="war-input" value=""> 
                         <h4  style="text-align: center;">At peace for now, Declare War?</h4>
-                        <button type="submit" style="margin-top: 20px; text-align: center;">
-                            <img class="image-button" src = "/static/AWSDefcon1App/DeclareWar.png" alt="Declare Fight" style="width: 100px; height: 100px; border:2px solid #fff; border-radius:5px;"">
+                        <button type="submit" style="background: none; border:none;  margin-top: 20px; text-align: center;">
+                            <img class="image-button" src = "/static/AWSDefcon1App/DeclareWar.png" alt="Declare Fight" style="width: 100px; height: 100px; border-radius:10px;">
                         </button>
                     </form>
+                    
                 <button id = "showDiv2-peace" class="toggle-button"><div class="info-bubble"><span class="info-icon">🛈</span>Espionage<span class="tooltip-text">Uses spies to preform special operations, counts as diplomatic requests</span> </div> </button> 
                 </div>
 
@@ -403,7 +403,7 @@
 
 
                 <div id="div2" style = "display: none;" class="toggle-div">
-                    <form style = "text-align: center;" action="{% url 'spies' game_id=game_id %}" method="post">
+                    <form id = "spies-form" style = "text-align: center;" action="{% url 'spies' game_id=game_id %}" method="post">
                         {% csrf_token %}
                         
                         <input type="hidden" name="target" id="victim-input" value="">
@@ -486,121 +486,156 @@
                 {% else %}
                 <h3 style = "text-align: center;">Battles Left: {{ attacks_left }}</h3>
                 {% endif %}
+    
+    <form method="post" action="{% url 'battle' game_id=game_id %}" style="text-align:center;background:transparent;">
+    {% csrf_token %}
 
-                <form method="post" action="{% url 'battle' game_id=game_id %}" style="text-align: center;">
-                {% csrf_token %}
-                
-                <input type="hidden" name="defender" id="defender-input" value="">
-                <input type="hidden" name="front_name" id="frontNameInput">
+    <input type="hidden" name="defender" id="defender-input">
+    <input type="hidden" name="front_name" id="frontNameInput">
 
-                <div style="display: inline-block;">
+    <div style="display:flex;justify-content:center;align-items:stretch;gap:20px;background:transparent;">
 
-                <label for="div_attack" style="font-weight: bold;">Active Armies</label><br>
-                <input type="range" id="div_attack" name="div_attack" value="{{default_divs}}" min="0" max="{{playernation.act_divisions}}" style="width: 80%; margin-bottom: 10px;">
-                <br>
-                <span id="div_attack_label">Amount: 1</span><br><br>
+        <!-- ARMIES -->
+        <div style="display:flex;flex-direction:column;align-items:center;min-width:220px;">
+            <strong>Active Armies</strong>
 
+            <input type="range" id="div_attack" name="div_attack"
+                   value="default_divs" min="0" max="{{playernation.act_divisions}}"
+                   style="width:80%;margin:6px 0;">
 
-                <div style="display: inline-block;">
+            <span id="div_attack_label">Amount: 1</span>
 
-                <div class="info-bubble">
-                    <button class = "attacker" type="submit" name="action" value="Ndivision">
-                        <img class="image-button" src="/static/AWSDefcon1App/Army_man.gif" alt="Normal Ground Attack" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
+            <div style="display:flex;gap:8px;margin-top:8px;">
+                <div>
+                    <button type="submit" name="action" value="Ndivision"
+                            style="background:transparent;border:none;padding:0;">
+                        <img class="image-button" src="/static/AWSDefcon1App/Army_man.gif"
+                             style="width:15vw;max-width:110px;min-width:60px;
+                                    aspect-ratio:1/1;object-fit:contain;
+                                    border:2px solid white;border-radius:10px;
+                                    background:transparent;display:block;">
                     </button>
-                    <figcaption> Ground Attack<span class="info-icon">🛈</span> <span class="tooltip-text">Attempt to take some of your enemies land, make sure you have a land border</span> </div> </figcaption>
+                    <figcaption style="font-size:0.85em;">Ground Attack</figcaption>
                 </div>
 
-                <div style="display: inline-block;">
-                <div class="info-bubble">
-                    <button class = "attacker" class = "attacker" type="submit" name="action" value="division">
-                        <img class="image-button" src="/static/AWSDefcon1App/Encirclement_1.gif" alt="Attempt an Encirclement" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
+                <div>
+                    <button type="submit" name="action" value="division"
+                            style="background:transparent;border:none;padding:0;">
+                        <img class="image-button" src="/static/AWSDefcon1App/Encirclement_1.gif"
+                             style="width:15vw;max-width:110px;min-width:60px;
+                                    aspect-ratio:1/1;object-fit:contain;
+                                    border:2px solid white;border-radius:10px;
+                                    background:transparent;display:block;">
                     </button>
-                    <figcaption> Encirclement<span class="info-icon">🛈</span> <span class="tooltip-text">Risky attack that could lead to major losses on either side (not both)</span> </div> </figcaption>
+                    <figcaption style="font-size:0.85em;">Encirclement</figcaption>
                 </div>
-                
-                </div>
+            </div>
+        </div>
 
+        <!-- DIVIDER -->
+        <div style="width:2px;background:white;opacity:0.4;"></div>
 
-                <div style="display: inline-block;">
+        <!-- BOATS -->
+        <div style="display:flex;flex-direction:column;align-items:center;min-width:220px;">
+            <strong>Active Boats</strong>
 
-                <label for="boat_attack" style="font-weight: bold;">Active Boats</label><br>
-                <input type="range" id="boat_attack" name="boat_attack" value="{{default_boats}}" min="0" max="{{playernation.act_boats}}" style="width: 80%; margin-bottom: 10px;">
-                <br>
-                <span id="boat_attack_label">Amount: 1</span><br><br>
+            <input type="range" id="boat_attack" name="boat_attack"
+                   value="{{default_boats}}" min="0" max="{{playernation.act_boats}}"
+                   style="width:80%;margin:6px 0;">
 
-                <div style="display: inline-block;">
-                <div class="info-bubble">
-                    <button class = "attacker"  type="submit" name="action" value="Nboat">
-                        <img class="image-button" src="/static/AWSDefcon1App/Boat.gif" alt="Attack Their Boats" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
+            <span id="boat_attack_label">Amount: 1</span>
+
+            <div style="display:flex;gap:8px;margin-top:8px;">
+                <div>
+                    <button type="submit" name="action" value="Nboat"
+                            style="background:transparent;border:none;padding:0;">
+                        <img class="image-button" src="/static/AWSDefcon1App/Boat.gif"
+                             style="width:15vw;max-width:110px;min-width:60px;
+                                    aspect-ratio:1/1;object-fit:contain;
+                                    border:2px solid white;border-radius:10px;
+                                    background:transparent;">
                     </button>
-                    <figcaption>Naval Attack<span class="info-icon">🛈</span> <span class="tooltip-text">Destroys some of your enemies boats, risking your own planes</span> </div> </figcaption>
+                    <figcaption style="font-size:0.85em;">Naval Attack</figcaption>
                 </div>
-                
-                <div style="display: inline-block;">
-                <div class="info-bubble">
-                    <button class = "attacker"  type="submit" name="action" value="boat">
-                        <img class="image-button" src="/static/AWSDefcon1App/Naval_invasion.gif" alt="Naval Invasion" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;">
+
+                <div>
+                    <button type="submit" name="action" value="boat"
+                            style="background:transparent;border:none;padding:0;">
+                        <img class="image-button" src="/static/AWSDefcon1App/Naval_invasion.gif"
+                             style="width:15vw;max-width:110px;min-width:60px;
+                                    aspect-ratio:1/1;object-fit:contain;
+                                    border:2px solid white;border-radius:10px;
+                                    background:transparent;">
                     </button>
-                    <figcaption> Naval Landing<span class="info-icon">🛈</span> <span class="tooltip-text">Attempts to take a state bordering the water, a good way to establish a border with someone!</span> </div></figcaption>
+                    <figcaption style="font-size:0.85em;">Naval Landing</figcaption>
                 </div>
+            </div>
+        </div>
 
-                </div>
+        <!-- DIVIDER -->
+        <div style="width:2px;background:white;opacity:0.4;"></div>
 
+        <!-- PLANES -->
+        <div style="display:flex;flex-direction:column;align-items:center;min-width:260px;">
+            <strong>Active Planes</strong>
 
-                
-                <div style="display: inline-block;">
+            <input type="range" id="planes_attack" name="planes_attack"
+                   value="{{default_planes}}" min="0" max="{{playernation.act_planes}}"
+                   style="width:80%;margin:6px 0;">
 
-                <label for="planes_attack" style="font-weight: bold;">Active Planes</label><br>
-                <input type="range" id="planes_attack" name="planes_attack" value="{{default_planes}}" min="0" max="{{playernation.act_planes}}" style="width: 80%; margin-bottom: 10px;">
-                <br>
-                <span id="planes_attack_label">Amount: 1</span><br><br>
+            <span id="planes_attack_label">Amount: 1</span>
 
-                <div style="display: inline-block;">
-                <div class="info-bubble">
-                    <button class = "attacker" type="submit" name="action" value="Nplanes">
-                        <img class="image-button" src="/static/AWSDefcon1App/Plane.gif" alt="Attack Their Planes" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" > 
+            <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;justify-content:center;">
+                <div>
+                    <button type="submit" name="action" value="Nplanes"
+                            style="background:transparent;border:none;padding:0;">
+                        <img class="image-button" src="/static/AWSDefcon1App/Plane.gif"
+                             style="width:15vw;max-width:110px;min-width:60px;
+                                    aspect-ratio:1/1;object-fit:contain;
+                                    border:2px solid white;border-radius:10px;">
                     </button>
-                    <figcaption> Planes  Attack<span class="info-icon">🛈</span> <span class="tooltip-text">Destroys some of your enemies planes, risking your own planes</span> </div>  </figcaption>
+                    <figcaption style="font-size:0.85em;">Plane Attack</figcaption>
                 </div>
 
-                <div style="display: inline-block;">
-                <div class="info-bubble">
-                    <button class = "attacker" type="submit" name="action" value="planes">
-                        <img class="image-button" src="/static/AWSDefcon1App/Bombing.gif" alt="Bomb Their Soldiers" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
+                <div>
+                    <button type="submit" name="action" value="planes"
+                            style="background:transparent;border:none;padding:0;">
+                        <img class="image-button" src="/static/AWSDefcon1App/Bombing.gif"
+                             style="width:15vw;max-width:110px;min-width:60px;
+                                    aspect-ratio:1/1;object-fit:contain;
+                                    border:2px solid white;border-radius:10px;">
                     </button>
-                    <figcaption>Bomb Army<span class="info-icon">🛈</span> <span class="tooltip-text">Destroys some of your enemy's soldiers based on how many planes you have</span> </div> </figcaption>
-                </div>
-                
-                <div style="display: inline-block;">
-                <div class="info-bubble">
-                    <button class = "attacker" type="submit" name="action" value="Bplanes">
-                        <img class="image-button" src="/static/AWSDefcon1App/Plane_bombing_boat_gif.gif" alt="Bomb Their Boats" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" >
-                    </button>
-                    <figcaption> Bomb Boats<span class="info-icon">🛈</span> <span class="tooltip-text">Destroy some of your enemy's boats based on how many planes you have</span> </div> </figcaption>
-                </div>
-              
-
-                {% if owner.nukes > 0 %}
-                <div style="display: inline-block;">
-                <div class="info-bubble">
-                    <button class = "attacker" type="submit" name="action" value="nuke">
-                        <img class="image-button" src="/static/AWSDefcon1App/Nuke.gif" alt="Nuclear Attack" style="border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" > 
-                    </button>
-                    <figcaption> Drop Nukes<span class="info-icon">🛈</span> <span class="tooltip-text">If you have more than 150% of your enemies planes, then this will nuke them.  If you drop enough nukes they will automatically lose!</span> </div></figcaption>
+                    <figcaption style="font-size:0.85em;">Bomb Army</figcaption>
                 </div>
 
-                {% else %}
-                <div style="display: inline-block;">
-                <div class="info-bubble">
-                    <button class = "attacker" style="pointer-events: none;">
-                        <img class="image-button" src="/static/AWSDefcon1App/Nuke.gif" alt="Nuclear Attack" style="filter: grayscale(100%); border: 2px solid white; border-radius: 10px; width: 100px; cursor: pointer; display: block; margin: 0 auto;" > 
+                <div>
+                    <button type="submit" name="action" value="Bplanes"
+                            style="background:transparent;border:none;padding:0;">
+                        <img class="image-button" src="/static/AWSDefcon1App/Plane_bombing_boat_gif.gif"
+                             style="width:15vw;max-width:110px;min-width:60px;
+                                    aspect-ratio:1/1;object-fit:contain;
+                                    border:2px solid white;border-radius:10px;">
                     </button>
-                    <figcaption>Nukes in {{playernation.nuke_time}} turns<span class="info-icon">🛈</span> <span class="tooltip-text">In {{playernation.nuke_time}} turns you will be able to use Nukes</span> </div></figcaption>
-                </div>
-                {% endif %}
+                    <figcaption style="font-size:0.85em;">Bomb Boats</figcaption>
                 </div>
 
-            </form>
+                <div>
+                    <button type="submit" name="action" value="nuke"
+                            style="background:transparent;border:none;padding:0;">
+                        <img class="image-button" src="/static/AWSDefcon1App/Nuke.gif"
+                             style="width:15vw;max-width:110px;min-width:60px;
+                                    aspect-ratio:1/1;object-fit:contain;
+                                    border:2px solid white;border-radius:10px;">
+                    </button>
+                    <figcaption style="font-size:0.85em;">Drop Nukes</figcaption>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</form>
+
+
                       <br> <br>
             </div>   
              <br> <br>     
@@ -621,7 +656,7 @@
             </div>
 
             <!-- Boxed list on the right -->
-            <div style="width: 20%; margin-left: 20px;">
+            <div style="width: 20%; padding-left: 30px; box-sizing: border-box;">
                 
                 <div class="game">
                     <hr>
@@ -636,6 +671,7 @@
                     <hr>
                 </div>
 
+                
                 <div id="dev-level-container" style="width:100%; max-width:420px; border: 1px solid #ccc; padding:10px; color:white; font-family:sans-serif;">
                 <div  class="info-bubble"> <h4> Territory Count: {{ playernation.states }}/902</h4>  <div></div><span class="info-icon" style="margin-right: 5px;">🛈</span> <span class="tooltip-text" style="font-size: 14px;">This is the amount of land you control</span></div>
                 <div  class="info-bubble"> <h4>Development Count: {% if playernation.states > 250 %}250{% else %} {{ playernation.states }}{% endif %}/250 </h4> <span class="info-icon" style="margin-right: 5px;">🛈</span> <span class="tooltip-text" style="font-size: 14px;">This determines how many troops you get each turn, it is your state count but capped at 250</span></div>
@@ -1101,8 +1137,137 @@
   </div>
 </div>
 
+</div>
+{{ squares|json_script:"squares-data" }}
 
 <script>
+// ### Check 0 requests ###
+
+const spiesForm = document.querySelector('#spies-form');
+
+spiesForm.addEventListener('submit', (event) => {
+    const requestsLeft = Number("{{ requesters }}");
+    if (requestsLeft <= 0) {
+        event.preventDefault();
+        alert("You have no requests left this turn!");
+    }
+});
+
+const allianceForm = document.querySelector('#alliance_form');
+
+allianceForm.addEventListener('submit', (event) => {
+    const requestsLeft = Number("{{ requesters }}");
+    if (requestsLeft <= 0) {
+        event.preventDefault();
+        alert("You have no requests left this turn!");
+    }
+});
+
+const begForm = document.querySelector('#beg-form');
+
+begForm.addEventListener('submit', (event) => {
+    const requestsLeft = Number("{{ requesters }}");
+    if (requestsLeft <= 0) {
+        event.preventDefault();
+        alert("You have no requests left this turn!");
+    }
+});
+
+
+// ### Check if Battle are Valid ###
+
+const squares = JSON.parse(document.getElementById("squares-data").textContent);
+const squaresById = {};
+const squaresByName = {};
+for (const sq of squares) {
+    squaresById[sq.number] = sq;
+    squaresByName[sq.name] = sq;
+}
+
+function nationHasAnyCoastalTile(nationName) {
+    return squares.some(sq =>
+        sq.coastal === true &&
+        sq.owner__name === nationName
+    );
+}
+function tileIsCoastal(tileName) {
+    return squaresByName[tileName]?.coastal === true;
+}
+
+function tileBordersAlly(tileName, allyNames) {
+    const tile = squaresByName[tileName];
+    if (!tile) {
+        return false;
+    }
+    for (const neighborId of tile.neighbors) {
+        const neighbor = squaresById[neighborId];
+        if (neighbor && allyNames.includes(neighbor.owner__name)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function nationBordersAnyAlly(country, allyNames) {
+    for (const tile of squares) {
+        if(tile.owner__name == country && tileBordersAlly(tile.name, allyNames))
+            return true;
+        }
+    return false;
+}
+
+const battleform = document.querySelector('#div1');
+battleform.addEventListener('submit', (event) => {
+    ally_names = "{{ally_names}}".replace("&#x27;","");
+    const gifContainer = document.createElement('div');
+    const colorDisplay = document.getElementById('colorDisplay');
+    const country = colorDisplay.textContent;
+    const tile = frontName.textContent.replace(" front", "");
+    const button = event.submitter; 
+    const action = button?.value;
+    var loadingAnim = true;
+
+    if (action === "boat") {
+        if (!nationHasAnyCoastalTile(country)){
+            alert("That nation doesn't have a coast"); 
+            event.preventDefault();
+            loadingAnim = false;
+        }
+        if (tile && !tileIsCoastal(tile)){
+            alert("The selected tile is not costal"); 
+            event.preventDefault();
+            loadingAnim = false;
+        }
+    }
+
+    if (action === "Ndivision" || action === "division") {
+        
+        if (!nationBordersAnyAlly(country, ally_names)){
+            alert("That nation doesn't border you")
+            event.preventDefault();
+            loadingAnim = false;
+        }
+
+        if (tile && !tileBordersAlly(tile, ally_names)){
+            alert("That state doesn't border you")
+            event.preventDefault();
+            loadingAnim = false;
+        }
+    }
+
+    const battlesLeft = Number("{{ attacks_left }}");
+    if (battlesLeft <= 0) {
+        alert("You have no battles left this turn!");
+        event.preventDefault();
+        loadingAnim = false;
+    }
+
+    if(loadingAnim){
+        gifContainer.style.display = 'flex';
+    }
+
+});
+
 
 // ### Check 0 Points ###
 const supplyForm = document.querySelector('#BuySupplies'); 
@@ -1153,8 +1318,9 @@ function refreshedRecently() {
 }
 
 socket.onmessage = () => {
+    const data = JSON.parse(event.data);
     if (refreshed) return;
-
+    if('{{game_id}}' != data.game_id) return;
     // ignore if user just refreshed / did a recent action
     if (refreshedRecently()) return;
 
@@ -1452,6 +1618,7 @@ const gameId = '{{ game_id }}';
 img.src = `{{path}}`;
 
 // ### Load in the tiles list ### 
+let imagesLoaded = false;
 const tileCanvases = [];
 async function loadTiles() {
   await Promise.all(
@@ -1472,10 +1639,16 @@ async function loadTiles() {
     })
   );
 }
-loadTiles();
-
+stateToggle.addEventListener("change", () => {
+  if (stateToggle.checked && !imagesLoaded) {
+    loadTiles();
+  } else {
+  imagesLoaded = true;
+    }
+});
 const frontName = document.getElementById('frontName');
 const frontNameInput = document.getElementById('frontNameInput');
+
 
 // ### Determine State ### 
 canvas.addEventListener("click", (e) => {
@@ -1484,9 +1657,7 @@ canvas.addEventListener("click", (e) => {
         frontNameInput.value = "";
         return;
     }
-
     const rect = canvas.getBoundingClientRect();
-
     const screenX = e.clientX - rect.left;
     const screenY = e.clientY - rect.top;
 
@@ -1531,9 +1702,8 @@ function updateCountryTab(country){
         offerDisplay.textContent = `Offer Alliance to ${country}`;
         const sendText = document.getElementById('sendText');
         sendText.textContent = `Donate Supplies to ${country}`; 
-
-        var some_var = "{{ nation_name_at_war }}";
-        nationsAtWar = some_var.replaceAll("&#x27;", "");
+        const allies = "{{ ally_names }}".replaceAll("&#x27;", "")
+        nationsAtWar = "{{ nation_name_at_war }}".replaceAll("&#x27;", "");
         var playerA = "{{playernation.name}}"
         const victimInput = document.getElementById('victim-input');
         const defenderInput = document.getElementById('defender-input');
@@ -1555,7 +1725,7 @@ function updateCountryTab(country){
                 sendInput.value = country;
                 allianceInput.value = country;
             }
-            if(playerA == country || "Ocean" == country){
+            if(playerA == country || "Ocean" == country || allies.includes(country)){
                 document.getElementById('alliance_form').style.display = "none";
                 document.getElementById('peace-form').style.display = "none";
                 offerHostility.textContent = `No Hostility`;
@@ -1712,27 +1882,6 @@ document.addEventListener('DOMContentLoaded', () => {
     gifContainer.appendChild(gifImage);
     document.body.appendChild(gifContainer);
 
-    // Event listener for clicks and form submissions
-    document.addEventListener('click', (event) => {
-        const target = event.target;
-        if (target.classList.contains('attacker') || target.closest('button.attacker')) {
-            gifContainer.style.display = 'flex';
-            
-            // Automatically hide the gif after a certain duration
-            setTimeout(() => {
-                gifContainer.style.display = 'none';
-            }, 2000000);  
-        }
-    });
-
-    // Event listener specifically for form submissions
-    document.addEventListener('submit', (event) => {
-        const target = event.target;
-        if (target.classList.contains('attacker')) {
-            gifContainer.style.display = 'flex';
-
-        }
-    });
 
 
 });

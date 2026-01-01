@@ -157,6 +157,9 @@ def credits(request):
 
 def error(request, exception):
       return render(request, "AWSDefcon1App/error.html")
+
+def devLog(request):
+      return render(request, "AWSDefcon1App/devLog.html")
   
 def error500(request):
         return bad_request(request, title="A serious issue occured", message="The action you just did is not currently working, this issue will not fix itself automatically and you will need to wait for the developer to fix it")
@@ -231,7 +234,7 @@ def passer(request, game_id):
             nation.attacks = 5
             nation.requests = 10
             nation.save()
-    refresh_all()
+    refresh_all(game_id)
     return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
 
 
@@ -713,6 +716,7 @@ def full_index(request):
     games = []
     for game in games_list:
         nations = list(Nations.objects.filter(game=game))
+        nations.sort(key=lambda n: 0 if n.user.username == 'empty' else 1)
         games.append([game.id] + nations)  
 
     return render(request, "AWSDefcon1App/full_index.html", {"games": games, "game_list":games_list, "user": user, "max_game_id":max_game_id,'next_id':next_id,'leaderboard': leaderboard,'leaderboard2': leaderboard2})
@@ -1155,7 +1159,7 @@ def spies(request, game_id):
             print(f"Error processing {filename}: {e}")
             continue
     final_image.save(output_path, optimize=True)
-    refresh_all()
+    refresh_all(game_id)
     return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
 
 @login_required(login_url='login')
@@ -2096,7 +2100,7 @@ def battle(request, game_id):
                 print(f"Error processing {filename}: {e}")
                 continue
         final_image.save(output_path, optimize=True)
-    refresh_all()
+    refresh_all(game_id)
     return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
 
 @login_required(login_url='login')
@@ -2151,6 +2155,7 @@ def makealliance(request,game_id):
         selected_nation = request.POST.get('selected_nation')
         player.requests -= 1
         yesman = False
+        un_named_alliance = False
         accepting_nation = request.POST.get('accepting_nation')
         rejecting_nation = request.POST.get('rejected_nation')
         action = request.POST.get('action')
@@ -2169,15 +2174,24 @@ def makealliance(request,game_id):
         elif action == 'accept':
             player_nation = Nations.objects.get(user=request.user,game_id = game_id)
             alliance = MakeAlliance.objects.filter(nation1__name = accepting_nation, nation2 = player_nation).first()
-            player_nation.alliance_name = alliance.nation1.alliance_name
             alliance.delete()
             accepting_nation = Nations.objects.get(game = game_id, name = accepting_nation)
-            Announcements.objects.create(text =f"{player_nation.name} has accepted {accepting_nation.name}'s invitation to the {Nations.objects.get(user=request.user,game_id = game_id).alliance_name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
+
+            if accepting_nation.alliance_name != "":
+                player_nation.alliance_name = accepting_nation.alliance_name
+                Announcements.objects.create(text =f"{player_nation.name} has accepted {accepting_nation.name}'s invitation to the {Nations.objects.get(user=request.user,game_id = game_id).alliance_name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
+
+            else:
+                alliance_name = "Unnamed_" + str(uuid.uuid4())
+                accepting_nation.alliance_name = alliance_name
+                player_nation.alliance_name = alliance_name  
+                Announcements.objects.create(text =f"{player_nation.name} has accepted {accepting_nation.name}'s invitation to an alliance", start_time = datetime.now(), game = Games.objects.get(id = game_id))              
             war = War.objects.filter(nation1__alliance_name = accepting_nation.alliance_name, nation2 = player_nation)
             war.delete()
             war = War.objects.filter(nation2__alliance_name = accepting_nation.alliance_name, nation1 = player_nation)
             war.delete()
             player_nation.save()
+            accepting_nation.save()
 
         elif selected_nation != "" and selected_nation != "Ocean" and selected_nation != Nations.objects.get(user=request.user, game=game_id).name:
             nation2 = Nations.objects.get(name=selected_nation, game=game_id)
@@ -2194,31 +2208,43 @@ def makealliance(request,game_id):
             if nation2.user.username == 'empty' or nation2.user.username == 'closed':
               chance = random.randint(1,temp_friendlyness + 2)
               if chance == 1 or temp_friendlyness == 1:
-                  player_nation = Nations.objects.get(name=selected_nation, game=game_id)
-                  player_nation.alliance_name = Nations.objects.get(user=request.user,game_id = game_id).alliance_name
-                  player_nation.friendlyness = 10
+                  player_nation = Nations.objects.get(user=request.user,game_id = game_id)
+                  
+                  if player_nation.alliance_name != "":
+                      alliance_name = player_nation.alliance_name
+                  elif nation2.alliance_name != "":
+                      alliance_name = nation2.alliance_name
+                  else:
+                      alliance_name = "Unnamed_" + str(uuid.uuid4())
+                  
+                  if "Unnamed_" in alliance_name:
+                      un_named_alliance = True
+                 
+                  nation2.alliance_name = alliance_name
+                  player_nation.alliance_name = alliance_name
+                  nation2.friendlyness = 10
+                  nation2.save()
                   player_nation.save()
-                  war = War.objects.filter(nation1 = player_nation).delete()
-                  war = War.objects.filter(nation2 = player_nation).delete()
+                  war = War.objects.filter(nation1 = player_nation, nation2 = nation2).delete()
+                  war = War.objects.filter(nation2 = player_nation, nation1 = nation2).delete()
                   yesman = True
                   selected_nation_alliance.delete()
 
             if yesman:
-                announcements = Announcements.objects.create(text =f"{nation2.name} has accepted {Nations.objects.get(user=request.user,game_id = game_id).name}'s invitation to the {Nations.objects.get(user=request.user,game_id = game_id).alliance_name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
-                nations = Nations.objects.filter(game=game_id)
-                for nation in nations:
-                    if nation.friendlyness == 0 or nation.friendlyness < 1:
-                        nation.friendlyness = 1
-                user = request.user.username
-                playernation = Nations.objects.filter(game=game_id, user=request.user).first()
-                if playernation and playernation.alliance_name:
-                    knownnations = Nations.objects.filter(game=game_id, alliance_name=playernation.alliance_name)
+                if un_named_alliance:
+                    Announcements.objects.create(text =f"{nation2.name} has accepted an alliance with {player_nation.name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
                 else:
-                    knownnations = [playernation] if playernation else []
+                     Announcements.objects.create(text =f"{nation2.name} has joined the {alliance_name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
             elif nation2.user.username == 'empty' or nation2.user.username == 'closed':
-                announcements = Announcements.objects.create(text =f"{nation2.name} has rejected {Nations.objects.get(user=request.user,game_id = game_id).name}'s invitation to the {Nations.objects.get(user=request.user,game_id = game_id).alliance_name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
-
-    refresh_all()
+                if "Unnamed_" in player_nation.alliance_name or player_nation.alliance_name == "":
+                    announcements = Announcements.objects.create(text =f"{nation2.name} has rejected {Nations.objects.get(user=request.user,game_id = game_id).name}'s invitation to an alliance", start_time = datetime.now(), game = Games.objects.get(id = game_id))
+                else:
+                    announcements = Announcements.objects.create(text =f"{nation2.name} has rejected {Nations.objects.get(user=request.user,game_id = game_id).name}'s invitation to {player_nation.alliance_name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
+    nations = Nations.objects.filter(game=game_id)
+    for nation in nations:
+        if nation.friendlyness < 1:
+            nation.friendlyness = 1
+    refresh_all(game_id)
     return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
 
   
@@ -2254,7 +2280,7 @@ def war(request,game_id):
         playernation = Nations.objects.get(user=request.user, game=game_id)
         wars = War.objects.filter(nation1__game=game_id) | War.objects.filter(nation2__game=game_id)
         announcements = Announcements.objects.create(text =f"{playernation.name} has declared war on {request.POST.get('selected_nation')}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
-    refresh_all()
+    refresh_all(game_id)
     return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
     # Get the player's nation
     playernation = Nations.objects.filter(game=game_id, user=request.user).first()
@@ -2319,14 +2345,22 @@ def send(request,game_id):
     # Get the player's nation
     playernation = Nations.objects.filter(game=game_id, user=request.user).first()
     allies = Nations.objects.filter(game=game_id, alliance_name=playernation.alliance_name)
+    if playernation.act_planes > playernation.planes:
+        playernation.act_planes = playernation.planes
 
+    if playernation.act_boats > playernation.boats:
+        playernation.act_boats = playernation.boats
+
+    if playernation.act_divisions > playernation.divisions:
+        playernation.act_divisions = playernation.divisions
+    playernation.save()
     return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
 
 
 @login_required(login_url='login')
 def current_wars(request,game_id):
     if request.method == 'POST':
-        refresh_all()
+        refresh_all(game_id)
         winner = request.POST.get('winner')
         loser = request.POST.get('loser')
         if winner:
@@ -2366,7 +2400,7 @@ def current_wars(request,game_id):
                 square.color = color
                 square.save()
                 
-            return HttpResponseRedirect(reverse('loader', kwargs={'game_id': game_id, 'loader':1}))
+            return HttpResponseRedirect(reverse('loader', kwargs={'game_id': game_id, 'reload':1}))
 
 
     else:
@@ -2378,9 +2412,12 @@ def current_wars(request,game_id):
 
 @login_required(login_url='login')
 def map(request, game_id):
+    try:
+        playernation = Nations.objects.get(user=request.user, game=game_id)
+    except Nations.DoesNotExist:
+        return HttpResponseRedirect(reverse('full_index'))
     announces = Announcements.objects.filter(game=game_id).order_by('-start_time')
 
-    playernation = Nations.objects.get(user=request.user, game=game_id)
     alliance_name = playernation.alliance_name
     if alliance_name != "" and alliance_name != None:
         allies = Nations.objects.filter(game = game_id , alliance_name = alliance_name)
@@ -2543,7 +2580,20 @@ def map(request, game_id):
     tired_divisions = PlayerAAA.divisions - PlayerAAA.act_divisions
     tired_planes = PlayerAAA.planes - PlayerAAA.act_planes
     tired_boats = PlayerAAA.boats - PlayerAAA.act_boats
+    ally_names = [ally.name for ally in allies]
+    squares = list(
+        Square.objects.filter(
+            map=Map.objects.get(game=Games.objects.get(id=game_id))
+        ).values(
+            "number",
+            "name",
+            "neighbors",
+            "coastal",
+            "owner__name",
+        )
+    )
     return render(request, "AWSDefcon1App/JSMap.html",{"game_id":game_id, 
+                                                       'squares':squares,
                                                        'tired_divisions': tired_divisions, 
                                                        'tired_planes':tired_planes, 
                                                        'tired_boats':tired_boats,
@@ -2551,7 +2601,9 @@ def map(request, game_id):
                                                        'default_boats': playernation.act_boats/2,
                                                        'default_planes': playernation.act_planes/2,
                                                        'announces': announces, 
-                                                       'allies':allies,'wars':wars,
+                                                       'allies':allies,
+                                                       'ally_names':ally_names,
+                                                       'wars':wars,
                                                        'playernation':playernation,
                                                         'active_nations':active_nations, 
                                                         'num_allies':num_allies,'path':path,
@@ -2562,7 +2614,8 @@ def map(request, game_id):
                                                         'nation_name_at_war':nation_name_at_war, 
                                                         'nations_at_war':nations_at_war,
                                                         'attacks_left':attacks_left, 
-                                                        'owner':owner, "requesters":requesters, 
+                                                        'owner':owner, 
+                                                        "requesters":requesters, 
                                                         "knownnations":knownnations, 
                                                         'announce':announce,
                                                         'nations':nations
