@@ -19,12 +19,19 @@
             <p class="timeline-summary">A bunch of small fixes mostly focused at lag prevention</p>
         </li>
 
+        <li class="timeline-item">
+            <span class="timeline-date">2026-01-02 11:00 AM</span>
+            <button class="timeline-btn" data-modal="modal2">Minor Patch</button>
+            <p class="timeline-summary">Fixed all bugs reported after first patch</p>
+        </li>
+
 
         <!-- Developer can add more items here -->
     </ul>
 </div>
 
 <!-- Modals -->
+
 <div id="modal1" class="custom-modal">
     <div class="modal-content">
         <span class="close-btn" data-close="modal1">&times;</span>
@@ -85,7 +92,7 @@
             <ul>
                 <li>Nations are now less likely to accept alliances</li>
                 <li>If a minor nations requests alliance to a bot major the minor will join the majors team</li>
-                <li>All nations can not offer alliances and create alliances</li>
+                <li>All nations can now offer alliances and create alliances</li>
             </ul>
         </li>
     </ul>
@@ -94,6 +101,35 @@
 
 
 
+<div id="modal2" class="custom-modal">
+    <div class="modal-content">
+        <span class="close-btn" data-close="modal1">&times;</span>
+        <h3>Update: 2026-01-02 7:00 AM</h3>
+        <ul>
+        
+        <li><strong>Feature Updates (Summary)</strong> 
+            <ul>
+                <li> Fixed various bugs/ inconveniences that were reported after yesterdays update</li>
+            </ul>
+        </li>
+
+        <li> <strong>Feature Changes</strong> </li>
+        <ul>
+            <li>Nations chance of accepting alliances <strong>slightly increased</strong></li>
+        </ul>
+
+        <li><strong>Fixed Bugs</strong> 
+            <ul>      
+                <li>Nations will no longer automatically pass after 8 hours</li>
+                <li>Lobbies will now automatically delete after 48 hours of inactivity</li>
+                <li>Dropping a nuke now actually decreases the number of nukes you have</li>
+                <li>The drop nukes button will be unavailable unless you have 1 nuke</li>
+                <li>You will now ALWAYS get a nuke every turn after researching them as opposed to randomly chanced at getting one</li>
+                <li>Boats will now be able to land in Hondoras</li>
+            </ul>
+        </li>
+    </div>
+</div>
 
 <script>
 // Open modal

@@ -619,6 +619,7 @@
                     <figcaption style="font-size:0.85em;">Bomb Boats</figcaption>
                 </div>
 
+                {% if playernation.nukes > 0 %}
                 <div>
                     <button type="submit" name="action" value="nuke"
                             style="background:transparent;border:none;padding:0;">
@@ -629,6 +630,19 @@
                     </button>
                     <figcaption style="font-size:0.85em;">Drop Nukes</figcaption>
                 </div>
+                {% else %}
+                <div>
+                    <button type="submit" name="action" value="nuke"
+                            style="background:transparent;border:none;padding:0; pointer-events: none">
+                        <img class="image-button" src="/static/AWSDefcon1App/Nuke.gif"
+                             style="filter: grayscale(100%); width:15vw;max-width:110px;min-width:60px;
+                                    aspect-ratio:1/1;object-fit:contain;
+                                    border:2px solid white;border-radius:10px;">
+                    </button>
+                    <figcaption style="font-size:0.85em;">Drop Nukes in {{playernation.nuke_time}} turns</figcaption>
+                </div>
+                {% endif %}
+
             </div>
         </div>
 
@@ -1216,10 +1230,35 @@ function nationBordersAnyAlly(country, allyNames) {
     return false;
 }
 
+const gifPath = '/static/AWSDefcon1App/Loading_Battle.gif';
+const gifContainer = document.createElement('div');
+const gifImage = document.createElement('img');
+
+document.addEventListener("DOMContentLoaded", function() {
+    gifContainer.style.position = 'fixed';
+    gifContainer.style.top = '0';
+    gifContainer.style.left = '0';
+    gifContainer.style.width = '100%';
+    gifContainer.style.height = '100%';
+    gifContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';  
+    gifContainer.style.display = 'none';  
+    gifContainer.style.justifyContent = 'center';
+    gifContainer.style.alignItems = 'center';
+    gifContainer.style.zIndex = '9999';  
+    gifImage.src = gifPath;
+    gifImage.style.maxWidth = '90%';
+    gifImage.style.maxHeight = '90%';
+
+    gifContainer.appendChild(gifImage);
+    document.body.appendChild(gifContainer);
+});
+
 const battleform = document.querySelector('#div1');
 battleform.addEventListener('submit', (event) => {
     ally_names = "{{ally_names}}".replace("&#x27;","");
-    const gifContainer = document.createElement('div');
+
+    // Styling for the gif container
+
     const colorDisplay = document.getElementById('colorDisplay');
     const country = colorDisplay.textContent;
     const tile = frontName.textContent.replace(" front", "");
@@ -1858,33 +1897,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-document.addEventListener('DOMContentLoaded', () => {
-    const gifPath = '/static/AWSDefcon1App/Loading_Battle.gif';
-    const gifContainer = document.createElement('div');
-    const gifImage = document.createElement('img');
-    // Styling for the gif container
-    gifContainer.style.position = 'fixed';
-    gifContainer.style.top = '0';
-    gifContainer.style.left = '0';
-    gifContainer.style.width = '100%';
-    gifContainer.style.height = '100%';
-    gifContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';  // Semi-transparent black background
-    gifContainer.style.display = 'none';  // Hidden initially
-    gifContainer.style.justifyContent = 'center';
-    gifContainer.style.alignItems = 'center';
-    gifContainer.style.zIndex = '9999';  // Ensure it appears above all content
 
-    // Setting up the gif image
-    gifImage.src = gifPath;
-    gifImage.style.maxWidth = '90%';
-    gifImage.style.maxHeight = '90%';
-
-    gifContainer.appendChild(gifImage);
-    document.body.appendChild(gifContainer);
-
-
-
-});
 
     document.querySelector('.qa-toggle-button').addEventListener('click', function() {
     const container = document.querySelector('.qa-container');

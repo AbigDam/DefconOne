@@ -230,7 +230,7 @@ def passer(request, game_id):
 
             if nation.nuke_time <= 0:
                 nation.nukes += 1
-                nation.nuke_time = 5  # Reset or leave at 0 if auto-generating
+                nation.nuke_time = 0
             nation.attacks = 5
             nation.requests = 10
             nation.save()
@@ -492,35 +492,8 @@ def index(request):
           # Calculate the time difference between now and the announcement's start_time
           time_difference = timezone.now() - most_recent_announcement.start_time
 
-          if time_difference > timedelta(hours=8):
-            all_nations = Nations.objects.filter(game = game_id, player_number__lt = 8).exclude(user = User.objects.get(username = "loser")).exclude(user = User.objects.get(username = "empty")).exclude(user = User.objects.get(username = "closed"))
-            nations = Nations.objects.filter(game = game_id)
-            for nation in nations:
-                states = nation.states
-                mult = 1
-                if states <= 20:
-                    mult = 2
-                elif states < 50:
-                    mult = 1.7
-                elif states < 150:
-                    mult = 1.5
-                elif states < 200:
-                    mult = 1.4
-                elif states < 250:
-                    mult = 1
-
-                nation.divisions = nation.divisions + states * mult
-                nation.planes = nation.planes + states * 10
-                nation.boats = nation.boats + states / 2
-                nation.points += 1
-                if nation.nuke_time <= 0:
-                    nation.nukes += 1
-                else:
-                    nation.nuke_time -= 1
-                nation.attacks = 5
-                nation.requests = 10
-                nation.save()
-            Announcements.objects.create(text =f"The game has been refreshed due to inactivity", start_time = datetime.now(), game = Games.objects.get(id = game_id))
+          if time_difference > timedelta(hours=48):
+            game.delete()
 
     loser_nations = Nations.objects.filter(player_number__lt=8, user__username="loser")
     for loser_nation in loser_nations:
@@ -610,45 +583,6 @@ def full_index(request):
         Achievements.objects.create(name = "Cuba Rules")#Own Every state as Cuba
         Achievements.objects.create(name = "Defcon1")#Have more then 200 Nukes
         Achievements.objects.create(name = "100 Wins")#Have 100 wins
-
-    for game in games:
-      # Get the most recent announcement for the game
-      most_recent_announcement = Announcements.objects.filter(game=game).order_by('-start_time').first()
-      game_id = game.id
-      # Check if there is a most recent announcement
-      if most_recent_announcement:
-          # Calculate the time difference between now and the announcement's start_time
-          time_difference = timezone.now() - most_recent_announcement.start_time
-
-          if time_difference > timedelta(hours=8):
-            all_nations = Nations.objects.filter(game = game_id, player_number__lt = 8).exclude(user = User.objects.get(username = "loser")).exclude(user = User.objects.get(username = "empty")).exclude(user = User.objects.get(username = "closed"))
-            nations = Nations.objects.filter(game = game_id)
-            for nation in nations:
-                states = nation.states
-                mult = 1
-                if states <= 20:
-                    mult = 2
-                elif states < 50:
-                    mult = 1.7
-                elif states < 150:
-                    mult = 1.5
-                elif states < 200:
-                    mult = 1.4
-                elif states < 250:
-                    mult = 1
-
-                nation.divisions = nation.divisions + states * mult
-                nation.planes = nation.planes + states * 10
-                nation.boats = nation.boats + states / 2
-                nation.points += 1
-                if nation.nuke_time <= 0:
-                    nation.nukes += 1
-                else:
-                    nation.nuke_time -= 1
-                nation.attacks = 5
-                nation.requests = 10
-                nation.save()
-            Announcements.objects.create(text =f"The game has been refreshed due to inactivity", start_time = datetime.now(), game = Games.objects.get(id = game_id))
 
     loser_nations = Nations.objects.filter(player_number__lt=8, user__username="loser")
     for loser_nation in loser_nations:
@@ -887,33 +821,41 @@ def register(request):
 @staff_member_required
 def new(request, game_id):
     if request.method == 'POST':
-        all_nations = Nations.objects.filter(game = game_id)
-        i = 0
-        j = 0
+        all_nations = Nations.objects.filter(game=game_id)
         for nation in all_nations:
             states = nation.states
-            mult = 0.1
-            if states <= 20:
-                mult = 4
-            elif states < 50:
-                mult = 2
-            elif states < 100:
-                mult = 1
-            elif states < 200:
-                mult = 0.5
-            elif states < 250:
-                mult = 0.25
 
-            nation.divisions = nation.divisions + states * mult
-            nation.planes = nation.planes + states * 10
-            nation.boats = nation.boats + states / 2
+            # Production multiplier based on number of states
+            if states <= 20:
+                mult = 2
+            elif states < 50:
+                mult = 1.7
+            elif states < 150:
+                mult = 1.5
+            elif states < 200:
+                mult = 1.4
+            elif states < 250:
+                mult = 1
+            else:
+                mult = 0.8  # You may want to penalize huge nations? Optional.
+
+            # Apply production values
+            nation.divisions += int(states * mult)
+            nation.act_divisions = nation.divisions
+            nation.planes += states * 10
+            nation.act_planes = nation.planes
+            nation.boats += states // 2
+            nation.act_boats = nation.boats
             nation.points += 1
-            nation.attacks = 2
+            nation.nuke_time -= 1
+
             if nation.nuke_time <= 0:
                 nation.nukes += 1
-            else:
-                nation.nuke_time -= 1
+                nation.nuke_time = 0
+            nation.attacks = 5
+            nation.requests = 10
             nation.save()
+        Announcements.objects.create(text =f"All player's turns have been passed by an admin", start_time = datetime.now(), game = Games.objects.get(id = game_id))
     return render(request, "AWSDefcon1App/new.html", {'game_id': game_id})
 
 
@@ -953,7 +895,7 @@ def focus(request, game_id):
               player.nuke_time -= 1
               if player.nuke_time <= 0:
                   player.nukes += 1
-                  player.nuke_time += 1
+                  player.nuke_time = 0
                   player.save()
           if policy:
               if player.points < 2:
@@ -999,11 +941,11 @@ def spies(request, game_id):
             if rand < chance or rand == chance:
                 player.spies += 1
                 enemy.spies -= 1
-                announcements = Announcements.objects.create(text =f"A spy from {enemy.name} has turned to join {player.name}'s nation", start_time = datetime.now(), game = Games.objects.get(id = game_id))
+                Announcements.objects.create(text =f"A spy from {enemy.name} has turned to join {player.name}'s nation", start_time = datetime.now(), game = Games.objects.get(id = game_id))
             else:
                 player.spies -= 1
                 player.save()
-                announcements = Announcements.objects.create(text =f"A spy from {player.name} has been caught and executed by {enemy.name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
+                Announcements.objects.create(text =f"A spy from {player.name} has been caught and executed by {enemy.name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
         if army:
             chance = player.spies/((enemy.spies * 2) + 1)
             if chance > 0.75:
@@ -1057,6 +999,7 @@ def spies(request, game_id):
                     player.nuke_time -= 1
                 else:
                     player.nukes += 1
+                    player.nuke_time = 0
                     announcements = Announcements.objects.create(text =f"A spy from {player.name} has stole technology of {enemy.name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
             else:
                 player.spies -= 1
@@ -1492,13 +1435,15 @@ def battle(request, game_id):
             if ogap > ogdp:
                 enemy = Nations.objects.get(game=game_id, name=nuke_defender)
                 player = Nations.objects.get(game=game_id, user=request.user)
+                player.nukes -= 1
+                player.save()
                 nuked = enemy.nuked
                 enemy.nuked = nuked + 1
                 enemy.save()
-                nuked = nuked + 1
-                announcements = Announcements.objects.create(text =f"{owner} has used nuclear weapons against {planes_defender}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
+                nuked = enemy.nuked
+                
+                Announcements.objects.create(text =f"{owner} has used nuclear weapons against {planes_defender}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
                 number = enemy.player_number
-                enemy_player_number = f"player{number}"
                
                 numerator = math.log(enemy.states / 10)
                 denominator = math.log(1.5)
@@ -2046,10 +1991,9 @@ def battle(request, game_id):
                 elif states < 200:
                     mult = 1.4
                 elif states < 250:
-                    mult = 1 
-                else:
                     mult = 1
-                    states = 250
+                else:
+                    mult = 0.8  # You may want to penalize huge nations? Optional.
 
                 # Apply production values
                 nation.divisions += int(states * mult)
@@ -2063,7 +2007,7 @@ def battle(request, game_id):
 
                 if nation.nuke_time <= 0:
                     nation.nukes += 1
-                    nation.nuke_time = 5  # Reset or leave at 0 if auto-generating
+                    nation.nuke_time = 0
                 nation.attacks = 5
                 nation.requests = 10
                 nation.save()
@@ -2202,11 +2146,11 @@ def makealliance(request,game_id):
                 nation2.save()
             
             temp_friendlyness = nation2.friendlyness
-            if  nation2.alliance_name != None or nation2.alliance_name != '':
+            if  nation2.alliance_name != '':
                 temp_friendlyness += 5
             
             if nation2.user.username == 'empty' or nation2.user.username == 'closed':
-              chance = random.randint(1,temp_friendlyness + 2)
+              chance = random.randint(1,temp_friendlyness + 3)
               if chance == 1 or temp_friendlyness == 1:
                   player_nation = Nations.objects.get(user=request.user,game_id = game_id)
                   
@@ -2383,7 +2327,6 @@ def current_wars(request,game_id):
             loser.planes = 0
             loser.alliance_name = ""
             loser.points = 0
-            loser.nuke_time = 0
             loser.nukes = 0
             loser.save()
             player_number = loser.player_number
@@ -2474,7 +2417,6 @@ def map(request, game_id):
                     non_loser_nation.user.achievements += 1
                     non_loser_nation.user.save()
 
-                non_loser_nation.user.wins += 1
                 if non_loser_nation.user.wins == 100 and non_loser_nation.user.id not in Achievements.objects.get(name = "100 Wins").users:
                     achievement = Achievements.objects.get(name="100 Wins")
                     users_list = achievement.users  
@@ -2484,7 +2426,8 @@ def map(request, game_id):
                     
                     non_loser_nation.user.achievements += 1
                     non_loser_nation.user.save()
-
+               
+                non_loser_nation.user.wins += 1
                 non_loser_nation.user.save()
                 game = Games.objects.get(id=game_id)
                 game.delete()
@@ -4625,7 +4568,7 @@ def makegame(request,game_id):
     {"name": "Zulia", "neighbors": ["Miranda", "Cundinamarca", "La Libertad"]},
     {"name": "Zunyi", "neighbors": ["Guizhou", "Changde", "Sichuan", "Liangshan"]},
     ]
-    coastal_states =['Aberdeenshire', 'Abkhazia', 'Abruzzo', 'Abu Dhabi', 'Aden', 'Agder', 'Akhtubinsk', 'Alabama', 'Alaska', 'Albania', 'Aleppo', 'Alexandria', 'Algiers', 'Amapa', 'Antalya', 'Antofagasta', 'Aquitaine', 'Araucania', 'Arequipa', 'Arica y Tarapaca', 'Arkhangelsk', 'Asir Makkah', 'Astrakhan', 'Asturias', 'Atacama', 'Attica', 'Aysen', 'Bahia', 'Baja California', 'Beijing', 'Beja', 'Benghasi', 'Benue', 'Bismarck', 'Bohuslan', 'Bolivar', 'Bombay', 'Bouches du Rhone', 'Baluchistan', 'Brabant', 'British Columbia', 'British Guyana', 'British Honduras', 'British Somaliland', 'Brittany', 'Burgas', 'Burma', 'Bursa', 'Cairo', 'Calabria', 'California', 'Cameroon', 'Campania', 'Cape', 'Casablanca', 'Cataluna', 'Ceara', 'Cebu', 'Central Islands', 'Central Macedonia', 'Cerro Largo', 'Ceylon', 'Chiapas', 'Chubut', 'Chugoku', 'Chukchi Peninsula', 'Chukotka', 'Connaught', 'Constantine', 'Corsica', 'Costa Rica', 'Cote Nord', 'Crimea', 'Cuba', 'Cumbria', 'Cundinamarca', 'Cyprus', 'Dagestan', 'Dahomey', 'Dalian', 'Dalmatia', 'Dammam', 'Danzig', 'Derna', 'Durango', 'Districts of Ontario', 'Dominican Republic', 'East Anglia', 'East Bengal', 'East Hebei', 'East Midlands', 'Easter Island', 'Eastern Desert', 'Ecuador', 'Edirne', 'El Agheila', 'El Salvador', 'Emilia Romagna', 'Epirus', 'Equatorial Guinea', 'Eritrea', 'Ermland Masuren', 'Espirito Santo', 'Fars', 'Finnmark', 'Florida', 'French Guiana', 'French India', 'French Somaliland', 'Friesland', 'Fujian', 'Gabes', 'Gabon', 'Galicia', 'Gambia', 'Garissa', 'Gavleborg', 'Gdynia', 'Georgia', 'Georgia US', 'Ghana', 'Gibraltar', 'Gilan', 'Gloucestershire', 'Goa', 'Gotland', 'Granada', 'Greater London Area', 'Greenland', 'Guangdong', 'Guangzhou', 'Guangzhouwan', 'Guatemala', 'Guerrero', 'Guinea', 'Gujarat', 'Guryev', 'Haida Gwaii', 'Hainan', 'Haiti', 'Hannover', 'Harju', 'Hatay', 'Hawaii', 'Hebei', 'Helgeland', 'Hinterpommern', 'Hokkaido', 'Hokuriku', 'Holland', 'Holstein', 'Iceland', 'Illinois', 'Indiana', 'Istanbul', 'Istria', 'Ivory Coast', 'Iwo Jima', 'Izmir', 'Izmit', 'Jalisco', 'Jamaica', 'Java', 'Jehol', 'Jiangsu', 'Jubaland', 'Jylland', 'Kalimantan', 'Kalmykia', 'Kamchatka', 'Kansai', 'Kanto', 'Karakalpakstan', 'Karas', 'Karjala', 'Kassala', 'Kastamonu', 'Khabarovsk', 'Kherson', 'Khiva', 'Khomas', 'Khuzestan', 'Konigsberg', 'Koshinetsu', 'Kunene', 'Kuopio', 'Kurzeme', 'Kuwait', 'Kymi', 'Kyushu', 'Labrador', 'Lagos', 'Lanark', 'Lancashire', 'Languedoc', 'Lappi', 'Lebanon', 'Leinster', 'Leningrad', 'Lesser Sunda Islands', 'Liberia', 'Lima', 'Lisbon', 'Litorale', 'Loire', 'Lothian', 'Louisiana', 'Lourenco Marques', 'Luanda', 'Luga', 'Luzon', 'Madagascar', 'Madinah', 'Madras', 'Madurai', 'Manica e Sofala', 'Magallanes', 'Malatya', 'Manila', 'Maranhao', 'Maryland', 'Matrouh', 'Maurice', 'Mauritania', 'Mecklenburg', 'Memel', 'Mersin', 'Middle Congo', 'Midi Pyrenees', 'Mindanao', 'Miranda', 'Mississippi', 'Mombasa', 'Montenegro', 'Munster', 'Muntenia', 'Murcia', 'Murmansk', 'Mykolaiv', 'Mysore', 'Nanning', 'Nenets', 'New Brunswick', 'New Caledonia', 'New England', 'New Jersey', 'New South Wales', 'New York', 'Newfoundland', 'Nicaragua', 'Nikolayevsk', 'Nord du Quebec', 'Nord Pas de Calais', 'Nordland', 'Normandy', 'Norrbotten', 'North Angola', 'North Borneo', 'North Carolina', 'North Island', 'North Korea', 'North Queensland', 'North Sakhalin', 'North West Australia', 'Northern Epirus', 'Northern Ireland', 'Northern Malay', 'Northern Manitoba', 'Northern Ontario', 'Northern Territory', 'Northumberland', 'Nova Scotia', 'Nunavut', 'Oaxaca', 'Odessa', 'Okhotsk', 'Okinawa', 'Olonets', 'Oman', 'Onega', 'Orissa', 'Oslofjord', 'Ostergotland', 'Ouest du Quebec', 'Oulu', 'Pais Vasco', 'Palestine', 'Pampas', 'Panama', 'Panama Canal', 'Papua', 'Para', 'Parana', 'Parnu', 'Paysandu', 'Peloponnese', 'Pennsylvania', 'Pernambuco', 'Petsamo', 'Piaui', 'Picardy', 'Piemonte', 'Poitou', 'Porto', 'Portuguese Guinea', 'Portuguese Timor', 'Puglia', 'Pyrenees Atlantiques', 'Qatar', 'Qingdao', 'Queensland', 'Region Mesopotamica', 'Riga', 'Rio de Janeiro', 'Rio de Oro', 'Rio Grande do Norte', 'Rio Negro', 'Rostov', 'Rub al Khali', 'Saint Lawrence', 'Salekhard', 'Samar', 'Saguenay', 'Samsun', 'Santa Catarina', 'Santa Cruz AR', 'Santiago', 'Sao Paulo', 'Sardegna', 'Savoy', 'Schleswig', 'Scottish Highlands', 'Senegal', 'Sevilla', 'Shandong', 'Shanghai', 'Shikoku', 'Shkoder', 'Siam', 'Sicilia', 'Sidi Ifni', 'Sierra Leone', 'Sinai', 'Sind', 'Singapore', 'Sistan', 'Sjaelland', 'Skane', 'Smaland', 'Sochi', 'Sodermalm', 'Solomon Islands', 'Sonderjylland', 'Sonora', 'South Australia', 'South Carolina', 'South Georgia', 'South Island', 'South Korea', 'South Sakhalin', 'South West Angola', 'South West Australia', 'South West England', 'Southern Bessarabia', 'Southern Indochina', 'Spanish Africa', 'Suez', 'Sulawesi', 'Sumatra', 'Suriname', 'Sussex', 'Tabuk', 'Taiwan', 'Tamaulipas', 'Tanganyika', 'Tasmania', 'Tehran', 'Telemark', 'Texas', 'The Moluccas', 'Thrace', 'Tierra del Fuego', 'Togo', 'Tohoku', 'Tokai', 'Tonkin', 'Toscana', 'Trabzon', 'Tripoli', 'Troms', 'Trondelag', 'Tunisia', 'Turku', 'Upper British Columbia', 'Uruguay', 'Ust Urt', 'Uusimaa', 'Vaasa', 'Valencia', 'Vancouver Island', 'Var', 'Vasterbotten', 'Vastergotland', 'Veneto', 'Veracruz', 'Vestlandet', 'Victoria', 'Vidzeme', 'Virginia', 'Virumaa', 'Vlaanderen', 'Vladivostok', 'Vorpommern', 'Washington', 'Weser Ems', 'West Bengal', 'West Papua', 'Western Australia', 'Yamalia', 'Yorkshire', 'Yucatan', 'Zambezia Mocambique', 'Zaporozhe', 'Zara', 'Zemaitija', 'Zemgale', 'Zhejiang']
+    coastal_states =['Aberdeenshire', 'Abkhazia', 'Abruzzo', 'Abu Dhabi', 'Aden', 'Agder', 'Akhtubinsk', 'Alabama', 'Alaska', 'Albania', 'Aleppo', 'Alexandria', 'Algiers', 'Amapa', 'Antalya', 'Antofagasta', 'Aquitaine', 'Araucania', 'Arequipa', 'Arica y Tarapaca', 'Arkhangelsk', 'Asir Makkah', 'Astrakhan', 'Asturias', 'Atacama', 'Attica', 'Aysen', 'Bahia', 'Baja California', 'Beijing', 'Beja', 'Benghasi', 'Benue', 'Bismarck', 'Bohuslan', 'Bolivar', 'Bombay', 'Bouches du Rhone', 'Baluchistan', 'Brabant', 'British Columbia', 'British Guyana', 'British Honduras', 'British Somaliland', 'Brittany', 'Burgas', 'Burma', 'Bursa', 'Cairo', 'Calabria', 'California', 'Cameroon', 'Campania', 'Cape', 'Casablanca', 'Cataluna', 'Ceara', 'Cebu', 'Central Islands', 'Central Macedonia', 'Cerro Largo', 'Ceylon', 'Chiapas', 'Chubut', 'Chugoku', 'Chukchi Peninsula', 'Chukotka', 'Connaught', 'Constantine', 'Corsica', 'Costa Rica', 'Cote Nord', 'Crimea', 'Cuba', 'Cumbria', 'Cundinamarca', 'Cyprus', 'Dagestan', 'Dahomey', 'Dalian', 'Dalmatia', 'Dammam', 'Danzig', 'Derna', 'Durango', 'Districts of Ontario', 'Dominican Republic', 'East Anglia', 'East Bengal', 'East Hebei', 'East Midlands', 'Easter Island', 'Eastern Desert', 'Ecuador', 'Edirne', 'El Agheila', 'El Salvador', 'Emilia Romagna', 'Epirus', 'Equatorial Guinea', 'Eritrea', 'Ermland Masuren', 'Espirito Santo', 'Fars', 'Finnmark', 'Florida', 'French Guiana', 'French India', 'French Somaliland', 'Friesland', 'Fujian', 'Gabes', 'Gabon', 'Galicia', 'Gambia', 'Garissa', 'Gavleborg', 'Gdynia', 'Georgia', 'Georgia US', 'Ghana', 'Gibraltar', 'Gilan', 'Gloucestershire', 'Goa', 'Gotland', 'Granada', 'Greater London Area', 'Greenland', 'Guangdong', 'Guangzhou', 'Guangzhouwan', 'Guatemala', 'Guerrero', 'Guinea', 'Gujarat', 'Guryev', 'Haida Gwaii', 'Hainan', 'Haiti', 'Hannover', 'Harju', 'Hatay', 'Hawaii', 'Hebei', 'Helgeland', 'Hinterpommern', 'Hokkaido', 'Hokuriku', 'Holland', 'Holstein','Honduras', 'Iceland', 'Illinois', 'Indiana', 'Istanbul', 'Istria', 'Ivory Coast', 'Iwo Jima', 'Izmir', 'Izmit', 'Jalisco', 'Jamaica', 'Java', 'Jehol', 'Jiangsu', 'Jubaland', 'Jylland', 'Kalimantan', 'Kalmykia', 'Kamchatka', 'Kansai', 'Kanto', 'Karakalpakstan', 'Karas', 'Karjala', 'Kassala', 'Kastamonu', 'Khabarovsk', 'Kherson', 'Khiva', 'Khomas', 'Khuzestan', 'Konigsberg', 'Koshinetsu', 'Kunene', 'Kuopio', 'Kurzeme', 'Kuwait', 'Kymi', 'Kyushu', 'Labrador', 'Lagos', 'Lanark', 'Lancashire', 'Languedoc', 'Lappi', 'Lebanon', 'Leinster', 'Leningrad', 'Lesser Sunda Islands', 'Liberia', 'Lima', 'Lisbon', 'Litorale', 'Loire', 'Lothian', 'Louisiana', 'Lourenco Marques', 'Luanda', 'Luga', 'Luzon', 'Madagascar', 'Madinah', 'Madras', 'Madurai', 'Manica e Sofala', 'Magallanes', 'Malatya', 'Manila', 'Maranhao', 'Maryland', 'Matrouh', 'Maurice', 'Mauritania', 'Mecklenburg', 'Memel', 'Mersin', 'Middle Congo', 'Midi Pyrenees', 'Mindanao', 'Miranda', 'Mississippi', 'Mombasa', 'Montenegro', 'Munster', 'Muntenia', 'Murcia', 'Murmansk', 'Mykolaiv', 'Mysore', 'Nanning', 'Nenets', 'New Brunswick', 'New Caledonia', 'New England', 'New Jersey', 'New South Wales', 'New York', 'Newfoundland', 'Nicaragua', 'Nikolayevsk', 'Nord du Quebec', 'Nord Pas de Calais', 'Nordland', 'Normandy', 'Norrbotten', 'North Angola', 'North Borneo', 'North Carolina', 'North Island', 'North Korea', 'North Queensland', 'North Sakhalin', 'North West Australia', 'Northern Epirus', 'Northern Ireland', 'Northern Malay', 'Northern Manitoba', 'Northern Ontario', 'Northern Territory', 'Northumberland', 'Nova Scotia', 'Nunavut', 'Oaxaca', 'Odessa', 'Okhotsk', 'Okinawa', 'Olonets', 'Oman', 'Onega', 'Orissa', 'Oslofjord', 'Ostergotland', 'Ouest du Quebec', 'Oulu', 'Pais Vasco', 'Palestine', 'Pampas', 'Panama', 'Panama Canal', 'Papua', 'Para', 'Parana', 'Parnu', 'Paysandu', 'Peloponnese', 'Pennsylvania', 'Pernambuco', 'Petsamo', 'Piaui', 'Picardy', 'Piemonte', 'Poitou', 'Porto', 'Portuguese Guinea', 'Portuguese Timor', 'Puglia', 'Pyrenees Atlantiques', 'Qatar', 'Qingdao', 'Queensland', 'Region Mesopotamica', 'Riga', 'Rio de Janeiro', 'Rio de Oro', 'Rio Grande do Norte', 'Rio Negro', 'Rostov', 'Rub al Khali', 'Saint Lawrence', 'Salekhard', 'Samar', 'Saguenay', 'Samsun', 'Santa Catarina', 'Santa Cruz AR', 'Santiago', 'Sao Paulo', 'Sardegna', 'Savoy', 'Schleswig', 'Scottish Highlands', 'Senegal', 'Sevilla', 'Shandong', 'Shanghai', 'Shikoku', 'Shkoder', 'Siam', 'Sicilia', 'Sidi Ifni', 'Sierra Leone', 'Sinai', 'Sind', 'Singapore', 'Sistan', 'Sjaelland', 'Skane', 'Smaland', 'Sochi', 'Sodermalm', 'Solomon Islands', 'Sonderjylland', 'Sonora', 'South Australia', 'South Carolina', 'South Georgia', 'South Island', 'South Korea', 'South Sakhalin', 'South West Angola', 'South West Australia', 'South West England', 'Southern Bessarabia', 'Southern Indochina', 'Spanish Africa', 'Suez', 'Sulawesi', 'Sumatra', 'Suriname', 'Sussex', 'Tabuk', 'Taiwan', 'Tamaulipas', 'Tanganyika', 'Tasmania', 'Tehran', 'Telemark', 'Texas', 'The Moluccas', 'Thrace', 'Tierra del Fuego', 'Togo', 'Tohoku', 'Tokai', 'Tonkin', 'Toscana', 'Trabzon', 'Tripoli', 'Troms', 'Trondelag', 'Tunisia', 'Turku', 'Upper British Columbia', 'Uruguay', 'Ust Urt', 'Uusimaa', 'Vaasa', 'Valencia', 'Vancouver Island', 'Var', 'Vasterbotten', 'Vastergotland', 'Veneto', 'Veracruz', 'Vestlandet', 'Victoria', 'Vidzeme', 'Virginia', 'Virumaa', 'Vlaanderen', 'Vladivostok', 'Vorpommern', 'Washington', 'Weser Ems', 'West Bengal', 'West Papua', 'Western Australia', 'Yamalia', 'Yorkshire', 'Yucatan', 'Zambezia Mocambique', 'Zaporozhe', 'Zara', 'Zemaitija', 'Zemgale', 'Zhejiang']
 
     all_squares = Square.objects.filter(map=map_obj)
     square_by_name = {s.name: s for s in all_squares}
