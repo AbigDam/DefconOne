@@ -778,7 +778,7 @@
                     <button type="submit" name="army" value="1" style="background:none; border:none; padding:0; cursor:pointer;">
                         <img class="image-button" src="/static/AWSDefcon1App/Gun.png" style="height:50px; border:2px solid #fff; border-radius:5px;">
                     </button>
-                    <label style="margin-left:8px;">Train Armies</label>
+                    <label style="margin-left:8px;">Train 80 Armies</label>
                     <span class="info-icon" style="margin-left:6px;">🛈</span>
                     <span class="tooltip-text">Buy 80 armies for 1 point</span>
                 </div>
@@ -788,7 +788,7 @@
                     <button type="submit" name="navy" value="1" style="background:none; border:none; padding:0; cursor:pointer;">
                         <img class="image-button" src="/static/AWSDefcon1App/Boat.png" style="height:50px; border:2px solid #fff; border-radius:5px;">
                     </button>
-                    <label style="margin-left:8px;">Build Boats</label>
+                    <label style="margin-left:8px;">Build 60 Boats</label>
                     <span class="info-icon" style="margin-left:6px;">🛈</span>
                     <span class="tooltip-text">Buy 60 boats for 1 point</span>
                 </div>
@@ -798,7 +798,7 @@
                     <button type="submit" name="spies" value="1" style="background:none; border:none; padding:0; cursor:pointer;">
                         <img class="image-button" src="/static/AWSDefcon1App/Spies.png" style="height:50px; border:2px solid #fff; border-radius:5px;">
                     </button>
-                    <label style="margin-left:8px;">Train Spies</label>
+                    <label style="margin-left:8px;">Train 1 Spy</label>
                     <span class="info-icon" style="margin-left:6px;">🛈</span>
                     <span class="tooltip-text">Train a spy for 1 point</span>
                 </div>
@@ -818,7 +818,7 @@
                     <button type="submit" name="policy" value="1" style="background:none; border:none; padding:0; cursor:pointer;">
                         <img class="image-button" src="/static/AWSDefcon1App/Chains.png" style="height:50px; border:2px solid #fff; border-radius:5px;">
                     </button>
-                    <label style="margin-left:8px;">2 Points Betray Allies</label>
+                    <label style="margin-left:8px;">2 Points Leave Alliance</label>
                     <span class="info-icon" style="margin-left:6px;">🛈</span>
                     <span class="tooltip-text">You can leave your alliance betray allies, but it will cost you</span>
                 </div>
@@ -1045,7 +1045,7 @@
             <td scope="row">{{ nation.alliance_name }}</td>
             <td scope="row">{{ nation.nuked }}</td>
             <td scope="row">{{ nation.attacks }}</td>
-            <td scope="row">{{ nation.friendlyness }}</td>
+            <td scope="row">{{ nation.hostility_to_me }}</td>
             {% if single_player %}
             <td scope="row">{{ nation.user.username }}</td>
             {% endif %}

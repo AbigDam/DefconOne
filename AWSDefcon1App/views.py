@@ -113,6 +113,72 @@ colors = {
     'Yemen': '#905d5d',
 }
 
+def newTurn(game_id):
+    loser_user = User.objects.get(username="loser")
+    empty_user = User.objects.get(username="empty")
+    closed_user = User.objects.get(username="closed")
+
+    nations = Nations.objects.filter(
+        Q(user=empty_user) | Q(user=closed_user),
+        player_number__lt=8,
+        game=game_id
+    )
+
+    
+    for nation in nations:
+        war_exists = War.objects.filter(Q(nation1=nation) | Q(nation2=nation)).exists()
+
+        # create a new War only if none exists
+        if not war_exists:
+            target_nation = Nations.objects.filter(game = game_id).order_by('-states').first()
+            if target_nation != nation:
+                War.objects.get_or_create(nation1=nation, nation2=target_nation)
+                Announcements.objects.create(text =f"{nation.name} has declared war on {target_nation.name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
+
+    wars = War.objects.filter(nation1__game=game_id)  # QuerySet
+    wars_list = list(wars)  # convert to a list
+    if wars_list:
+        war = random.choice(wars_list) 
+        if war.nation1.user in [empty_user, closed_user]:
+            AIbattle(war.nation1, war.nation2, game_id)
+        elif war.nation2.user in [empty_user, closed_user]:
+            AIbattle(war.nation2, war.nation1, game_id)
+
+    all_nations = Nations.objects.filter(game=game_id)
+    for nation in all_nations:
+        states = nation.states
+
+        # Production multiplier based on number of states
+        if states <= 20:
+            mult = 2
+        elif states < 50:
+            mult = 1.7
+        elif states < 150:
+            mult = 1.5
+        elif states < 200:
+            mult = 1.4
+        elif states < 250:
+            mult = 1
+        else:
+            mult = 0.8  # You may want to penalize huge nations? Optional.
+
+        # Apply production values
+        nation.divisions += int(states * mult)
+        nation.act_divisions = nation.divisions
+        nation.planes += states * 10
+        nation.act_planes = nation.planes
+        nation.boats += states // 2
+        nation.act_boats = nation.boats
+        nation.points += 1
+        nation.nuke_time -= 1
+
+        if nation.nuke_time <= 0:
+            nation.nukes += 1
+            nation.nuke_time = 0
+        nation.attacks = 5
+        nation.requests = 10
+        nation.save()
+
 def serve_media_no_cache(request, path):
     response = serve(request, path, document_root=settings.MEDIA_ROOT)
     response["Cache-Control"] = "no-store"
@@ -185,14 +251,21 @@ def delete(request, game_id):
 
 @login_required(login_url='login')
 def passer(request, game_id):
-    user = request.user
-    nation = Nations.objects.get(game = game_id, user = user)
-    nation.attacks = 0
-    nation.requests = 0
-    nation.save()
     loser_user = User.objects.get(username="loser")
     empty_user = User.objects.get(username="empty")
     closed_user = User.objects.get(username="closed")
+    playernation = Nations.objects.get(game = game_id, user = request.user)
+    
+    try:
+        user = request.user
+        nation = Nations.objects.get(game = game_id, user = user)
+    except:
+        return HttpResponseRedirect(reverse('index'))
+   
+    nation.attacks = 0
+    nation.requests = 0
+    nation.save()
+
     active_nations = Nations.objects.filter(game=game_id).exclude(user__in=[loser_user, empty_user, closed_user]).exclude(user = None)
 
     # Check how many players have completed their turn
@@ -200,40 +273,7 @@ def passer(request, game_id):
 
     # Allow two extra players not required to play
     if len(active_nations) == players_ready:
-        all_nations = Nations.objects.filter(game=game_id)
-        for nation in all_nations:
-            states = nation.states
-
-            # Production multiplier based on number of states
-            if states <= 20:
-                mult = 2
-            elif states < 50:
-                mult = 1.7
-            elif states < 150:
-                mult = 1.5
-            elif states < 200:
-                mult = 1.4
-            elif states < 250:
-                mult = 1
-            else:
-                mult = 0.8  # You may want to penalize huge nations? Optional.
-
-            # Apply production values
-            nation.divisions += int(states * mult)
-            nation.act_divisions = nation.divisions
-            nation.planes += states * 10
-            nation.act_planes = nation.planes
-            nation.boats += states // 2
-            nation.act_boats = nation.boats
-            nation.points += 1
-            nation.nuke_time -= 1
-
-            if nation.nuke_time <= 0:
-                nation.nukes += 1
-                nation.nuke_time = 0
-            nation.attacks = 5
-            nation.requests = 10
-            nation.save()
+        newTurn(game_id)
     refresh_all(game_id)
     return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
 
@@ -746,9 +786,6 @@ def game(request, game_id):
         non_loser_nation.user.save()
 
     nations = Nations.objects.filter(game=game_id)
-    for nation in nations:
-        if nation.friendlyness == 0 or nation.friendlyness < 1:
-            nation.friendlyness = 1
     user = request.user.username
     # Get the player's nation
     playernation = Nations.objects.filter(game=game_id, user=request.user).first()
@@ -1000,7 +1037,7 @@ def spies(request, game_id):
                 else:
                     player.nukes += 1
                     player.nuke_time = 0
-                    announcements = Announcements.objects.create(text =f"A spy from {player.name} has stole technology of {enemy.name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
+                    announcements = Announcements.objects.create(text =f"A spy from {player.name} has stolen technology from {enemy.name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
             else:
                 player.spies -= 1
                 player.save()         
@@ -1143,18 +1180,7 @@ def battle(request, game_id):
     owned_squares = Square.objects.filter(owner=owner, map=map_instance).only('number')
     controlled_squares = [square.number for square in owned_squares]
 
-    # Determine bordering square numbers
-    border_offsets = [1, -1, 69, -69]
-    border_squares = {
-        square_num + offset
-        for square_num in controlled_squares
-        for offset in border_offsets
-    } - set(controlled_squares)
-
-    # Get bordering nation owners from those bordering squares
-    bordering_owners = Square.objects.filter(number__in=border_squares).values_list('owner', flat=True)
-    bordering_nations = set(Nations.objects.filter(name__in=bordering_owners))
-    borders_at_war = bordering_nations & nations_at_war
+    borders_at_war = nations_at_war
 
     if request.method == 'GET':
         return render(request, 'AWSDefcon1App/battles.html', {
@@ -1971,46 +1997,10 @@ def battle(request, game_id):
 
         # Get active nations
         active_nations = Nations.objects.filter(game=game_id).exclude(user__in=[loser_user, empty_user, closed_user]).exclude(user = None)
-
-        # Check how many players have completed their turn
         players_ready = sum(1 for nation in active_nations if nation.attacks == 0)
-
-        # Allow two extra players not required to play
         if len(active_nations) == players_ready:
-            all_nations = Nations.objects.filter(game=game_id)
-            for nation in all_nations:
-                states = nation.states
+            newTurn(game_id)
 
-                # Production multiplier based on number of states
-                if states <= 20:
-                    mult = 2
-                elif states < 50:
-                    mult = 1.7
-                elif states < 150:
-                    mult = 1.5
-                elif states < 200:
-                    mult = 1.4
-                elif states < 250:
-                    mult = 1
-                else:
-                    mult = 0.8  # You may want to penalize huge nations? Optional.
-
-                # Apply production values
-                nation.divisions += int(states * mult)
-                nation.act_divisions = nation.divisions
-                nation.planes += states * 10
-                nation.act_planes = nation.planes
-                nation.boats += states // 2
-                nation.act_boats = nation.boats
-                nation.points += 1
-                nation.nuke_time -= 1
-
-                if nation.nuke_time <= 0:
-                    nation.nukes += 1
-                    nation.nuke_time = 0
-                nation.attacks = 5
-                nation.requests = 10
-                nation.save()
         canvas_width, canvas_height = 1120, 480
 
 
@@ -2141,17 +2131,15 @@ def makealliance(request,game_id):
             nation2 = Nations.objects.get(name=selected_nation, game=game_id)
             selected_nation_alliance = MakeAlliance.objects.get_or_create(nation1 = Nations.objects.get(user=request.user, game=game_id), nation2 = Nations.objects.get(name=selected_nation, game=game_id))    
             selected_nation_alliance = MakeAlliance.objects.get(nation1 = Nations.objects.get(user=request.user, game=game_id), nation2 = Nations.objects.get(name=selected_nation, game=game_id))    
-            if nation2.friendlyness < 0: 
-                nation2.friendlyness = 0
-                nation2.save()
+
             
-            temp_friendlyness = nation2.friendlyness
+            temp_hostility = nation2.hostility[player.player_number]
             if  nation2.alliance_name != '':
-                temp_friendlyness += 5
+                temp_hostility += 5
             
             if nation2.user.username == 'empty' or nation2.user.username == 'closed':
-              chance = random.randint(1,temp_friendlyness + 3)
-              if chance == 1 or temp_friendlyness == 1:
+              chance = random.randint(1,temp_hostility + 3)
+              if chance == 1 or temp_hostility == 1:
                   player_nation = Nations.objects.get(user=request.user,game_id = game_id)
                   
                   if player_nation.alliance_name != "":
@@ -2166,7 +2154,6 @@ def makealliance(request,game_id):
                  
                   nation2.alliance_name = alliance_name
                   player_nation.alliance_name = alliance_name
-                  nation2.friendlyness = 10
                   nation2.save()
                   player_nation.save()
                   war = War.objects.filter(nation1 = player_nation, nation2 = nation2).delete()
@@ -2185,9 +2172,6 @@ def makealliance(request,game_id):
                 else:
                     announcements = Announcements.objects.create(text =f"{nation2.name} has rejected {Nations.objects.get(user=request.user,game_id = game_id).name}'s invitation to {player_nation.alliance_name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
     nations = Nations.objects.filter(game=game_id)
-    for nation in nations:
-        if nation.friendlyness < 1:
-            nation.friendlyness = 1
     refresh_all(game_id)
     return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
 
@@ -2207,23 +2191,15 @@ def makealliance(request,game_id):
 @login_required(login_url='login')
 def war(request,game_id):
     if request.method == 'POST':
-        '''
-        eligible_nations = Nations.objects.exclude(user__username__in=["closed", "empty", "loser"])
-        rand_nation1 = random.choice(eligible_nations)
-        eligible_nations_2 = eligible_nations.filter(game = rand_nation1.game).exclude(id=rand_nation1.id)
-        rand_nation2 = random.choice(eligible_nations_2)
-        war, created = War.objects.get_or_create(nation1=rand_nation1, nation2=rand_nation2)
-        announcements = Announcements.objects.create(text =f"{rand_nation1.name} has declared war on {rand_nation2.name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
-        '''
         selected_nation = request.POST.get('selected_nation')
         if selected_nation:
-            
             if Nations.objects.get(user=request.user, game=game_id).alliance_name == Nations.objects.get(name=selected_nation, game=game_id).alliance_name and  Nations.objects.get(name=selected_nation, game=game_id).alliance_name  != '':
                 return bad_request(request, title="User Error", message="To declare war on an ally, break the alliance using 2 points from the shop")
             selected_nation = War.objects.get_or_create(nation1 = Nations.objects.get(user=request.user, game=game_id), nation2 = Nations.objects.get(name=selected_nation, game=game_id))
         playernation = Nations.objects.get(user=request.user, game=game_id)
         wars = War.objects.filter(nation1__game=game_id) | War.objects.filter(nation2__game=game_id)
         announcements = Announcements.objects.create(text =f"{playernation.name} has declared war on {request.POST.get('selected_nation')}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
+    
     refresh_all(game_id)
     return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
     # Get the player's nation
@@ -2251,13 +2227,16 @@ def send(request,game_id):
         amount = amount/100
         if amount < 0:
           amount = amount * -1
+        
         playernation = Nations.objects.get(user=request.user, game=game_id)
         if int(send_type) == 1:
             if amount > playernation.divisions:
                 amount = playernation.divisions
             reciver_nation.divisions += amount*playernation.divisions
             playernation.divisions -= amount*playernation.divisions
-            reciver_nation.friendlyness -= amount*10
+            dec_amount = min(amount*playernation.divisions / playernation.divisions,1)
+            reciver_nation.hostility[playernation.player_number] -= math.floor(dec_amount*10)
+            reciver_nation.hostility[playernation.player_number] = max(reciver_nation.hostility[playernation.player_number],1)
             playernation.save()
             reciver_nation.save()
         if int(send_type) == 2:
@@ -2265,7 +2244,9 @@ def send(request,game_id):
                 amount = playernation.planes
             reciver_nation.planes += amount*playernation.planes
             playernation.planes -= amount * playernation.planes
-            reciver_nation.friendlyness -= amount*10
+            dec_amount = min(amount*playernation.planes / playernation.planes,1)
+            reciver_nation.hostility[playernation.player_number] -= math.floor(dec_amount*10)
+            reciver_nation.hostility[playernation.player_number] = max(reciver_nation.hostility[playernation.player_number],1)
             playernation.save()
             reciver_nation.save()
         if int(send_type) == 3:
@@ -2273,7 +2254,9 @@ def send(request,game_id):
                 amount = playernation.boats
             reciver_nation.boats += amount*playernation.boats
             playernation.boats -= amount*playernation.boats
-            reciver_nation.friendlyness -= amount*10
+            dec_amount = min(amount*playernation.boats / playernation.boats,1)
+            reciver_nation.hostility[playernation.player_number] -= math.floor(dec_amount*10)
+            reciver_nation.hostility[playernation.player_number] = max(reciver_nation.hostility[playernation.player_number],1)
             playernation.save()
             reciver_nation.save()
         playernation.save()
@@ -2282,9 +2265,6 @@ def send(request,game_id):
 
     knownnations = Nations.objects.filter(game=game_id).exclude(user=request.user).exclude(user = User.objects.get(username = "loser"))
     nations = Nations.objects.filter(game=game_id)
-    for nation in nations:
-        if nation.friendlyness < 1:
-            nation.friendlyness = 1
     user = request.user.username
     # Get the player's nation
     playernation = Nations.objects.filter(game=game_id, user=request.user).first()
@@ -2494,9 +2474,6 @@ def map(request, game_id):
         non_loser_nation.user.save()
 
     nations = Nations.objects.filter(game=game_id)
-    for nation in nations:
-        if nation.friendlyness == 0 or nation.friendlyness < 1:
-            nation.friendlyness = 1
 
     nation_list = list(Nations.objects.filter(game=game_id).exclude(user = User.objects.get(username = "loser")).values_list('name', flat=True))
 
@@ -2535,6 +2512,9 @@ def map(request, game_id):
             "owner__name",
         )
     )
+    for n in nations:
+        n.hostility_to_me = n.hostility[playernation.player_number] if n.hostility else 10
+
     return render(request, "AWSDefcon1App/JSMap.html",{"game_id":game_id, 
                                                        'squares':squares,
                                                        'tired_divisions': tired_divisions, 
@@ -2724,11 +2704,23 @@ def makegame(request,game_id):
            SINGLE_SELECT = True
 
 
-
     nation_objs = [Nations(**data) for data in nations_data]
 
     # Now bulk insert them into the database
     Nations.objects.bulk_create(nation_objs)
+
+    War.objects.create(nation1=Nations.objects.get(game = game_id, name = "German Reich"), nation2=Nations.objects.get(game = game_id, name = "Poland"))
+    War.objects.create(nation1=Nations.objects.get(game = game_id, name = "Soviet Union"), nation2=Nations.objects.get(game = game_id, name = "Poland"))
+
+    War.objects.create(nation1=Nations.objects.get(game = game_id, name = "United Kingdom"), nation2=Nations.objects.get(game = game_id, name = "German Reich"))
+    War.objects.create(nation1=Nations.objects.get(game = game_id, name = "France"), nation2=Nations.objects.get(game = game_id, name = "German Reich"))
+    War.objects.create(nation1=Nations.objects.get(game = game_id, name = "United Kingdom"), nation2=Nations.objects.get(game = game_id, name = "Italy"))
+    War.objects.create(nation1=Nations.objects.get(game = game_id, name = "France"), nation2=Nations.objects.get(game = game_id, name = "Italy"))
+
+    War.objects.create(nation1=Nations.objects.get(game = game_id, name = "Japan"), nation2=Nations.objects.get(game = game_id, name = "China"))
+    War.objects.create(nation1=Nations.objects.get(game = game_id, name = "Japan"), nation2=Nations.objects.get(game = game_id, name = "Shanxi"))
+
+    War.objects.create(nation1=Nations.objects.get(game = game_id, name = "Japan"), nation2=Nations.objects.get(game = game_id, name = "United States"))
 
     map_obj = Map.objects.get_or_create(number=game_id, game =game_obj)
     map_obj = Map.objects.get(game = game_obj)
@@ -3664,7 +3656,187 @@ def makegame(request,game_id):
     # Bulk create all squares in one DB hit
     Square.objects.bulk_create(squares_to_create)
 
-    
+    hostility = [
+        # UK
+        [0,10,5,15,15,15,15,10,10,5,10,10,5,10,10,10,10,5,5,5,10,10,10,15,10,10,5,5,5,10,10,10,10,20,10,10,10,10,10,5,10,10,10,10,10,10,10,10,5,15,10,15,15,10,5,5,10,5,10,5,10,5,15,10,10,10,10,10,5,15,10,10,10,10,10,15,10,10,10,10,10],
+        # USA
+        [10,0,10,10,15,15,15,10,10,5,10,10,10,10,10,10,10,5,5,5,10,10,10,15,10,10,10,10,5,10,10,10,10,15,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,15,10,10,10,10,10,5,10,10,10,10,10,10,10,10,15,10,10,10,10,10,5,15,10,10,10,10,10,10,10,10,10,10,10],
+        # France
+        [5,10,0,15,20,15,15,10,10,5,10,10,5,10,10,10,10,5,5,5,10,10,10,15,10,10,5,5,5,10,10,10,10,20,10,10,10,10,10,5,10,10,10,10,15,10,10,10,5,15,10,15,15,10,5,5,10,5,10,5,10,5,20,10,10,10,10,10,5,15,10,10,10,10,10,15,10,10,10,10,10],
+        # USSR
+        [15,10,15,0,20,15,15,10,10,10,10,10,10,10,10,10,10,10,10,10,15,10,10,5,10,10,10,10,10,10,10,10,10,15,15,10,10,10,10,10,10,10,10,10,10,10,10,10,10,15,10,5,5,10,10,10,10,10,10,10,10,10,10,15,15,10,10,5,10,10,10,15,10,10,10,10,10,5,10,10,10,10,10],
+        # Germany
+        [15,15,20,20,0,5,10,10,5,15,10,5,15,5,10,10,10,15,15,15,20,10,10,20,10,10,20,10,15,10,10,10,15,20,15,10,10,10,10,10,10,10,10,10,5,15,10,15,15,5,10,15,5,10,15,15,10,15,10,15,10,15,5,20,5,10,10,10,10,15,15,10,10,10,10,10,15,10,10,10,10,5,10],
+        # Italy
+        [15,15,15,15,5,0,10,10,10,15,10,5,10,5,10,10,10,15,15,15,15,10,10,15,10,10,10,10,15,10,10,10,10,20,10,10,10,10,10,10,10,10,10,10,5,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,15,10,10,10,10,10,10,10,10,10,10,10],
+        # Japan
+        [15,15,15,15,10,10,0,10,10,15,10,10,10,10,10,10,10,15,15,15,20,10,10,20,10,10,10,10,15,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,5,10,15,5,10,10,10,10,10,10,10,10,10,10,10,10,5,10,10,10,10,15,10,10,10,10,10,10,10,10,10,10,10,10],
+        # Afghanista
+        [10]*83,
+        # Austria
+        [10,10,10,10,5,10,10,10,0] + [10]*74,
+        # Australia
+        [5,5,5,10,15,15,15,10,10,0] + [10]*73,
+        # Argentina
+        [10]*83,
+        # Albania
+        [10,10,10,10,5,5] + [10]*77,
+        # Belgium
+        [5,10,5,10,15,10,10,10,10,5] + [10]*73,
+        # Bulgaria
+        [10,10,10,10,5,5] + [10]*77,
+        # Bhutan
+        [10]*83,
+        # Bolivia
+        [10]*83,
+        # Brazil
+        [10]*83,
+        # British Malaya
+        [5,5,5,10,15,15,15,10,10,5] + [10]*73,
+        # British Raj
+        [5,5,5,10,15,15,15,10,10,5] + [10]*73,
+        # Canada
+        [5,5,5,10,15,15,15,10,10,5] + [10]*73,
+        # China (ROC)
+        [10,10,10,15,20,15,20] + [10]*76,
+        # Chile
+        [10]*83,
+        # Colombia
+        [10]*83,
+        # CCP
+        [15,10,15,5,20,15,20] + [10]*76,
+        # Costa Rica
+        [10]*83,
+        # Cuba
+        [10]*83,
+        # Czechoslovakia
+        [5,10,5,10,20,10,10] + [10]*76,
+        # Denmark
+        [5,10,5,10,15,10,10] + [10]*76,
+        # Dutch East Indies
+        [5,5,5,10,15,15,15] + [10]*76,
+        # Dominican Republic
+        [10]*83,
+        # Ecuador
+        [10]*83,
+        # El Salvador
+        [10]*83,
+        # Estonia
+        [10,10,10,15,15] + [10]*78,
+        # Ethiopia
+        [10,10,10,15,15,20] + [10]*77,
+        # Finland
+        [10,10,10,15,15] + [10]*78,
+        # Guangxi Clique
+        [10]*83,
+        # Guatemala
+        [10]*83,
+        # Haiti
+        [10]*83,
+        # Honduras
+        [10]*83,
+        # Iceland
+        [5,10,5] + [10]*80,
+        # Iran
+        [10]*83,
+        # Iraq
+        [10]*83,
+        # Ireland
+        [10,10,10] + [10]*80,
+        # Greece
+        [10]*83,
+        # Hungary
+        [10,10,10,10,5] + [10]*78,
+        # Latvia
+        [10]*83,
+        # Liberia
+        [10]*83,
+        # Lithuania
+        [10]*83,
+        # Luxembourg
+        [5,10,5] + [10]*80,
+        # Manchukuo
+        [15,15,15,15,5,10,5] + [10]*76,
+        # Mexico
+        [10]*83,
+        # Mongolia
+        [10,10,10,5] + [10]*79,
+        # Mengkukuo
+        [15,15,15,15,5,10,5] + [10]*76,
+        # Nepal
+        [10]*83,
+        # Netherlands
+        [5,10,5,10,15] + [10]*78,
+        # New Zealand
+        [5,5,5,10,15] + [10]*78,
+        # Nicaragua
+        [10]*83,
+        # Norway
+        [5,10,5,10,15] + [10]*78,
+        # Oman
+        [10]*83,
+        # Panama
+        [10]*83,
+        # Peru
+        [10]*83,
+        # Philippines
+        [5,5,5,10,15,15,15] + [10]*76,
+        # Portugal
+        [5,10,5,10,10] + [10]*78,
+        # Poland
+        [5,10,5,15,20] + [10]*78,
+        # Romania
+        [10,10,10,15,5] + [10]*78,
+        # Paraguay
+        [10]*83,
+        # Siam
+        [10]*83,
+        # Sinkiang
+        [10]*83,
+        # Saudi Arabia
+        [10]*83,
+        # Shanxi
+        [10]*83,
+        # South Africa
+        [5,5,5,10,15] + [10]*78,
+        # Spain
+        [10]*83,
+        # Sweden
+        [5,10,5,10,10] + [10]*78,
+        # Switzerland
+        [5,10,5,10,10] + [10]*78,
+        # Sultanate of Aussa
+        [10]*83,
+        # Tannu Tuva
+        [10,10,10,5] + [10]*79,
+        # Turkey
+        [10,10,10,10,10] + [10]*78,
+        # Tibet
+        [10]*83,
+        # Uruguay
+        [10]*83,
+        # Venezuela
+        [10]*83,
+        # Xibei San Ma
+        [10]*83,
+        # Yugoslavia
+        [10]*83,
+        # Yunnan
+        [10]*83,
+        # Yemen
+        [10]*83,
+        ]
+
+    nations = list(Nations.objects.filter(game = game_id).order_by("player_number"))
+    if len(nations) != len(hostility):
+        return HttpResponse(
+            f"Error: {len(nations)} nations but {len(hostility)} hostility rows",
+            status=500
+        )
+    for i, nation in enumerate(nations):
+        nation.hostility = hostility[i]
+        nation.save(update_fields=["hostility"])
+
     neighbors_data = [
     {"name": "Aberdeenshire", "neighbors": ["Lothian", "Lanark", "Scottish Highlands"]},
     {"name": "Abkhazia", "neighbors": ["Sochi", "Kabardino Balkaria", "Georgia"]},
@@ -4607,3 +4779,336 @@ def makegame(request,game_id):
         return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))
     else:
         return HttpResponseRedirect(reverse('full_index'))
+
+
+
+def AIbattle(OWNER_NATION,DEFENDER,game_id):
+    # Prefetch related objects early to avoid redundant queries
+    game = Games.objects.get(id=game_id)
+    map_instance = Map.objects.get(game=game)
+    changed_squares = []
+    owner = OWNER_NATION
+
+    # Fetch owned squares in one efficient query
+    owned_square_objs = Square.objects.filter(owner=owner, map=map_instance)
+    enemy_square_objs = Square.objects.filter(owner=DEFENDER, map=map_instance)
+    owned_numbers = {sq.number for sq in owned_square_objs}
+
+    for square in enemy_square_objs:
+        if any(n in square.neighbors for n in owned_numbers):
+            defender_nation = DEFENDER
+            division_attack_amount = owner.divisions
+            division_defend_amount = int(defender_nation.divisions)
+            oga = int(division_attack_amount)
+            ogd = defender_nation.divisions
+
+            chance = random.randint(1, 20)
+            if 1 < chance < 20:
+                division_defend_amount = ogd - int(oga * 0.3)
+            elif chance == 1:
+                division_defend_amount = ogd - int(oga * 0.9)
+            elif chance == 20:
+                division_defend_amount = ogd - int(oga * 0.1)
+                
+            chance = random.randint(1, 20)
+            if 1 < chance < 20:
+                division_attack_amount = oga - int(ogd * 0.3)
+            elif chance == 1:
+                division_attack_amount = oga - int(ogd * 0.9)
+            elif chance == 20:
+                division_attack_amount = oga - int(ogd * 0.1)
+
+            # Clamp to zero if negative
+            division_defend_amount = max(0, division_defend_amount)
+            division_attack_amount = max(0, division_attack_amount)
+            # Calculate state changes
+            state_changeA = (oga - division_attack_amount) // 10
+            state_changeD = (ogd - division_attack_amount) // 10
+
+
+            div_attackers_lost = oga - int(division_attack_amount)
+            div_defenders_lost = ogd - int(division_defend_amount)
+
+        
+        
+            if state_changeD < state_changeA:
+                state_change = min(state_changeA - state_changeD, 15)
+                owner = OWNER_NATION
+                defender = DEFENDER
+                game = Games.objects.only("id").get(id=game_id)
+                map_obj = Map.objects.only("id").get(game=game)
+                owner_alliance = owner.alliance_name
+                if owner_alliance:
+                    allies = Nations.objects.filter(game=game_id, alliance_name=owner_alliance)
+                else:
+                    allies = Nations.objects.filter(pk=owner.pk)
+                owned_squares = Square.objects.filter(owner__in=allies, map=map_obj).only("number") 
+                controlled_numbers = set(sq.number for sq in owned_squares)
+                all_squares = Square.objects.filter(map=map_obj).only("number", "owner", "color", "neighbors")
+                square_dict = {sq.number: sq for sq in all_squares}
+                captured = 0
+                max_iterations = len(controlled_numbers) * 2  
+                iterations = 0
+                attacker_color = colors.get(owner.name)
+                for num in controlled_numbers:
+                    if iterations > max_iterations or captured >= state_change:
+                        break
+                    square = square_dict.get(num)
+                    if not square or not square.neighbors:
+                        continue
+                    for neighbor_num in square.neighbors:
+                        neighbor = square_dict.get(neighbor_num)
+                        if not neighbor or neighbor.owner_id != defender.id:
+                            continue
+                        neighbor.owner = owner
+                        neighbor.color = attacker_color
+                        changed_squares.append(neighbor)
+                        neighbor.save()
+                        owner.states += 1
+                        defender.states -= 1
+                        captured += 1
+                        if captured >= state_change:
+                            break
+                    iterations += 1
+                owner.save()
+                defender.save()
+
+            ## Defensive Wins
+            elif state_changeD >= state_changeA:
+                game = Games.objects.only("id").get(id=game_id)
+                map_obj = Map.objects.only("id").get(game=game)
+                defender = DEFENDER
+                attacker = OWNER_NATION
+                max_swaps = 10
+                stater = defender.states * 3
+                defender_alliance = defender.alliance_name
+                if defender_alliance:
+                    allies = Nations.objects.filter(game=game_id, alliance_name=defender_alliance)
+                else:
+                    allies = Nations.objects.filter(pk=defender.pk)
+                owned_squares = Square.objects.filter(owner__in=allies, map=map_obj).only("number")                
+                controlled_numbers = set(sq.number for sq in owned_squares)
+                all_squares = Square.objects.filter(map=map_obj).only("number", "owner", "color", "neighbors")
+                square_dict = {sq.number: sq for sq in all_squares}
+                attacker_name = attacker.name
+                defender_color = colors.get(defender.name)
+                swapped = 0
+                iterations = 0
+                for num in controlled_numbers:
+                    if iterations > stater or swapped >= max_swaps:
+                        break
+                    square = square_dict.get(num)
+                    if not square or not square.neighbors:
+                        continue
+                    for neighbor_num in square.neighbors:
+                        neighbor = square_dict.get(neighbor_num)
+                        if not neighbor or neighbor.owner_id != attacker.id:
+                            continue
+                        neighbor.owner = defender
+                        neighbor.color = defender_color
+                        changed_squares.append(neighbor)
+                        neighbor.save()
+                        attacker.states -= 1
+                        defender.states += 1
+                        swapped += 1
+                        if swapped >= max_swaps:
+                            break
+                    iterations += 1
+                    attacker.save()
+                    defender.save()
+
+            game = Games.objects.only("id").get(id=game_id)
+            attacker = OWNER_NATION
+            defender = DEFENDER
+            if state_changeD <= state_changeA:
+                Announcements.objects.create(text=f"{attacker.name} has defeated {DEFENDER.name} in a battle and taken states",start_time=datetime.now(),game=game)
+            else:
+                Announcements.objects.create(text=f"{DEFENDER.name} has defeated {attacker.name} in a battle and taken states",start_time=datetime.now(),game=game)
+            
+            attacker.divisions = attacker.divisions - div_attackers_lost
+            defender.divisions = defender.divisions - div_defenders_lost
+            
+            if defender.states < 0:
+                attacker.states += defender.states 
+                defender.states = 0
+
+            if attacker.states < 0:
+                defender.states += attacker.states
+                attacker.states = 0
+
+            attacker.save()
+            defender.save()
+                
+            div_defender = DEFENDER
+            player = OWNER_NATION
+
+            if div_defender.states < 1:
+                player.boats += div_defender.boats
+                player.planes += div_defender.planes
+                div_defender.boats = 0
+                div_defender.planes = 0
+                div_defender.user = User.objects.get(username='loser')
+                div_defender.divisions = 0
+                div_defender.alliance_name = ''
+                div_defender.save()
+                player.save()
+                game_instance = Games.objects.get(id=game_id)
+                game_instance.enemy_player_number = User.objects.get(username='loser')
+                game_instance.save()
+                War.objects.filter(Q(nation1=div_defender) | Q(nation2=div_defender)).delete()
+            
+
+            if div_defender.act_divisions > div_defender.divisions:
+                div_defender.act_divisions = div_defender.divisions
+                div_defender.save()
+
+            if player.states <= 1:
+                div_defender.boats += player.boats
+                div_defender.planes += player.planes
+                player.user = User.objects.get(username='loser')
+                player.divisions = 0
+                player.alliance_name = ''
+                War.objects.filter(Q(nation1=player) | Q(nation2=player)).delete()
+                game_instance = Games.objects.get(id=game_id)
+                game_instance.player_number_value = User.objects.get(username='loser')
+                game_instance.save()
+                                
+            div_defender.save()
+            player.save()
+            break
+
+    if any(enemy_square_objed.coastal for enemy_square_objed in enemy_square_objs):
+        ogab = OWNER_NATION.boats
+        ogdb = DEFENDER.boats
+        boat_defend_amount = ogdb
+        if ogab > ogdb:
+            O_border_squares = Square.objects.filter(map = Map.objects.get(game=game_id), coastal = True, owner = DEFENDER)
+            
+            if O_border_squares: 
+                fallen_state = random.choice(O_border_squares) 
+                Announcements.objects.create(text =f"{owner.name} has landed on the beaches of {DEFENDER.name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
+                fallen_state.owner = OWNER_NATION
+                owner = OWNER_NATION
+                color = colors.get(owner.name)
+                fallen_state.color = color
+                fallen_state.save()
+                changed_squares.append(fallen_state)
+                player = OWNER_NATION
+                defender = DEFENDER
+                player.states += 1
+                defender.states -= 1
+                player.save()
+                defender.save()
+                if defender.states < 1:
+                    player.boats += defender.boats
+                    player.planes += defender.planes
+                    defender.boats = 0
+                    defender.planes = 0
+                    defender.user = User.objects.get(username='loser')
+                    defender.divisions = 0
+                    defender.alliance_name = ''
+                    defender.save()
+                    player.save()
+                    game_instance = Games.objects.get(id=game_id)
+                    game_instance.enemy_player_number = User.objects.get(username='loser')
+                    game_instance.save()
+                    War.objects.filter(Q(nation1=defender) | Q(nation2=defender)).delete()
+            else:
+                Announcements.objects.create(text =f"{owner.name} has failed to land on the beaches of {DEFENDER.name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
+                chance = random.randint(1, 20)
+                boat_defend_amount = DEFENDER.boats
+                if chance > 1 and chance < 20:
+                    OWNER_NATION.boats = int(OWNER_NATION.boats) - int(boat_defend_amount)*0.3
+                elif chance == 1:
+                    OWNER_NATION.boats = int(OWNER_NATION.boats) - int(boat_defend_amount)*0.9
+                elif chance == 20:
+                    OWNER_NATION.boats = int(OWNER_NATION.boats) - int(boat_defend_amount)*0.1
+                
+                OWNER_NATION.save()
+
+        else:
+            Announcements.objects.create(text =f"{owner.name} has failed to land on the beaches of {DEFENDER.name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
+            chance = random.randint(1, 20)
+            boat_defend_amount = DEFENDER.boats
+            if chance > 1 and chance < 20:
+                OWNER_NATION.boats = int(OWNER_NATION.boats) - int(boat_defend_amount)*0.3
+            elif chance == 1:
+                OWNER_NATION.boats = int(OWNER_NATION.boats) - int(boat_defend_amount)*0.9
+            elif chance == 20:
+                OWNER_NATION.boats = int(OWNER_NATION.boats) - int(boat_defend_amount)*0.1
+            
+            OWNER_NATION.save()
+
+    planes_attack_amount = OWNER_NATION.planes 
+    planes_defend_amount = DEFENDER.planes
+
+    ogap = int(planes_attack_amount)
+    ogdp = int(planes_defend_amount)
+
+    planes_attack_type = random.choice(["bombing","normal"])
+    if planes_attack_type == "bombing":
+        announcements = Announcements.objects.create(text =f"{owner.name} has sent a bombing raid over {DEFENDER.name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
+        change = ogap//1000
+        enemy = DEFENDER
+        enemy.divisions -= change
+        if enemy.divisions < 0:
+            enemy.divisions = 0
+        enemy.save()
+
+    elif planes_attack_type == "normal":
+        chance = random.randint(1, 20)
+        if chance > 1 and chance < 20:
+            planes_defend_amount = int(ogdp) - int(ogap)*0.3
+        elif chance == 1:
+            planes_defend_amount = int(ogdp) - int(ogap)*0.9
+        elif chance == 20:
+            planes_defend_amount = int(ogdp) - int(ogap)*0.1
+        chance = random.randint(1, 20)
+        if chance > 1 and chance < 20:
+            planes_attack_amount = int(ogap) - int(ogdp)*0.3
+        elif chance == 1:
+            planes_attack_amount = int(ogap) - int(ogdp)*0.9
+        elif chance == 20:
+            planes_attack_amount = int(ogap) - int(ogdp)*0.1
+
+        planes_attackers_lost = ogap - int(planes_attack_amount)
+        planes_defenders_lost =  ogdp - int(planes_defend_amount)
+        nation_attacker = OWNER_NATION 
+        nation_defender = DEFENDER
+        Announcements.objects.create(text =f"{owner.name} has sent planes to fight {DEFENDER.name}", start_time = datetime.now(), game = Games.objects.get(id = game_id))
+
+        nation_attacker.planes -= planes_attackers_lost
+        nation_defender.planes -= planes_defenders_lost  
+        if nation_attacker.planes < 0:
+            nation_attacker.planes = 0
+        if nation_defender.planes < 0:
+            nation_defender.planes = 0
+        nation_attacker.save()
+        nation_defender.save()
+    
+
+    output_path = os.path.join(settings.MEDIA_ROOT, f"AWSDefcon1App/MapChart_Game_{game_id}.png")
+    final_image = Image.open(output_path).convert("RGBA")
+
+    white_image_dir = "AWSDefcon1App/static/AWSDefcon1App/white_image"
+    existing_images = set(os.listdir(white_image_dir))
+
+    for square in changed_squares:
+        filename = f"MapChart_Map.{square.name}.png"
+        if filename not in existing_images:
+            continue
+
+        image_path = os.path.join(white_image_dir, filename)
+        try:
+            img = Image.open(image_path).convert("RGBA")
+            r, g, b = tuple(int(square.color[i:i+2], 16) for i in (1, 3, 5))  # hex to RGB
+            r_img, _, _, alpha = img.split()
+            colorized = ImageOps.colorize(r_img, black=(r, g, b), white=(r, g, b))
+            colorized.putalpha(alpha)
+            final_image.alpha_composite(colorized)
+        except Exception as e:
+            print(f"Error processing {filename}: {e}")
+            continue
+    final_image.save(output_path, optimize=True)
+    refresh_all(game_id)
+    return HttpResponseRedirect(reverse('map', kwargs={'game_id': game_id}))

@@ -14,18 +14,22 @@
     <ul class="timeline">
         <!-- Example update -->
         <li class="timeline-item">
-            <span class="timeline-date">2026-01-01 11:00 AM</span>
+            <span class="timeline-date">2026-01-01 10:00 AM</span>
             <button class="timeline-btn" data-modal="modal1">Lag Optimization Update</button>
             <p class="timeline-summary">A bunch of small fixes mostly focused at lag prevention</p>
         </li>
 
         <li class="timeline-item">
-            <span class="timeline-date">2026-01-02 11:00 AM</span>
+            <span class="timeline-date">2026-01-02 7:00 AM</span>
             <button class="timeline-btn" data-modal="modal2">Minor Patch</button>
             <p class="timeline-summary">Fixed all bugs reported after first patch</p>
         </li>
 
-
+        <li class="timeline-item">
+            <span class="timeline-date">2026-01-08 6:00 PM</span>
+            <button class="timeline-btn" data-modal="modal3">Bot Update</button>
+            <p class="timeline-summary">Added an brain to the bots</p>
+        </li>
         <!-- Developer can add more items here -->
     </ul>
 </div>
@@ -127,6 +131,37 @@
                 <li>The drop nukes button will be unavailable unless you have 1 nuke</li>
                 <li>You will now ALWAYS get a nuke every turn after researching them as opposed to randomly chanced at getting one</li>
                 <li>Boats will now be able to land in Hondoras</li>
+            </ul>
+        </li>
+    </div>
+</div>
+
+
+<div id="modal3" class="custom-modal">
+    <div class="modal-content">
+        <span class="close-btn" data-close="modal3">&times;</span>
+
+        <h3>Update: 2026-01-08 6:00 PM</h3>
+        <ul>
+        
+        <li><strong>Feature Updates (Summary)</strong> 
+            <ul>
+                <li>Bots will now play "intelligently"</li>
+                <li>Bugs with hostility were fixed</li>
+            </ul>
+        </li>
+
+        <li> <strong>Feature Changes</strong> </li>
+        <ul>
+            <li>All major nations now start in a war. Each turn 1 major nation will be randomly selected to "play" its turn <br>
+                The selected bot will fight battles with everyone its at war with, and declare war on the strongest nation if its not at war <br>
+                This bot will not declare war if it is the strongest nation and is in no war</li>
+        </ul>
+
+        <li><strong>Fixed Bugs</strong> 
+            <ul>      
+                <li>Donating a small amount will no longer decrease hosility</li>
+                <li>Donating a will no longer affect a nations hostility to all nations, only its hosility to you</li>
             </ul>
         </li>
     </div>

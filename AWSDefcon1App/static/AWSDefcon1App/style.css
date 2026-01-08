@@ -1444,3 +1444,155 @@ button.attacker:hover {
       font-size: 1.3em;
       margin-top: 15px;
     }
+
+    /* ===== Page Base ===== */
+.profile-container {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 30px;
+    background: linear-gradient(145deg, #1e1e2f, #26263b);
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    color: #eaeaf0;
+    text-align: center;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ===== Header ===== */
+.profile-header h1 {
+    margin-bottom: 25px;
+    font-size: 36px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+/* ===== Stats Section ===== */
+.profile-info {
+    display: flex;
+    justify-content: center;
+}
+
+.profile-stats {
+    display: flex;
+    gap: 40px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    background: rgba(255,255,255,0.06);
+    padding: 20px 30px;
+    border-radius: 12px;
+    min-width: 140px;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+}
+
+.stat-item h2 {
+    font-size: 18px;
+    margin-bottom: 8px;
+    color: #b6b6ff;
+}
+
+.stat-item p {
+    font-size: 22px;
+    font-weight: 600;
+}
+
+/* ===== Bio ===== */
+.profile-bio {
+    max-width: 280px;
+    background: rgba(255,255,255,0.04);
+    padding: 18px;
+    border-radius: 12px;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #d6d6e8;
+}
+
+/* ===== Edit Bio ===== */
+.edit-bio {
+    margin-top: 35px;
+    text-align: center;
+}
+
+.edit-bio h2 {
+    margin-bottom: 10px;
+    color: #b6b6ff;
+}
+
+.edit-bio textarea {
+    width: 100%;
+    max-width: 420px;
+    resize: none;
+    border-radius: 10px;
+    border: none;
+    padding: 12px;
+    background-color: #2e2e45;
+    color: #ffffff;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+}
+
+.edit-bio textarea::placeholder {
+    color: #aaaaaa;
+}
+
+.save-btn {
+    margin-top: 12px;
+    padding: 10px 22px;
+    border-radius: 20px;
+    border: none;
+    background: purple;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.save-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(106,106,255,0.4);
+}
+
+/* ===== Message Link ===== */
+a[href*="DM"] {
+    display: inline-block;
+    margin-top: 30px;
+    text-decoration: none;
+    color: #454151;
+    font-weight: 600;
+}
+
+a[href*="DM"]:hover {
+    text-decoration: underline;
+}
+
+/* Achievement container spacing fix */
+.profile-container + div {
+    margin-top: 20px;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 700px) {
+    .profile-stats {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .profile-header h1 {
+        font-size: 28px;
+    }
+}
+
+textarea::placeholder {
+    color: black;
+}
+.gold-text {
+    color: #ffd966;
+    font-weight: 700;
+    text-shadow: 0 0 6px rgba(255,217,102,0.4);
+}
+
+.black-text {
+    color: #777;
+    font-weight: 600;
+}

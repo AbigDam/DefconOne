@@ -34,7 +34,7 @@ class Nations(models.Model):
     attacks = models.IntegerField(default = 0, null=True, blank=True)
     requests = models.IntegerField(default = 4, null=True, blank=True)
     spies = models.IntegerField(default = 10, null=True, blank=True)
-    friendlyness = models.IntegerField(default = 10, null=True, blank=True)
+    hostility = models.JSONField(default=list, null=True, blank=True)
 
 
 class MakeAlliance(models.Model):
@@ -73,7 +73,8 @@ class Announcements(models.Model):
     game = models.ForeignKey(Games, on_delete=models.CASCADE)
     start_time = models.DateTimeField()
     text = models.CharField(max_length=1000, null=True, blank=True)
-
+    #special_nation = models.ForeignKey(Nations, on_delete=models.CASCADE, related_name='special_nation', null=True, blank=True)
+    #special_text = models.CharField(max_length=1000, null=True, blank=True)
 class Achievements(models.Model):
     name = models.CharField(max_length=255, default="")
     users = models.JSONField(default=list)
