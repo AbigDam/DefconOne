@@ -639,10 +639,6 @@ def full_index(request):
             player_number_to_update = f"player{loser_nation.player_number}"
             setattr(game, player_number_to_update, User.objects.get(username = 'closed'))
             game.save()
-
-    if not User.objects.filter(username='Admin').exists():
-        user = User.objects.create_superuser('Admin', 'randomdams@gmail.com', 'C0deClub')
-        user.save()
         
     max_game_id = Games.objects.count()
                     
